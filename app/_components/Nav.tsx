@@ -67,7 +67,7 @@ export default function Nav() {
   const router = useRouter();
 
   return (
-    <div className="bg-teal-600 text-slate-300 fixed z-10 w-full h-10 lg:w-32 lg:h-screen flex flex-row lg:flex-col">
+    <div className="bg-dark-1 text-dark-3 fixed z-10 w-full h-10 lg:w-32 lg:h-screen flex flex-row lg:flex-col">
       <div className="flex flex-grow-0 p-2 -ml-1 lg:ml-0 lg:-mt-1">
         <NavLink href="/" className="_bg-yellow-600 hover:no-underline">
           <div className="Logo my-auto">Workout</div>

@@ -3,19 +3,20 @@
 @tailwind utilities;
 
 /*
-  color theme: https://coolors.co/palette/264653-2a9d8f-e9c46a-f4a261-e76f51
+  color theme: https://coolors.co/palette/3d5a80-98c1d9-e0fbfc-ee6c4d-293241
 */
 
 :root {
   --foreground-rgb: 38, 70, 83;
   --background-start-rgb: 214, 219, 220;
   --background-end-rgb: 255, 255, 255;
-  --color-scheme-dark-1: #264653;
-  --color-scheme-dark-2: #2a9d8f;
-  --color-scheme-dark-3: #92a7a8;
-  --color-scheme-light-1: #e9c46a;
-  --color-scheme-light-2: #f4a261;
-  --color-scheme-light-3: #e76f51;
+  --color-scheme-dark-0: #293241;
+  --color-scheme-dark-1: #3D5A80;
+  --color-scheme-dark-2: #7b90aa;
+  --color-scheme-dark-3: #E0FBFC;
+  --color-scheme-light-1: #edc78a;
+  --color-scheme-light-2: #edb08a;
+  --color-scheme-light-3: #EE6C4D;
 }
 
 /* TODO: figure out a clean dark mode style */
@@ -34,7 +35,7 @@ html {
 
 body {
   /* color: rgb(var(--foreground-rgb)); */
-  color: var(--color-scheme-dark-1);
+  color: var(--color-scheme-dark-0);
   background: linear-gradient(
       to bottom,
       transparent,
@@ -50,12 +51,12 @@ main {
 
 h1 {
   @apply mb-3 text-2xl font-bold;
-  color: var(--color-scheme-dark-1);
+  color: var(--color-scheme-dark-0);
 }
 
 h2 {
   @apply mb-3 text-lg font-semibold;
-  color: var(--color-scheme-dark-1);
+  color: var(--color-scheme-dark-0);
 }
 
 p {

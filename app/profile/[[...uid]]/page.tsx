@@ -88,16 +88,16 @@ export default function Page({ params }: { params: { uid?: string } }) {
           <h2>{users.getUserName(user)}{user.isAnonymous ? "" : ` (${users.getProviderName(user)})`}</h2>
 
           <div className="p-0.5">
-            <span className="text-dark-3">User ID:</span> {user.uid}{user?.isAnonymous && " (Anonymous)"}{user.admin && " (Administrator)"}
+            <span className="text-dark-0 font-semibold">User ID:</span> {user.uid}{user?.isAnonymous && " (Anonymous)"}{user.admin && " (Administrator)"}
           </div>
           {user.email &&
             <div className="p-0.5">
-              <span className="text-dark-3">Email:</span> {user.email}
+              <span className="text-dark-0 font-semibold">Email:</span> {user.email}
             </div>
           }
           {!user.isAnonymous &&
             <div className="p-0.5">
-              <span className="text-dark-3">Provider:</span> {users.getProviderType(user)}
+              <span className="text-dark-0 font-semibold">Provider:</span> {users.getProviderType(user)}
             </div>
           }
 

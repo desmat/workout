@@ -1,0 +1,107 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  color theme: https://coolors.co/palette/264653-2a9d8f-e9c46a-f4a261-e76f51
+*/
+
+:root {
+  --foreground-rgb: 38, 70, 83;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+  --color-scheme-dark-1: #264653;
+  --color-scheme-dark-2: #2a9d8f;
+  --color-scheme-dark-3: #92a7a8;
+  --color-scheme-light-1: #e9c46a;
+  --color-scheme-light-2: #f4a261;
+  --color-scheme-light-3: #e76f51;
+}
+
+/* TODO: figure out a clean dark mode style */
+/* @media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+  }
+} */
+
+html {
+  /* background: rgb(var(--background-end-rgb)); */
+  background: rgb(var(--background-start-rgb));
+}
+
+body {
+  /* color: rgb(var(--foreground-rgb)); */
+  color: var(--color-scheme-dark-1);
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+  background-attachment: fixed;    
+}
+
+main {
+  @apply px-2 py-4 lg:px-8 lg:py-8
+}
+
+h1 {
+  @apply mb-3 text-2xl font-bold;
+  color: var(--color-scheme-dark-1);
+}
+
+h2 {
+  @apply mb-3 text-lg font-semibold;
+  color: var(--color-scheme-dark-1);
+}
+
+p {
+  @apply py-1
+}
+
+a {
+  @apply no-underline;
+  _color: var(--color-scheme-dark-2);
+  _color: var(--color-scheme-light-1);
+}
+
+a:hover {
+  @apply underline;
+}
+
+ul {
+  list-style-type: circle;
+}
+
+.no-link-style {
+  @apply no-underline;
+  _color: var(--color-scheme-dark-1);
+}
+
+.no-link-style:hover {
+  @apply no-underline;
+}
+
+.Logo {
+  @apply text-xl uppercase font-bold;
+  color: var(--color-scheme-light-1);
+}
+
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* number of lines to show */
+          line-clamp: 2; 
+  -webkit-box-orient: vertical;
+}
+
+.line-clamp-3 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3; /* number of lines to show */
+          line-clamp: 3; 
+  -webkit-box-orient: vertical;
+}

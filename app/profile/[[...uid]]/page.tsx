@@ -5,9 +5,9 @@ import { useEffect } from "react";
 import useUser from "@/app/_hooks/user";
 import useMenus from "@/app/_hooks/exercises";
 import * as users from "@/services/users";
-import { Game } from "@/types/Trivia";
-import { Menu } from "@/types/Exercise";
-import { Post } from "@/types/Post";
+import {  } from "@/types/Exercise";
+import useWorkouts from "@/app/_hooks/workouts";
+import { Workout } from "@/types/Workout";
 
 function doSigninWithGoogle(e: any, signinFn: any) {
   console.log("** app.profile.page.doSigninWithGoogle");
@@ -30,17 +30,17 @@ function doLogout(e: any, logoutFn: any) {
 export default function Page({ params }: { params: { uid?: string } }) {
   // console.log('>> app.profile.page.render()', params.uid);
   const [user, userLoaded, loadUser, signin, logout] = useUser((state: any) => [state.user, state.loaded, state.load, state.signin, state.logout]);
-  const [menus, menusLoaded, loadMenus] = useMenus((state: any) => [state.menus, state.loaded, state.load]);
-  const myMenus = menusLoaded && menus.filter((menu: Menu) => menu.createdBy == user?.uid);
+  const [workouts, workoutsLoaded, loadWorkouts] = useWorkouts((state: any) => [state.workouts, state.loaded, state.load]);
+  const myWorkouts = workoutsLoaded && workouts.filter((workout: Workout) => workout.createdBy == user?.uid);
   console.log('>> app.profile.page.render()', { uid: params.uid, user, userLoaded });
 
   useEffect(() => {
     // console.log("** app.profile.page.useEffect", { uid: params.uid, user });
     if (!userLoaded) loadUser();
-    if (!menusLoaded) loadMenus();
+    if (!workoutsLoaded) loadWorkouts();
   }, [params.uid]);
 
-  if (!userLoaded || !menusLoaded) {
+  if (!userLoaded) {
     return (
       <main className="flex flex-col items-center _justify-between _p-24">
         <h1>
@@ -115,9 +115,9 @@ export default function Page({ params }: { params: { uid?: string } }) {
       }
       {!params.uid &&
         <div className="flex flex-col lg:flex-row lg:space-x-4 items-center justify-center mt-4">
-          {user && myMenus.length > 0 && 
+          {user && myWorkouts.length > 0 && 
             <div className="text-dark-2">
-              <Link href={`/menus?uid=${user.uid}`}>Menus ({myMenus.length})</Link>
+              <Link href={`/workouts?uid=${user.uid}`}>Workouts ({myWorkouts.length})</Link>
             </div>
           }
           {user && user.isAnonymous &&

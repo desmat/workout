@@ -29,7 +29,7 @@ function ExerciseEntry({ exercise, user }: any) {
         {isReady &&
           <>
             {/* {` (${summary})`} */}
-            <Link style="child light" className="ml-2">View</Link>
+            <Link style="child light" className="ml-2 absolute">View</Link>
           </>
         }
         {!isReady &&
@@ -78,7 +78,7 @@ export default function Page() {
   }, []);
 
   const links = (
-    <div className="flex flex-col md:flex-row md:gap-3 items-center justify-center mt-2 mb-4">
+    <div className="flex flex-row gap-3 items-center justify-center mt-2 mb-4">
       <div title={user ? "" : "Login to create new exercise"}>
         <Link className={user ? "" : "cursor-not-allowed"} onClick={() => /* user && */ handleCreateExercise(createExercise, router, user)}>
           Create New Exercise
@@ -107,7 +107,7 @@ export default function Page() {
         </p> */}
         {links}
         {filteredExercises && filteredExercises.length > 0 &&
-          <div className="md:self-center flex flex-col gap-3">
+          <div className="self-center flex flex-col gap-3">
             {
               filteredExercises
                 // .filter(...)

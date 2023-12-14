@@ -117,7 +117,7 @@ export default function Page({ params }: { params: { id: string } }) {
   }
 
   const links = (
-    <div className="flex flex-col md:flex-row md:gap-3 items-center justify-center mt-2 mb-4">
+    <div className="flex flex-row gap-3 items-center justify-center mt-2 mb-4">
       <Link href="/exercises">Back</Link>
       {/* {exercise && <Link onClick={() => setshowDetails(!showDetails)}>{showDetails ? "Hide details" : "Show details"}</Link>} */}
       {/* {game && <Link onClick={() => handlePlayGame(params.id, startGame, router)}>Play</Link>} */}
@@ -142,7 +142,7 @@ export default function Page({ params }: { params: { id: string } }) {
       </p>
       {links}
       {exercise && exercise.items && (exercise.items.length as number) > 0 &&
-        <div className="md:self-center">
+        <div className="self-center">
           <Exercise {...{ ...exercise, showDetails }} />
         </div>
       }

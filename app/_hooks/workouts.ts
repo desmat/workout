@@ -4,21 +4,20 @@ import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import { Workout, WorkoutSession, WorkoutSet } from '@/types/Workout';
 import { Exercise } from '@/types/Exercise';
+import { byCreatedAtDesc } from '@/utils/sort';
 
-const completeSet = (session: WorkoutSession) => {
+const stopSet = (session: WorkoutSession, status = "stopped") => {
   const sets = session.sets && session.sets.filter((set: WorkoutSet) => set.status == "started");
 
-  // console.log(">> hooks.workout.completeSet", { sets });
-  
-  sets && sets
-    // .filter((set: WorkoutSet) => set.status == "started")
-    .forEach((set: WorkoutSet) => {
-      // console.log(">> hooks.workout.completeSet", { set });
-      set.stoppedAt = moment().valueOf();
-      set.duration = set.stoppedAt - (set?.startedAt || 0);
-      set.status = "completed"
-      // session.sets.push(set);
-    });
+  // console.log(">> hooks.workout.stopSet", { sets });
+
+  sets && sets.forEach((set: WorkoutSet) => {
+    // console.log(">> hooks.workout.stopSet", { set });
+    set.stoppedAt = moment().valueOf();
+    set.duration = (set.duration || 0) + set.stoppedAt - (set?.startedAt || 0);
+    set.startedAt = 0;
+    set.status = status;
+  });
 
   return session;
 }
@@ -178,7 +177,7 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
     console.log(">> hooks.workout.stopSession", { user, id });
 
     if (!id) {
-      throw `Cannot create workout session with null id`;
+      throw `Cannot complete workout session with null id`;
     }
 
     const { workouts, sessions } = get();
@@ -188,8 +187,112 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
       throw `Session not found: ${id}`;
     }
 
-    session = completeSet(session);
+    session = stopSet(session, "completed");
     session.status = "completed";
+
+    // optimistic
+    set({
+      sessions: [...sessions.filter((s: WorkoutSession) => s.id != session.id), session]
+    });
+
+    // fetch(`/api/workouts/${session.workout.id}/sessions/${id}`, {
+    //   method: "PUT",
+    //   body: JSON.stringify({ session }),
+    // }).then(async (res) => {
+    //   if (res.status != 200) {
+    //     console.error(`Error saving workout session: ${res.status} (${res.statusText})`);
+
+    //     // TODO revert
+
+    //     return;
+    //   }
+
+    //   const data = await res.json();
+    //   const session = data.session;
+    //   // remove optimistic post
+    //   const sessions = get().sessions.filter((session: WorkoutSession) => session.id != tempId);
+    //   set({ sessions: [...sessions, session] });
+    // });
+
+    return session;
+  },
+
+  stopSession: async (user: User, id: string) => {
+    console.log(">> hooks.workout.stopSession", { user, id });
+
+    if (!id) {
+      throw `Cannot stop workout session with null id`;
+    }
+
+    const { workouts, sessions } = get();
+    let session = sessions.filter((session: WorkoutSession) => session.id == id)[0]
+
+    if (!session) {
+      throw `Session not found: ${id}`;
+    }
+
+    session = stopSet(session);
+    session.status = "stopped";
+
+    // optimistic
+    set({
+      sessions: [...sessions.filter((s: WorkoutSession) => s.id != session.id), session]
+    });
+
+    // fetch(`/api/workouts/${session.workout.id}/sessions/${id}`, {
+    //   method: "PUT",
+    //   body: JSON.stringify({ session }),
+    // }).then(async (res) => {
+    //   if (res.status != 200) {
+    //     console.error(`Error saving workout session: ${res.status} (${res.statusText})`);
+
+    //     // TODO revert
+
+    //     return;
+    //   }
+
+    //   const data = await res.json();
+    //   const session = data.session;
+    //   // remove optimistic post
+    //   const sessions = get().sessions.filter((session: WorkoutSession) => session.id != tempId);
+    //   set({ sessions: [...sessions, session] });
+    // });
+
+    return session;
+  },
+
+  resumeSession: async (user: User, id: string) => {
+    console.log(">> hooks.workout.resumeSession", { user, id });
+
+    if (!id) {
+      throw `Cannot resume workout session with null id`;
+    }
+
+    const { workouts, sessions } = get();
+    let session = sessions.filter((session: WorkoutSession) => session.id == id)[0]
+
+    if (!session) {
+      throw `Session not found: ${id}`;
+    }
+
+    if (session.status != "stopped") {
+      throw `Unable to resume session: state was not "stopped": ${id}`;
+    }
+
+    const sessionSet = session.sets.sort(byCreatedAtDesc)[0];
+
+    if (!sessionSet) {
+      throw `Unable to resume session: no set found: ${id}`;
+    }
+
+    console.log(">> hooks.workout.resumeSession", { sessionSet });
+
+    sessionSet.startedAt = moment().valueOf();
+    sessionSet.stoppedAt = 0;
+    sessionSet.status = "started";
+    session.status = "started";
+
+    console.log(">> hooks.workout.resumeSession", { session });
 
     // optimistic
     set({
@@ -238,7 +341,7 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
     // const lastSet = session.sets && session.sets[session.sets.length - 1];
 
     // if (lastSet && lastSet && lastSet.status == "started") {
-      session = completeSet(session);
+    session = stopSet(session, "completed");
     // }
 
     const tempId = crypto.randomUUID();
@@ -299,7 +402,7 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
       throw `Session not found: ${sessionId}`;
     }
 
-    session = completeSet(session);
+    session = stopSet(session, "completed");
 
     // optimistic
     set({

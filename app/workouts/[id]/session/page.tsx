@@ -1,15 +1,15 @@
 'use client'
 
+import moment from 'moment';
+import { User } from 'firebase/auth';
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from "react";
 import Link from "@/app/_components/Link"
 import useWorkouts from "@/app/_hooks/workouts";
 import useUser from "@/app/_hooks/user";
 import Loading from "./loading";
-import { User } from 'firebase/auth';
 import { Workout, WorkoutSession, WorkoutSet } from '@/types/Workout';
 import { Exercise } from '@/types/Exercise';
-import moment from 'moment';
 import { byCreatedAtDesc, byName } from '@/utils/sort';
 
 function ExerciseEntry({ id, name, /* description,*/ showDetails }: any) {
@@ -90,19 +90,37 @@ async function handleDeleteWorkout(id: string, deleteFn: any, router: any) {
   }
 }
 
-async function handleStartSession(user: User, workout: Workout, startFn: any) {
+async function handleStartSession(user: User, workout: Workout, fn: any) {
   console.log('>> app.workout[id].session.handleStartSession()', { user, workout });
 
-  const session = startFn(user, workout.id);
+  const session = fn(user, workout.id);
   // if (session) {
   //   router.push(`/workouts/${workout.id}/session`);
   // }
 }
 
-async function handleStopSession(user: User, session: WorkoutSession, stopFn: any) {
+async function handleStopSession(user: User, session: WorkoutSession, fn: any) {
   console.log('>> app.workout[id].session.handleStopSession()', { user, session });
 
-  const stoppedSession = stopFn(user, session.id);
+  const updatedSession = fn(user, session.id);
+  // if (session) {
+  //   router.push(`/workouts/${workout.id}/session`);
+  // }
+}
+
+async function handleResumeSession(user: User, session: WorkoutSession, fn: any) {
+  console.log('>> app.workout[id].session.handleResumeSession()', { user, session });
+
+  const updatedSession = fn(user, session.id);
+  // if (session) {
+  //   router.push(`/workouts/${workout.id}/session`);
+  // }
+}
+
+async function handleCompleteSession(user: User, session: WorkoutSession, fn: any) {
+  console.log('>> app.workout[id].session.handleCompleteSession()', { user, session });
+
+  const updatedSession = fn(user, session.id);
   // if (session) {
   //   router.push(`/workouts/${workout.id}/session`);
   // }
@@ -141,6 +159,8 @@ export default function Page({ params }: { params: { id: string } }) {
     startSet,
     completeSession,
     completeSet,
+    stopSession,
+    resumeSession,
   ] = useWorkouts((state: any) => [
     state.workouts,
     state.loaded,
@@ -151,6 +171,8 @@ export default function Page({ params }: { params: { id: string } }) {
     state.startSet,
     state.completeSession,
     state.completeSet,
+    state.stopSession,
+    state.resumeSession,
   ]);
   const [user] = useUser((state: any) => [state.user]);
   const workout = workouts && workouts.filter((workout: any) => workout.id == params.id)[0];
@@ -165,7 +187,7 @@ export default function Page({ params }: { params: { id: string } }) {
   const updateCurrentSetDurection = () => {
     if (currentSet && currentSet.startedAt) {
       // console.log('>> app.workouts[id].session.Page useEffect(currentSet) TIC TOK!', { currentSet, timer });
-      setCurrentSetDuration(moment().valueOf() - currentSet.startedAt);
+      setCurrentSetDuration((currentSet.duration || 0) + moment().valueOf() - currentSet.startedAt);
     }
   }
   // console.log('>> app.workouts[id].session.Page.render()', { id: params.id, workout, sessions, session });
@@ -183,7 +205,7 @@ export default function Page({ params }: { params: { id: string } }) {
   }, [session]);
 
   useEffect(() => {
-    console.log('>> app.workouts[id].session.Page useEffect(currentSet)', { currentSet });
+    console.log('>> app.workouts[id].session.Page useEffect(currentSet)', { currentSet, previousSet });
     if (currentSet && (currentSet.id != previousSet?.id || currentSet.status != previousSet?.status)) {
       console.log('>> app.workouts[id].session.Page useEffect(currentSet) KICKOFF TIMER!', { currentSet, timer });
 
@@ -206,6 +228,7 @@ export default function Page({ params }: { params: { id: string } }) {
       if (timer) {
         clearInterval(timer);
         setTimer(0);
+        setPreviousSet(undefined);
       }
     }
   }, [currentSet?.id, session?.id]);
@@ -218,8 +241,10 @@ export default function Page({ params }: { params: { id: string } }) {
     <div className="flex flex-row gap-3 items-center justify-center mt-2 mb-4">
       <Link href={`/workouts/${params.id}`}>Back</Link>
       {/* {workout && <Link onClick={() => setshowDetails(!showDetails)}>{showDetails ? "Hide details" : "Show details"}</Link>} */}
-      {workout && user && !sessionStarted && <Link onClick={() => handleStartSession(user, workout, startSession)}>New</Link>}
-      {workout && user && sessionStarted && <Link onClick={() => handleStopSession(user, session, completeSession)}>Stop</Link>}
+      {workout && user && !session && <Link onClick={() => handleStartSession(user, workout, startSession)}>New</Link>}
+      {workout && user && ["stopped", "started"].includes(session?.status) && <Link onClick={() => handleCompleteSession(user, session, completeSession)}>Complete</Link>}
+      {workout && user && sessionStarted && <Link onClick={() => handleStopSession(user, session, stopSession)}>Pause</Link>}
+      {workout && user && session?.status == "stopped" && <Link onClick={() => handleResumeSession(user, session, resumeSession)}>Resume</Link>}
       {/* {workout && user && (user.uid == workout.createdBy || user.admin) && <Link style="warning" onClick={() => handleDeleteWorkout(params.id, deleteWorkout, router)}>Delete</Link>} */}
     </div>
   );
@@ -244,10 +269,28 @@ export default function Page({ params }: { params: { id: string } }) {
 
   return (
     <main className="flex flex-col items-left lg:max-w-4xl lg:mx-auto px-4">
-      <h1 className="text-center capitalize">{workout.name} Session</h1>
+      <h1 className="text-center capitalize">{workout.name} Session ({session.status})</h1>
       {links}
       <p className='text-center'>
-        <span className={`font-bold text-3xl ${sessionStarted ? "text-dark-1" : "text-dark-2"}`}>
+        <span
+          className={`font-bold text-3xl transition-all${sessionStarted ? " text-dark-1" : " text-dark-2"}${["stopped", "started"].includes(session?.status) ? " cursor-pointer" : ""}${session?.status == "stopped" ? " animate-pulse" : ""}`}
+          title={
+            session?.status == "stopped"
+              ? "Resume"
+              : session?.status == "started"
+                ? "Pause"
+                : session?.status == "completed"
+                  ? "Workout session completed"
+                  : "Pick an exercise to start"
+          }
+          onClick={() => {
+            session?.status == "stopped"
+              ? handleResumeSession(user, session, resumeSession)
+              : session?.status == "started"
+                ? handleStopSession(user, session, stopSession)
+                : null;
+          }}
+        >
           <Timer ms={currentSetDuration} />
         </span>
       </p>
@@ -278,7 +321,13 @@ export default function Page({ params }: { params: { id: string } }) {
                 return (
                   <div className="_px-0.5" key={i}>
                     <span className="text-dark-0 capitalize _font-semibold mr-2">{set.exercise?.name} </span>
-                    (<Timer ms={set?.duration || (set?.stoppedAt || moment().valueOf()) - (set?.startedAt || 0)} />)
+                    (<Timer 
+                      ms={
+                        set.status == "started"
+                          ? (set?.duration || 0) + moment().valueOf() - (set?.startedAt || 0)
+                          : (set?.duration || 0)
+                      }
+                    />)
                   </div>
                 )
               })

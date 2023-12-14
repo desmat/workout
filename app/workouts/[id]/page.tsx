@@ -1,5 +1,6 @@
 'use client'
 
+import { User } from 'firebase/auth';
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from "react";
 import BackLink from '@/app/_components/BackLink';
@@ -7,8 +8,7 @@ import Link from "@/app/_components/Link"
 import useWorkouts from "@/app/_hooks/workouts";
 import useUser from "@/app/_hooks/user";
 import Loading from "./loading";
-import { User } from 'firebase/auth';
-import { Workout } from '@/types/Workout';
+import { Workout, WorkoutSession } from '@/types/Workout';
 
 function ExerciseEntry({ id, name, /* description,*/ showDetails }: any) {
   const [showDetail, setshowDetail] = useState(false);
@@ -103,15 +103,21 @@ export default function Page({ params }: { params: { id: string } }) {
   // console.log('>> app.workout[id].Page.render()', { id: params.id });
   const router = useRouter();
   const [showDetails, setshowDetails] = useState(false);
-  const [workouts, loaded, load, deleteWorkout, startSession] = useWorkouts((state: any) => [state.workouts, state.loaded, state.load, state.deleteWorkout, state.startSession]);
+  const [workouts, loaded, load, deleteWorkout, startSession, sessions, sessionsLoaded, loadSessions] = useWorkouts((state: any) => [state.workouts, state.loaded, state.load, state.deleteWorkout, state.startSession, state.sessions, state.sessionsLoaded, state.loadSessions]);
   const [user] = useUser((state: any) => [state.user]);
   const workout = workouts.filter((workout: any) => workout.id == params.id)[0];
+  const filteredSessions = sessions && workout && sessions.filter((session: WorkoutSession) => session.workout.id == workout.id && session.status != "completed");
+  const session = filteredSessions && filteredSessions.length > 0 && filteredSessions[filteredSessions.length - 1];
 
   console.log('>> app.workouts[id].page.render()', { id: params.id, workout });
 
   useEffect(() => {
     load(params.id);
   }, [params.id]);
+
+  useEffect(() => {
+    if (workout?.id) loadSessions(workout.id);
+  }, [workout?.id]);
 
   if (!loaded) {
     return <Loading />
@@ -121,7 +127,8 @@ export default function Page({ params }: { params: { id: string } }) {
     <div className="flex flex-row gap-3 items-center justify-center mt-2 mb-4">
       <BackLink />
       {/* {workout && <Link onClick={() => setshowDetails(!showDetails)}>{showDetails ? "Hide details" : "Show details"}</Link>} */}
-      {workout && user && <Link onClick={() => handleStartSession(user, workout, startSession, router)}>Start</Link>}
+      {workout && user && !session && <Link onClick={() => handleStartSession(user, workout, startSession, router)}>Start</Link>}
+      {workout && user && session && <Link href={`/workouts/${workout.id}/session`}>Resume</Link>}
       {workout && user && (user.uid == workout.createdBy || user.admin) && <Link style="warning" onClick={() => handleDeleteWorkout(params.id, deleteWorkout, router)}>Delete</Link>}
     </div>
   );

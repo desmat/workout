@@ -8,6 +8,7 @@ import { sampleExercises } from './samples';
 
 const exercisesKey = "exercises";
 const workoutsKey = "workouts";
+const workoutSessionKey = "workout-sessions";
 const jsonGetNotDeleted = "$[?((@.deletedAt > 0) == false)]";
 const jsonGetById = (id: string) => `$[?(@.id == '${id}')]`;
 const jsonGetByIds = (ids: string[]) => {
@@ -94,7 +95,7 @@ export async function deleteExercise(id: string): Promise<void> {
 
 
 //
-// Workout Types 
+// Workouts
 //
 
 export async function getWorkouts(): Promise<Workout[]> {
@@ -146,3 +147,69 @@ export async function deleteWorkout(id: string): Promise<void> {
   // console.log("REDIS response", response);
 }
 
+
+//
+// Workout Sessions
+//
+
+export async function getWorkoutSessions(): Promise<WorkoutSession[]> {
+  console.log('>> services.stores.redis.getSessions()');
+
+  let response = await kv.json.get(workoutSessionKey, jsonGetNotDeleted);
+  // console.log("REDIS response", JSON.stringify(response));
+
+  if (!response || !response.length) {
+    console.log('>> services.stores.redis.getSessions(): empty redis key, creating empty list');
+    await kv.json.set(workoutSessionKey, "$", "[]");
+    response = await kv.json.get(workoutSessionKey, jsonGetNotDeleted);
+  }
+
+  return response as WorkoutSession[];
+}
+
+export async function getWorkoutSession(id: string): Promise<WorkoutSession | null> {
+  console.log(`>> services.stores.redis.getSession(${id})`, { id });
+
+  const response = await kv.json.get(workoutSessionKey, jsonGetById(id));
+
+  let session: WorkoutSession | null = null;
+  if (response) {
+    session = response[0] as WorkoutSession;
+  }
+
+  return session;
+}
+
+export async function addWorkoutSession(session: WorkoutSession): Promise<WorkoutSession> {
+  console.log(">> services.stores.redis.addSession", { session });
+
+  const response = await kv.json.arrappend(workoutSessionKey, "$", session);
+  // console.log("REDIS response", response);
+
+  return new Promise((resolve) => resolve(session));
+}
+
+export async function saveWorkoutSession(session: WorkoutSession): Promise<WorkoutSession | null> {
+  console.log(">> services.stores.redis.saveWorkoutSession", { session });
+
+  if (!session.id) {
+    throw `Cannot save workout session with null id`;
+  }
+
+  const response = await kv.json.set(workoutSessionKey, jsonGetById(session.id), session);
+  console.log("REDIS response", response);
+
+  return new Promise((resolve) => resolve(session));
+}
+
+export async function deleteWorkoutSession(id: string): Promise<void> {
+  console.log(">> services.stores.redis.deleteSession", { id });
+
+  if (!id) {
+    throw `Cannot delete trivia session with null id`;
+  }
+
+  // const response = await kv.json.set(workoutSessionKey, `${jsonGetById(id)}.deletedAt`, moment().valueOf());
+  const response = await kv.json.del(workoutSessionKey, `${jsonGetById(id)}`);
+  // console.log("REDIS response", response);
+}

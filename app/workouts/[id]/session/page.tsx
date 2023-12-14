@@ -160,9 +160,10 @@ export default function Page({ params }: { params: { id: string } }) {
     deleteWorkout,
     startSession,
     sessions,
+    sessionsLoaded,
+    loadSessions,
     startSet,
     completeSession,
-    completeSet,
     stopSession,
     resumeSession,
   ] = useWorkouts((state: any) => [
@@ -172,9 +173,10 @@ export default function Page({ params }: { params: { id: string } }) {
     state.deleteWorkout,
     state.startSession,
     state.sessions,
+    state.sessionsLoaded,
+    state.loadSessions,
     state.startSet,
     state.completeSession,
-    state.completeSet,
     state.stopSession,
     state.resumeSession,
   ]);
@@ -199,6 +201,10 @@ export default function Page({ params }: { params: { id: string } }) {
   useEffect(() => {
     load(params.id);
   }, [params.id]);
+
+  useEffect(() => {
+    if (workout?.id) loadSessions(workout.id);
+  }, [workout?.id]);
 
   useEffect(() => {
     setCurrentSetDuration(0);

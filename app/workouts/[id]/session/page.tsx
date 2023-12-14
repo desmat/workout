@@ -2,8 +2,8 @@
 
 import moment from 'moment';
 import { User } from 'firebase/auth';
-import { useRouter } from 'next/navigation'
 import { useEffect, useState } from "react";
+import BackLink from '@/app/_components/BackLink';
 import Link from "@/app/_components/Link"
 import useWorkouts from "@/app/_hooks/workouts";
 import useUser from "@/app/_hooks/user";
@@ -153,7 +153,6 @@ const Timer = ({ ms }: { ms: number }) => {
 
 export default function Page({ params }: { params: { id: string } }) {
   // console.log('>> app.workout[id].Page.render()', { id: params.id });
-  const router = useRouter();
   const [
     workouts,
     loaded,
@@ -244,7 +243,7 @@ export default function Page({ params }: { params: { id: string } }) {
 
   const links = (
     <div className="flex flex-row gap-3 items-center justify-center mt-2 mb-4">
-      <Link href={`/workouts/${params.id}`}>Back</Link>
+      <BackLink />
       {/* {workout && <Link onClick={() => setshowDetails(!showDetails)}>{showDetails ? "Hide details" : "Show details"}</Link>} */}
       {workout && user && !session && <Link onClick={() => handleStartSession(user, workout, startSession)}>Start</Link>}
       {workout && user && ["stopped", "started"].includes(session?.status) && <Link onClick={() => handleCompleteSession(user, session, completeSession)}>Complete</Link>}

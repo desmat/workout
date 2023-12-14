@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from "react";
+import BackLink from '@/app/_components/BackLink';
 import Link from "@/app/_components/Link"
 import useWorkouts from "@/app/_hooks/workouts";
 import useUser from "@/app/_hooks/user";
@@ -118,7 +119,7 @@ export default function Page({ params }: { params: { id: string } }) {
 
   const links = (
     <div className="flex flex-row gap-3 items-center justify-center mt-2 mb-4">
-      <Link href="/workouts">Back</Link>
+      <BackLink />
       {/* {workout && <Link onClick={() => setshowDetails(!showDetails)}>{showDetails ? "Hide details" : "Show details"}</Link>} */}
       {workout && user && <Link onClick={() => handleStartSession(user, workout, startSession, router)}>Start</Link>}
       {workout && user && (user.uid == workout.createdBy || user.admin) && <Link style="warning" onClick={() => handleDeleteWorkout(params.id, deleteWorkout, router)}>Delete</Link>}

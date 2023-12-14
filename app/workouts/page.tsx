@@ -10,14 +10,14 @@ import useUser from '@/app/_hooks/user';
 import { Workout, WorkoutSession, WorkoutSet } from "@/types/Workout"
 import Loading from "./loading";
 import { Exercise } from '@/types/Exercise';
-import { byCreatedAt, byCreatedAtDesc } from '@/utils/sort';
+import { byCreatedAt, byCreatedAtDesc, byName } from '@/utils/sort';
 
 function WorkoutEntry({ workout, user }: any) {
   const isReady = ["created"].includes(workout.status);
   const maxSummaryItems = 3;
   const summary = workout?.exercises?.length > 0
     ? workout?.exercises?.length > maxSummaryItems
-      ? workout.exercises.slice(0, maxSummaryItems).map((exercise: Exercise) => exercise.name).join(", ") + ` and ${workout.exercises.length - maxSummaryItems} more`
+      ? workout.exercises.sort(byName).slice(0, maxSummaryItems).map((exercise: Exercise) => exercise.name).join(", ") + ` and ${workout.exercises.length - maxSummaryItems} more`
       : workout?.exercises?.map((exercise: Exercise) => exercise.name).join(", ") || ""
     : "";
   console.log('>> app.workouts.page.WorkoutEntry.render()', { workout, user, summary });

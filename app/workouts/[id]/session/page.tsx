@@ -10,7 +10,7 @@ import { User } from 'firebase/auth';
 import { Workout, WorkoutSession, WorkoutSet } from '@/types/Workout';
 import { Exercise } from '@/types/Exercise';
 import moment from 'moment';
-import { byCreatedAtDesc } from '@/utils/sort';
+import { byCreatedAtDesc, byName } from '@/utils/sort';
 
 function ExerciseEntry({ id, name, /* description,*/ showDetails }: any) {
   const [showDetail, setshowDetail] = useState(false);
@@ -118,7 +118,15 @@ async function handleStartSet(user: User, workout: Workout, session: WorkoutSess
   // }
 }
 
+const Timer = ({ ms }: { ms: number }) => {
+  const s = Math.floor(ms / 1000) % 60;
+  const m = Math.floor(ms / 1000 / 60) % 60;
+  const h = Math.floor(ms / 60 / 60 / 1000);
 
+  return (
+    <span className="font-mono">{`${(h + "").padStart(2, '0')}:${(m + "").padStart(2, '0')}:${(s + "").padStart(2, '0')}`}</span>
+  )
+}
 
 export default function Page({ params }: { params: { id: string } }) {
   // console.log('>> app.workout[id].Page.render()', { id: params.id });
@@ -234,37 +242,29 @@ export default function Page({ params }: { params: { id: string } }) {
     )
   }
 
-  const Timer = ({ t }: { t: number }) => {
-    const s = Math.floor(t / 1000) % 60;
-    const m = Math.floor(t / (60 * 1000)) % (60 * 60);
-    const h = Math.floor(t / (60 * 60 * 1000)) % (60 * 60 * 24);
-
-    return (
-      <span className="font-mono">{`${(h + "").padStart(2, '0')}:${(m + "").padStart(2, '0')}:${(s + "").padStart(2, '0')}`}</span>
-    )
-  }
-
   return (
     <main className="flex flex-col items-left lg:max-w-4xl lg:mx-auto px-4">
       <h1 className="text-center capitalize">{workout.name} Session</h1>
       {links}
       <p className='text-center'>
         <span className={`font-bold text-3xl ${sessionStarted ? "text-dark-1" : "text-dark-2"}`}>
-          <Timer t={currentSetDuration} />
+          <Timer ms={currentSetDuration} />
         </span>
       </p>
       {workout && workout.exercises && workout.exercises.length > 0 &&
         <div className="self-center flex flex-col gap-3 p-4 _-mr-8 _bg-pink-200">
           {/* <div className="md:self-center font-bold">Excercises</div> */}
           {
-            workout.exercises.map((exercise: Exercise, i: number) => {
-              return (
-                <Link key={i} style="parent" className="_bg-yellow-200" onClick={() => handleStartSet(user, workout, session, exercise, startSet)}>
-                  <span className={`text-dark-0 capitalize ${exercise.id == currentSet?.exercise?.id ? " text-dark-1 font-bold" : " text-dark-0 font-semibold"}`}>{exercise.name}</span>
-                  <Link style="child light" className="ml-2 absolute">{sessionStarted ? "Next" : "Start"}</Link>
-                </Link>
-              )
-            })
+            workout.exercises
+              .sort(byName)
+              .map((exercise: Exercise, i: number) => {
+                return (
+                  <Link key={i} style="parent" className="_bg-yellow-200" onClick={() => handleStartSet(user, workout, session, exercise, startSet)}>
+                    <span className={`text-dark-0 capitalize ${exercise.id == currentSet?.exercise?.id ? " text-dark-1 font-bold" : " text-dark-0 font-semibold"}`}>{exercise.name}</span>
+                    <Link style="child light" className="ml-2 absolute">{sessionStarted ? "Next" : "Start"}</Link>
+                  </Link>
+                )
+              })
           }
         </div>
       }
@@ -275,40 +275,40 @@ export default function Page({ params }: { params: { id: string } }) {
             session.sets
               .sort(byCreatedAtDesc)
               .map((set: WorkoutSet, i: number) => {
-              return (
-                <div className="_px-0.5" key={i}>
-                  <span className="text-dark-0 capitalize _font-semibold mr-2">{set.exercise?.name} </span>
-                  (<Timer t={set?.duration || (set?.stoppedAt || moment().valueOf()) - (set?.startedAt || 0)} />)
-                </div>
-              )
-            })
+                return (
+                  <div className="_px-0.5" key={i}>
+                    <span className="text-dark-0 capitalize _font-semibold mr-2">{set.exercise?.name} </span>
+                    (<Timer ms={set?.duration || (set?.stoppedAt || moment().valueOf()) - (set?.startedAt || 0)} />)
+                  </div>
+                )
+              })
           }
         </div>
       }
       {
-      // session &&
-      //   <div className="md:self-center flex flex-col gap-3 p-6">
-      //     <div className="md:self-center font-bold">Session details</div>
-      //     {
-      //       Object.entries(session)
-      //         .filter(([k, v]) => !["workout", "_sets"].includes(k))
-      //         .map(([k, v]: any) => {
-      //           // if (k == "sets") {
-      //           //   return (
-      //           //     <div className="_px-0.5">
-      //           //       <span className="text-dark-0 font-semibold">Sets:</span> {v.map((set: WorkoutSet) => `${set.exercise.id} (${set.status})`).join(", ")}
-      //           //       {/* <span className="text-dark-0 font-semibold">Sets:</span> {v.length} */}
-      //           //     </div>
-      //           //   )
-      //           // }
-      //           return (
-      //             <div className="_px-0.5">
-      //               <span className="text-dark-0 font-semibold">{k}:</span> {JSON.stringify(v)}
-      //             </div>
-      //           )
-      //         })
-      //     }
-      //   </div>
+        // session &&
+        //   <div className="md:self-center flex flex-col gap-3 p-6">
+        //     <div className="md:self-center font-bold">Session details</div>
+        //     {
+        //       Object.entries(session)
+        //         .filter(([k, v]) => !["workout", "_sets"].includes(k))
+        //         .map(([k, v]: any) => {
+        //           // if (k == "sets") {
+        //           //   return (
+        //           //     <div className="_px-0.5">
+        //           //       <span className="text-dark-0 font-semibold">Sets:</span> {v.map((set: WorkoutSet) => `${set.exercise.id} (${set.status})`).join(", ")}
+        //           //       {/* <span className="text-dark-0 font-semibold">Sets:</span> {v.length} */}
+        //           //     </div>
+        //           //   )
+        //           // }
+        //           return (
+        //             <div className="_px-0.5">
+        //               <span className="text-dark-0 font-semibold">{k}:</span> {JSON.stringify(v)}
+        //             </div>
+        //           )
+        //         })
+        //     }
+        //   </div>
       }
       {/* {currentSet &&
         <div className="md:self-center flex flex-col gap-3 p-6">

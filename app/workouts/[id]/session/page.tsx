@@ -257,9 +257,9 @@ export default function Page({ params }: { params: { id: string } }) {
         <div className="self-center flex flex-col gap-3 p-4 _-mr-8 _bg-pink-200">
           {/* <div className="md:self-center font-bold">Excercises</div> */}
           {
-            workout.exercises.map((exercise: Exercise) => {
+            workout.exercises.map((exercise: Exercise, i: number) => {
               return (
-                <Link style="parent" className="_bg-yellow-200" onClick={() => handleStartSet(user, workout, session, exercise, startSet)}>
+                <Link key={i} style="parent" className="_bg-yellow-200" onClick={() => handleStartSet(user, workout, session, exercise, startSet)}>
                   <span className={`text-dark-0 capitalize ${exercise.id == currentSet?.exercise?.id ? " text-dark-1 font-bold" : " text-dark-0 font-semibold"}`}>{exercise.name}</span>
                   <Link style="child light" className="ml-2 absolute">{sessionStarted ? "Next" : "Start"}</Link>
                 </Link>
@@ -274,9 +274,9 @@ export default function Page({ params }: { params: { id: string } }) {
           {
             session.sets
               .sort(byCreatedAtDesc)
-              .map((set: WorkoutSet) => {
+              .map((set: WorkoutSet, i: number) => {
               return (
-                <div className="_px-0.5">
+                <div className="_px-0.5" key={i}>
                   <span className="text-dark-0 capitalize _font-semibold mr-2">{set.exercise?.name} </span>
                   (<Timer t={set?.duration || (set?.stoppedAt || moment().valueOf()) - (set?.startedAt || 0)} />)
                 </div>

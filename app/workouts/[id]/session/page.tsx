@@ -303,7 +303,7 @@ export default function Page({ params }: { params: { id: string } }) {
         <>
           <div className={`self-center _font-semibold pt-4 transition-all${!session || session.status == "created" ? " animate-pulse" : ""}`}>{
             ["stopped", "started"].includes(session?.status)
-              ? "Next up:"
+              ? "Next set:"
               : session?.status == "completed"
                 ? "Resume with:"
                 : "Start with:"

@@ -138,7 +138,7 @@ export default function Page({ params }: { params: { id: string } }) {
     <main className="flex flex-col items-left lg:max-w-4xl lg:mx-auto px-4">
       <h1 className="text-center capitalize">{workout.name}</h1>
       <p className='italic text-center'>
-        (summary here)
+        Press Start to begin a workout
       </p>
       {links}
       {workout && workout.exercises && (workout.exercises.length as number) > 0 &&

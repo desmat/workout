@@ -273,7 +273,7 @@ export default function Page({ params }: { params: { id: string } }) {
       {links}
       <p className='text-center'>
         <span
-          className={`font-bold text-3xl transition-all${sessionStarted ? " text-dark-1" : " text-dark-2"}${["stopped", "started"].includes(session?.status) ? " cursor-pointer" : ""}${session?.status == "stopped" ? " animate-pulse" : ""}`}
+          className={`font-bold text-4xl transition-all${sessionStarted ? " text-dark-1" : " text-dark-2"}${["stopped", "started"].includes(session?.status) ? " cursor-pointer" : ""}${session?.status == "stopped" ? " animate-pulse" : ""}`}
           title={
             session?.status == "stopped"
               ? "Resume"
@@ -295,25 +295,34 @@ export default function Page({ params }: { params: { id: string } }) {
         </span>
       </p>
       {workout && workout.exercises && workout.exercises.length > 0 &&
-        <div className="self-center flex flex-col gap-3 p-4 _-mr-8 _bg-pink-200">
-          {/* <div className="md:self-center font-bold">Excercises</div> */}
-          {
-            workout.exercises
-              .sort(byName)
-              .map((exercise: Exercise, i: number) => {
-                return (
-                  <Link key={i} style="parent" className="_bg-yellow-200" onClick={() => handleStartSet(user, workout, session, exercise, startSet)}>
-                    <span className={`text-dark-0 capitalize ${exercise.id == currentSet?.exercise?.id ? " text-dark-1 font-bold" : " text-dark-0 font-semibold"}`}>{exercise.name}</span>
-                    <Link style="child light" className="ml-2 absolute">{sessionStarted ? "Next" : "Start"}</Link>
-                  </Link>
-                )
-              })
+        <>
+          <div className={`self-center _font-semibold pt-4 transition-all${session?.status == "created" ? " animate-pulse" : ""}`}>{
+            ["stopped", "started"].includes(session?.status)
+              ? "Next up:"
+              : session?.status == "completed"
+                ? "Resume with:"
+                : "Start with:"
           }
-        </div>
+          </div>
+          <div className="self-center flex flex-col gap-2 p-2 _-mr-8 _bg-pink-200">
+            {
+              workout.exercises
+                .sort(byName)
+                .map((exercise: Exercise, i: number) => {
+                  return (
+                    <Link key={i} style="parent" className="_bg-yellow-200" onClick={() => handleStartSet(user, workout, session, exercise, startSet)}>
+                      <span className={`text-dark-0 capitalize ${exercise.id == currentSet?.exercise?.id ? " text-dark-1 font-bold" : " text-dark-0 font-semibold"}`}>{exercise.name}</span>
+                      <Link style="child light" className="ml-2 absolute">{sessionStarted ? "Next" : "Start"}</Link>
+                    </Link>
+                  )
+                })
+            }
+          </div>
+        </>
       }
       {session && session.sets && session.sets.length > 0 &&
         <div className="self-center flex flex-col gap-1 p-4">
-          <div className="self-center font-bold">Previous sets</div>
+          <div className="self-center _font-bold">Previous sets:</div>
           {
             session.sets
               .sort(byCreatedAtDesc)
@@ -321,7 +330,7 @@ export default function Page({ params }: { params: { id: string } }) {
                 return (
                   <div className="_px-0.5" key={i}>
                     <span className="text-dark-0 capitalize _font-semibold mr-2">{set.exercise?.name} </span>
-                    (<Timer 
+                    (<Timer
                       ms={
                         set.status == "started"
                           ? (set?.duration || 0) + moment().valueOf() - (set?.startedAt || 0)

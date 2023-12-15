@@ -9,8 +9,8 @@ import User from '@/app/_components/User'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Pubspace',
-  description: 'Billboard, calendar, games and other things for coffee shops/bars/public houses/etc',
+  title: 'Workout',
+  description: 'AI-powered workout app',
 }
 
 export default function RootLayout({

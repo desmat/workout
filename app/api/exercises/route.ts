@@ -13,6 +13,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  console.log('>> app.api.exercises.POST');
+
   const { user } = await validateUserSession(request);
   if (!user) {
     return NextResponse.json(

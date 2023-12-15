@@ -59,7 +59,7 @@ export async function getWorkouts(user?: User): Promise<Workout[]> {
         .flat()))
   const allExercises = new Map((await getExercises({ ids: exerciseIds })).map((exercise: Exercise) => [exercise.id, exercise]));
 
-  console.log(`>> services.workout.getWorkouts`, { exerciseIds, allExercises });
+  // console.log(`>> services.workout.getWorkouts`, { exerciseIds, allExercises });
 
   // const workoutDetails = Promise.all(
   //   workouts.map(async (workout: Workout) => {

@@ -8,6 +8,7 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
   exercises: [],
   deletedExercises: [], // to smooth out visual glitches when deleting
   loaded: false,
+  error: "",
 
   load: async (id?: string) => {
     console.log(">> hooks.exercise.load", { id });
@@ -69,7 +70,7 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
       if (res.status != 200) {
         console.error(`Error adding exercise: ${res.status} (${res.statusText})`);
         const exercises = get().exercises.filter((exercise: Exercise) => exercise.id != tempId);        
-        set({ exercises });
+        set({ exercises, error: `Error adding exercise: ${res.status} (${res.statusText})` });
         return;
       }
 

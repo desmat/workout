@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect } from "react";
 import FilterButton from '@/app/_components/FilterButton';
 import Link from "@/app/_components/Link"
+import useAlert from '../_hooks/alert';
 import useExercises from '@/app/_hooks/exercises';
 import useUser from '@/app/_hooks/user';
 import { Exercise, ExerciseItem, SuggestedExerciseTypes } from "@/types/Exercise"
@@ -48,7 +49,7 @@ async function handleCreateExercise(createExercise: any, router: any, user: User
   //   ? `${user.displayName.split(/\s+/)[0]}'s`
   //   : "A";
 
-  const name = window.prompt("Name?", "");
+  const name = window.prompt("Name?", "Foo bar");
 
   if (name) {
     const id = await createExercise(user, name);
@@ -66,7 +67,8 @@ async function handleCreateExercise(createExercise: any, router: any, user: User
 export default function Page() {
   const router = useRouter();
   const [user] = useUser((state: any) => [state.user]);
-  const [exercises, loaded, load, createExercise] = useExercises((state: any) => [state.exercises, state.loaded, state.load, state.createExercise]);
+  const [exercises, loaded, load, createExercise, error] = useExercises((state: any) => [state.exercises, state.loaded, state.load, state.createExercise, state.error]);
+  const [alertError] = useAlert((state: any) => [state.error]);
   const params = useSearchParams();
   const uidFilter = params.get("uid");
   const filteredExercises = uidFilter ? exercises.filter((exercise: Exercise) => exercise.createdBy == uidFilter) : exercises;
@@ -77,10 +79,19 @@ export default function Page() {
     load();
   }, []);
 
+  useEffect(() => {
+    if (error) {
+      alertError(error);
+    }
+  }, [error]);
+
   const links = (
     <div className="flex flex-row gap-3 items-center justify-center mt-2 mb-4">
       <div title={user ? "" : "Login to create new exercise"}>
-        <Link className={user ? "" : "cursor-not-allowed"} onClick={() => /* user && */ handleCreateExercise(createExercise, router, user)}>
+        <Link
+          className={user ? "" : "cursor-not-allowed"}
+          onClick={() => /* user && */ handleCreateExercise(createExercise, router, user)}
+        >
           Create New Exercise
         </Link>
       </div>

@@ -7,11 +7,13 @@ import useAlert from '../_hooks/alert';
 
 const WIDTH = "700px";
 
-function _Error({
+function Alert({
   message,
+  // type,
   timestamp,
 }: {
-  message: string
+  message: string,
+  // type: string,
   timestamp: number
 }) {
   const [dismissedAt, setDismissedAt] = useState<number|undefined>();
@@ -70,7 +72,7 @@ export function Error({
 
   if (message || _message && type == "error") {
     return (
-      <_Error message={message || _message} timestamp={moment().valueOf()} />
+      <Alert message={message || _message} timestamp={moment().valueOf()} />
     )
   }
 

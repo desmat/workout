@@ -17,6 +17,8 @@ function Alert({
   timestamp: number
 }) {
   const [dismissedAt, setDismissedAt] = useState<number|undefined>();
+  const [setError] = useAlert((state: any) => [state.error]);
+  // const [lastMessage, setLastMessage] = useState<string|undefined>(message);
 
   console.log('>> app._components.Alert._Error.render()', { message, timestamp });
 
@@ -24,12 +26,22 @@ function Alert({
     console.log('>> app._components.Alert._Error.render() useEffect', { message, timestamp });
     
     // make the thing pulse a bit when same message but was not dismissed
-    setDismissedAt(moment().valueOf());
-    setTimeout(() => setDismissedAt(undefined), 50);
+    if (message && !dismissedAt) {
+      setDismissedAt(moment().valueOf());
+      // setError(undefined);
+      setTimeout(() => {
+        setDismissedAt(undefined)
+        // setError(_message);
+      }, 100);
+    }
+ 
+    // setLastMessage(message);
   }, [message, timestamp]);
 
   const handleClose = () => {
-    setDismissedAt(timestamp);
+    setDismissedAt(timestamp); 
+    // setLastMessage(undefined); 
+    setError(undefined);
   }
 
   return (

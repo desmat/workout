@@ -182,7 +182,7 @@ export default function Page({ params }: { params: { id: string } }) {
   ]);
   const [user] = useUser((state: any) => [state.user]);
   const workout = workouts && workouts.filter((workout: any) => workout.id == params.id)[0];
-  const filteredSessions = sessions && workout && sessions.filter((session: WorkoutSession) => session.workout.id == workout.id);
+  const filteredSessions = sessions && workout && sessions.filter((session: WorkoutSession) => session?.workout?.id == workout.id);
   const session = filteredSessions && filteredSessions[filteredSessions.length - 1];
   const sessionStarted = session?.status == "started";
   const currentSet = session && sessionStarted && session.sets && session.sets.sort(byCreatedAtDesc)[0];

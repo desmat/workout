@@ -2,6 +2,7 @@ import './globals.css'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/react';
+import { Error } from '@/app/_components/Alert';
 import Auth from '@/app/_components/Auth'
 import Nav from '@/app/_components/Nav'
 import User from '@/app/_components/User'
@@ -31,6 +32,7 @@ export default function RootLayout({
       <Auth />
       <User />
       <Analytics />
+      <Error />
     </html>
   )
 }

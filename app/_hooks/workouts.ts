@@ -5,6 +5,7 @@ import { devtools } from 'zustand/middleware'
 import { Workout, WorkoutSession, WorkoutSet } from '@/types/Workout';
 import { Exercise } from '@/types/Exercise';
 import { byCreatedAtDesc } from '@/utils/sort';
+import useAlert from "./alert";
 
 const stopSet = (session: WorkoutSession, status = "stopped") => {
   const sets = session.sets && session.sets.filter((set: WorkoutSet) => set.status == "started");
@@ -40,12 +41,11 @@ const fetchSession = (putOrPost: "PUT" | "POST", get: any, set: any, newSession:
     body: JSON.stringify(newSession),
   }).then(async (res) => {
     if (res.status != 200) {
-      console.error(`Error creating workout session set: ${res.status} (${res.statusText})`);
+      useAlert.getState().error(`Error ${putOrPost == "PUT" ? "saving" : "creating"} workout session set: ${res.status} (${res.statusText})`);        
 
       // revert optimistic 
-      const filteredSessions = sessions.filter((session: WorkoutSession) => session.id != sessionId);
-      set({ sessions: [...filteredSessions, session] });
-
+      const filteredSessions = sessions.filter((session: WorkoutSession) => session?.id != sessionId);
+      set({ sessions: [...filteredSessions, session] });      
       return;
     }
 
@@ -71,7 +71,7 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
     if (id) {
       fetch(`/api/workouts/${id}`).then(async (res) => {
         if (res.status != 200) {
-          console.error(`Error fetching workout ${id}: ${res.status} (${res.statusText})`);
+          useAlert.getState().error(`Error fetching workout ${id}: ${res.status} (${res.statusText})`);
           set({ loaded: true });
           return;
         }
@@ -85,7 +85,7 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
     } else {
       fetch('/api/workouts').then(async (res) => {
         if (res.status != 200) {
-          console.error(`Error fetching workouts: ${res.status} (${res.statusText})`);
+          useAlert.getState().error(`Error fetching workouts: ${res.status} (${res.statusText})`);
           return;
         }
 
@@ -110,7 +110,7 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
     if (sessionId) {
       fetch(`/api/workouts/${workoutId}/sessions/${sessionId}`).then(async (res) => {
         if (res.status != 200) {
-          console.error(`Error fetching workout session ${sessionId}: ${res.status} (${res.statusText})`);
+          useAlert.getState().error(`Error fetching workout session ${sessionId}: ${res.status} (${res.statusText})`);
           set({ loaded: true });
           return;
         }
@@ -124,7 +124,7 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
     } else {
       fetch(`/api/workouts/${workoutId}/sessions`).then(async (res) => {
         if (res.status != 200) {
-          console.error(`Error fetching workout sessions: ${res.status} (${res.statusText})`);
+          useAlert.getState().error(`Error fetching workout sessions: ${res.status} (${res.statusText})`);
           return;
         }
 
@@ -156,7 +156,7 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
       body: JSON.stringify({ name, exercises }),
     }).then(async (res) => {
       if (res.status != 200) {
-        console.error(`Error adding workout: ${res.status} (${res.statusText})`);
+        useAlert.getState().error(`Error adding workout: ${res.status} (${res.statusText})`);
         const workouts = get().workouts.filter((workout: Workout) => workout.id != tempId);
         set({ workouts });
         return;
@@ -189,7 +189,7 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
       method: "DELETE",
     }).then(async (res) => {
       if (res.status != 200) {
-        console.error(`Error deleting workouts ${id}: ${res.status} (${res.statusText})`);
+        useAlert.getState().error(`Error deleting workouts ${id}: ${res.status} (${res.statusText})`);
         set({ workouts, deletedWorkouts });
         return;
       }
@@ -313,7 +313,7 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
     }
 
     const { sessions } = get();
-    let session = sessions.filter((session: WorkoutSession) => session.id == sessionId)[0]
+    let session = sessions.filter((session: WorkoutSession) => session?.id == sessionId)[0]
 
     if (!session) {
       throw `Workout Session not found: ${sessionId}`;

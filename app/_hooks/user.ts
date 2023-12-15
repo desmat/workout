@@ -3,6 +3,7 @@ import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import { init as doInit, logout as doLogout, signin as doSignin, signInAnonymously as doSignInAnonymously } from "@/services/auth";
 import { SigninMethod } from "@/types/SigninMethod";
+import useAlert from "./alert";
 
 const useUser: any = create(devtools((set: any, get: any) => ({
   user: undefined,
@@ -47,9 +48,23 @@ const useUser: any = create(devtools((set: any, get: any) => ({
         if (!loaded && !loading) {
           set({ loaded: false, loading: true });
           console.log('>> hooks.User.useUser.onAuthStateChanged doSignInAnonymously', { loading, loaded });
-          doSignInAnonymously().then(() => {
-            console.log('>> hooks.User.useUser.onAuthStateChanged doSignInAnonymously completed', { loading, loaded });
-            // set({ loading: false });
+          doSignInAnonymously().then(async (auth: any) => {
+            const user = auth.user;
+            const authToken = await user.getIdToken();
+            console.log('>> hooks.User.useUser.onAuthStateChanged doSignInAnonymously completed', { loading, loaded, user, authToken });
+
+            // fetch('/api/user', {
+            //   method: "POST",
+            //   body: JSON.stringify({ uid: user.uid }),
+            //   headers: {
+            //     Authorization: `Bearer ${authToken}`,
+            //   },
+            // }).then(async (response: any) => {
+            //   const updatedUser = await response.json();
+            //   console.log('>> hooks.User.useUser.onAuthStateChanged doSignInAnonymously fetch user completed', { updatedUser });
+            //   set({ user: { ...user, admin: updatedUser.customClaims?.admin }, loaded: true, loading: false });              
+            // });
+            set({ loading: false });
           });
         }
       }
@@ -95,7 +110,7 @@ const useUser: any = create(devtools((set: any, get: any) => ({
             resolve(user);
           });
         }).catch((error) => {
-          console.warn('>> hooks.User.signin', { error });
+          useAlert.getState().error(`Error signing in: ${error}`);
           set({ /* user: undefined, */ loaded: true, loading: false, fetching: false });
           reject(error);
         });
@@ -118,7 +133,7 @@ const useUser: any = create(devtools((set: any, get: any) => ({
             console.log(">> hooks.User.logout success");
             resolve(true);
           }).catch((error) => {
-            console.warn(">> hooks.User.logout error", { error })
+            useAlert.getState().error(`Error logging out: ${error}`);
             reject(error);
           })
         });

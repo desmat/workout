@@ -106,7 +106,7 @@ export default function Page({ params }: { params: { id: string } }) {
   const [workouts, loaded, load, deleteWorkout, startSession, sessions, sessionsLoaded, loadSessions] = useWorkouts((state: any) => [state.workouts, state.loaded, state.load, state.deleteWorkout, state.startSession, state.sessions, state.sessionsLoaded, state.loadSessions]);
   const [user] = useUser((state: any) => [state.user]);
   const workout = workouts.filter((workout: any) => workout.id == params.id)[0];
-  const filteredSessions = sessions && workout && sessions.filter((session: WorkoutSession) => session.workout.id == workout.id && session.status != "completed");
+  const filteredSessions = workout && sessions && sessions.filter((session: WorkoutSession) => session?.workout?.id == workout.id && session.status != "completed");
   const session = filteredSessions && filteredSessions.length > 0 && filteredSessions[filteredSessions.length - 1];
 
   console.log('>> app.workouts[id].page.render()', { id: params.id, workout });

@@ -2,13 +2,13 @@ import { MetadataRoute } from 'next'
  
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'PubSpace: The app for public spaces',
-    short_name: 'PubSpace',
-    description: 'PubSpace: The app for public spaces',
+    name: 'Workout: AI-powered workout app',
+    short_name: 'Workout',
+    description: 'Workout: AI-powered workout app',
     start_url: '/',
     display: 'standalone',
     background_color: '#d6dbdc',
-    theme_color: '#2a9d8f',
+    theme_color: '#7b90aa',
     icons: [
       {
         src: 'favicon.ico',

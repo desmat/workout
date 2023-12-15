@@ -283,7 +283,7 @@ export default function Page({ params }: { params: { id: string } }) {
       {links}
       <p className='text-center'>
         <span
-          className={`font-bold text-4xl text-dark-1 transition-all${["stopped", "started"].includes(session?.status) ? " cursor-pointer" : ""}${session?.status == "stopped" ? " animate-pulse" : ""}`}
+          className={`font-bold text-6xl text-dark-1 transition-all${["stopped", "started"].includes(session?.status) ? " cursor-pointer" : ""}${session?.status == "stopped" ? " animate-pulse" : ""}`}
           title={
             session?.status == "stopped"
               ? "Resume"
@@ -320,8 +320,8 @@ export default function Page({ params }: { params: { id: string } }) {
                 .sort(byName)
                 .map((exercise: Exercise, i: number) => {
                   return (
-                    <Link key={i} style="primary" className=" _bg-yellow-200 mx-auto text-xl" onClick={() => handleStartSet(user, workout, session, exercise, startSet, startSession)}>
-                      <span className={`_text-dark-0 capitalize ${exercise.id == currentSet?.exercise?.id ? " _text-dark-1 font-bold" : " _text-dark-0 font-semibold"}`}>{exercise.id == currentSet?.exercise?.id ? `>> ${exercise.name} <<` : exercise.name}</span>
+                    <Link key={i} style="primary" className="_bg-yellow-200 mx-auto text-2xl" onClick={() => handleStartSet(user, workout, session, exercise, startSet, startSession)}>
+                      <span className={`_text-dark-1 capitalize ${exercise.id == currentSet?.exercise?.id ? " text-dark-1 font-bold" : " font-semibold"}`}>{exercise.id == currentSet?.exercise?.id ? `>> ${exercise.name} <<` : exercise.name}</span>
                       {/* <Link style="child light" className="ml-2 absolute">{sessionStarted ? "Next" : "Start"}</Link> */}
                     </Link>
                   )

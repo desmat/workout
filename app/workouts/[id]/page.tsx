@@ -31,9 +31,9 @@ function ExerciseEntry({ id, name, /* description,*/ showDetails }: any) {
   }, [showDetails]);
 
   return (
-    <p className="text-left flex flex-col gap-2 pb-2" >
+    <p className="text-center flex flex-col gap-2 pb-2 mx-auto" >
       {/* <Link style="parent" onClick={() => !showDetails && setshowDetail(!showDetail)}> */}
-      <Link style="parent" href={`/exercises/${id}`}>
+      <Link style="parent" className=" _bg-yellow-200" href={`/exercises/${id}`}>
         <div className="">
           <span className="capitalize font-semibold">{name}</span>{description ? `: ${description}` : ""}
           {/* {details && !showDetails &&

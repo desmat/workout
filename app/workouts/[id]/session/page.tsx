@@ -305,41 +305,41 @@ export default function Page({ params }: { params: { id: string } }) {
         </span>
       </p>
       {workout && workout.exercises && workout.exercises.length > 0 &&
-        <>
-          <div className={`self-center _font-semibold pt-4 transition-all${!session || session.status == "created" ? " animate-pulse" : ""}`}>{
+        <div className="pt-2">
+          {/* <div className={`self-center _font-semibold pt-4 transition-all${!session || session.status == "created" ? " animate-pulse" : ""}`}>{
             ["stopped", "started"].includes(session?.status)
-              ? "Next set:"
+              ? "Next set"
               : session?.status == "completed"
-                ? "Resume with:"
-                : "Start with:"
+                ? "Resume with"
+                : "Start with"
           }
-          </div>
+          </div> */}
           <div className="self-center flex flex-col gap-2 p-2 _-mr-8 _bg-pink-200">
             {
               workout.exercises
                 .sort(byName)
                 .map((exercise: Exercise, i: number) => {
                   return (
-                    <Link key={i} style="parent" className="_bg-yellow-200" onClick={() => handleStartSet(user, workout, session, exercise, startSet, startSession)}>
-                      <span className={`text-dark-0 capitalize ${exercise.id == currentSet?.exercise?.id ? " text-dark-1 font-bold" : " text-dark-0 font-semibold"}`}>{exercise.name}</span>
-                      <Link style="child light" className="ml-2 absolute">{sessionStarted ? "Next" : "Start"}</Link>
+                    <Link key={i} style="primary" className=" _bg-yellow-200 mx-auto text-xl" onClick={() => handleStartSet(user, workout, session, exercise, startSet, startSession)}>
+                      <span className={`_text-dark-0 capitalize ${exercise.id == currentSet?.exercise?.id ? " _text-dark-1 font-bold" : " _text-dark-0 font-semibold"}`}>{exercise.id == currentSet?.exercise?.id ? `>> ${exercise.name} <<` : exercise.name}</span>
+                      {/* <Link style="child light" className="ml-2 absolute">{sessionStarted ? "Next" : "Start"}</Link> */}
                     </Link>
                   )
                 })
             }
           </div>
-        </>
+        </div>
       }
       {session && session.sets && session.sets.length > 0 &&
         <div className="self-center flex flex-col gap-1 p-4">
-          <div className="self-center _font-bold">Previous sets:</div>
+          <div className="self-center _font-bold">Previous sets</div>
           {
             session.sets
               .sort(byCreatedAtDesc)
               .map((set: WorkoutSet, i: number) => {
                 return (
-                  <div className="_px-0.5" key={i}>
-                    <span className="text-dark-0 capitalize _font-semibold mr-2">{set.exercise?.name} </span>
+                  <div className="flex flex-row _bg-pink-300" key={i}>
+                    <div className="flex flex-row flex-grow _bg-yellow-100 text-dark-0 capitalize _font-semibold mr-2">{set.exercise?.name} </div>
                     (<Timer
                       ms={
                         set.status == "started"

@@ -7,9 +7,19 @@ import useUser from "@/app/_hooks/user";
 import { SigninMethod } from "@/types/SigninMethod";
 import useAlert from "@/app/_hooks/alert";
 
-function doLogin(e: any, signinFn: any, form: any, router: any) {
+function doLogin(e: any, signinFn: any, form: any, router: any, alertFn: any) {
   console.log("** app.profile.auth.page.doLogin");
   e.preventDefault();
+
+  const validationError = 
+    !form.email ? `Email must not be empty` :
+    !form.password ? `Password must not be empty` :
+    undefined;
+
+  if (validationError) {
+    alertFn(`Validation error: ${validationError}`);
+    return;
+  }  
 
   signinFn("login-email", form).then(() => {
     router.push("/profile");
@@ -86,7 +96,7 @@ export default function Page() {
         <div className="text-dark-2">
           <Link
             href="/"
-            onClick={(e) => method == "login-email" ? doLogin(e, signin, form, router) : method == "signup-email" ? doSignup(e, signin, form, router, alertError) : console.error("Unknown signing method", method)}
+            onClick={(e) => method == "login-email" ? doLogin(e, signin, form, router, alertError) : method == "signup-email" ? doSignup(e, signin, form, router, alertError) : console.error("Unknown signing method", method)}
           >
             {method == "login-email" ? "Login" : method == "signup-email" ? "Signup" : "(unknown method)"}
           </Link>

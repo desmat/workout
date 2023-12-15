@@ -10,7 +10,7 @@ export default function Page() {
   console.log('>> app.page.render()');
 
   return (
-    <main className="flex flex-col items-left md:items-center lg:max-w-4xl lg:mx-auto px-4">
+    <main className="flex flex-col items-center lg:max-w-4xl lg:mx-auto px-4">
       <h1 className="text-center">AI-powered app for workouts</h1>
       <div className="lg:self-center flex flex-col gap-4">
         <p>Let AI generate for you the perfect workouts!</p>

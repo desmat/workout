@@ -1,21 +1,14 @@
 'use client'
 
+import { User } from 'firebase/auth';
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from "react";
+import BackLink from '@/app/_components/BackLink';
 import Link from "@/app/_components/Link"
 import useWorkouts from "@/app/_hooks/workouts";
 import useUser from "@/app/_hooks/user";
 import Loading from "./loading";
-
-function stripIngredientQuantity(ingredient: string) {
-  const regex = /^(?:\w+\s+of\s+)?(?:\d+\s*\w+\s+of\s+)?(?:\d+\s*\w+\s+)?(?:\d+\s+)?(.+)$/i;
-  const match = ingredient.match(regex);
-  if (match && match.length > 1) {
-    return match[1];
-  }
-
-  return ingredient;
-}
+import { Workout, WorkoutSession } from '@/types/Workout';
 
 function ExerciseEntry({ id, name, /* description,*/ showDetails }: any) {
   const [showDetail, setshowDetail] = useState(false);
@@ -38,9 +31,9 @@ function ExerciseEntry({ id, name, /* description,*/ showDetails }: any) {
   }, [showDetails]);
 
   return (
-    <p className="text-left flex flex-col gap-2 pb-6" >
+    <p className="text-center flex flex-col gap-2 pb-2 mx-auto" >
       {/* <Link style="parent" onClick={() => !showDetails && setshowDetail(!showDetail)}> */}
-      <Link style="parent" href={`/exercises/${id}`}>
+      <Link style="parent" className=" _bg-yellow-200" href={`/exercises/${id}`}>
         <div className="">
           <span className="capitalize font-semibold">{name}</span>{description ? `: ${description}` : ""}
           {/* {details && !showDetails &&
@@ -48,7 +41,7 @@ function ExerciseEntry({ id, name, /* description,*/ showDetails }: any) {
               <Link style="child light" className="ml-2">{showDetail ? "Hide details" : "Show details"}</Link>
             </>
           } */}
-          <Link style="child light" className="ml-2">View</Link>
+          <Link style="child light" className="ml-2 absolute">View</Link>
         </div>
         {summary && !showDetail && !showDetails &&
           <div className="capitalize italic text-dark-3 -mt-1">{summary}</div>
@@ -95,13 +88,26 @@ async function handleDeleteWorkout(id: string, deleteFn: any, router: any) {
   }
 }
 
+async function handleStartSession(user: User, workout: Workout, startFn: any, router: any) {
+  console.log('>> app.workout[id].Page.render()', { user, workout });
+
+  const session = startFn(user, workout.id);
+  if (session) {
+    router.push(`/workouts/${workout.id}/session`);
+  }
+}
+
+
+
 export default function Page({ params }: { params: { id: string } }) {
-  // console.log('>> app.trivia[id].Page.render()', { id: params.id });
+  // console.log('>> app.workout[id].Page.render()', { id: params.id });
   const router = useRouter();
   const [showDetails, setshowDetails] = useState(false);
-  const [workouts, loaded, load, deleteWorkout] = useWorkouts((state: any) => [state.workouts, state.loaded, state.load, state.deleteWorkout]);
+  const [workouts, loaded, load, deleteWorkout, startSession, sessions, sessionsLoaded, loadSessions] = useWorkouts((state: any) => [state.workouts, state.loaded, state.load, state.deleteWorkout, state.startSession, state.sessions, state.sessionsLoaded, state.loadSessions]);
   const [user] = useUser((state: any) => [state.user]);
   const workout = workouts.filter((workout: any) => workout.id == params.id)[0];
+  const filteredSessions = sessions && workout && sessions.filter((session: WorkoutSession) => session.workout.id == workout.id && session.status != "completed");
+  const session = filteredSessions && filteredSessions.length > 0 && filteredSessions[filteredSessions.length - 1];
 
   console.log('>> app.workouts[id].page.render()', { id: params.id, workout });
 
@@ -109,15 +115,20 @@ export default function Page({ params }: { params: { id: string } }) {
     load(params.id);
   }, [params.id]);
 
+  useEffect(() => {
+    if (workout?.id) loadSessions(workout.id);
+  }, [workout?.id]);
+
   if (!loaded) {
     return <Loading />
   }
 
   const links = (
-    <div className="flex flex-col md:flex-row md:gap-3 items-center justify-center mt-2 mb-4">
-      <Link href="/workouts">Back</Link>
+    <div className="flex flex-row gap-3 items-center justify-center mt-2 mb-4">
+      <BackLink />
       {/* {workout && <Link onClick={() => setshowDetails(!showDetails)}>{showDetails ? "Hide details" : "Show details"}</Link>} */}
-      {/* {game && <Link onClick={() => handlePlayGame(params.id, startGame, router)}>Play</Link>} */}
+      {workout && user && !session && <Link onClick={() => handleStartSession(user, workout, startSession, router)}>Start</Link>}
+      {workout && user && session && <Link href={`/workouts/${workout.id}/session`}>Resume</Link>}
       {workout && user && (user.uid == workout.createdBy || user.admin) && <Link style="warning" onClick={() => handleDeleteWorkout(params.id, deleteWorkout, router)}>Delete</Link>}
     </div>
   );
@@ -135,15 +146,15 @@ export default function Page({ params }: { params: { id: string } }) {
     <main className="flex flex-col items-left lg:max-w-4xl lg:mx-auto px-4">
       <h1 className="text-center capitalize">{workout.name}</h1>
       <p className='italic text-center'>
-        (summary here)
+        Press Start to begin a workout
       </p>
       {links}
       {workout && workout.exercises && (workout.exercises.length as number) > 0 &&
-        <div className="md:self-center">
+        <div className="self-center">
           <WorkoutDetails {...{ ...workout, showDetails }} />
         </div>
       }
-      {workout && workout.items > 4 && links}
+      {workout && workout?.exercises.length > 4 && links}
     </main>
   )
 }

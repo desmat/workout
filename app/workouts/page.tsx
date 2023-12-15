@@ -10,14 +10,14 @@ import useUser from '@/app/_hooks/user';
 import { Workout, WorkoutSession, WorkoutSet } from "@/types/Workout"
 import Loading from "./loading";
 import { Exercise } from '@/types/Exercise';
-import { byCreatedAt, byCreatedAtDesc } from '@/utils/sort';
+import { byCreatedAt, byCreatedAtDesc, byName } from '@/utils/sort';
 
 function WorkoutEntry({ workout, user }: any) {
   const isReady = ["created"].includes(workout.status);
   const maxSummaryItems = 3;
   const summary = workout?.exercises?.length > 0
     ? workout?.exercises?.length > maxSummaryItems
-      ? workout.exercises.slice(0, maxSummaryItems).map((exercise: Exercise) => exercise.name).join(", ") + ` and ${workout.exercises.length - maxSummaryItems} more`
+      ? workout.exercises.sort(byName).slice(0, maxSummaryItems).map((exercise: Exercise) => exercise.name).join(", ") + ` and ${workout.exercises.length - maxSummaryItems} more`
       : workout?.exercises?.map((exercise: Exercise) => exercise.name).join(", ") || ""
     : "";
   console.log('>> app.workouts.page.WorkoutEntry.render()', { workout, user, summary });
@@ -29,7 +29,7 @@ function WorkoutEntry({ workout, user }: any) {
         {isReady &&
           <>
             <span className="capitalize">{` (${summary})`}</span>
-            <Link style="child light" className="ml-2">View</Link>
+            <Link style="child light" className="ml-2 absolute">View</Link>
           </>
         }
         {!isReady &&
@@ -81,7 +81,7 @@ export default function Page() {
   }, []);
 
   const links = (
-    <div className="flex flex-col md:flex-row md:gap-3 items-center justify-center mt-2 mb-4">
+    <div className="flex flex-row gap-3 items-center justify-center mt-2 mb-4">
       <div title={user ? "" : "Login to create new workout"}>
         <Link className={user ? "" : "cursor-not-allowed"} onClick={() => /* user && */ handleCreateWorkout(createWorkout, router, user)}>
           Create New Workout
@@ -110,7 +110,7 @@ export default function Page() {
         </p> */}
         {links}
         {filteredWorkouts && filteredWorkouts.length > 0 &&
-          <div className="md:self-center flex flex-col gap-3">
+          <div className="self-center flex flex-col gap-3">
             {
               filteredWorkouts
                 // .filter(...)

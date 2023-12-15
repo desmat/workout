@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from "react";
+import BackLink from '@/app/_components/BackLink';
 import Link from "@/app/_components/Link"
 import useExercises from "@/app/_hooks/exercises";
 import useUser from "@/app/_hooks/user";
@@ -117,8 +118,8 @@ export default function Page({ params }: { params: { id: string } }) {
   }
 
   const links = (
-    <div className="flex flex-col md:flex-row md:gap-3 items-center justify-center mt-2 mb-4">
-      <Link href="/exercises">Back</Link>
+    <div className="flex flex-row gap-3 items-center justify-center mt-2 mb-4">
+      <BackLink />
       {/* {exercise && <Link onClick={() => setshowDetails(!showDetails)}>{showDetails ? "Hide details" : "Show details"}</Link>} */}
       {/* {game && <Link onClick={() => handlePlayGame(params.id, startGame, router)}>Play</Link>} */}
       {exercise && user && (user.uid == exercise.createdBy || user.admin) && <Link style="warning" onClick={() => handleDeleteExercise(params.id, deleteExercise, router)}>Delete</Link>}
@@ -142,7 +143,7 @@ export default function Page({ params }: { params: { id: string } }) {
       </p>
       {links}
       {exercise && exercise.items && (exercise.items.length as number) > 0 &&
-        <div className="md:self-center">
+        <div className="self-center">
           <Exercise {...{ ...exercise, showDetails }} />
         </div>
       }

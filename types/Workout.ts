@@ -16,7 +16,6 @@ export type WorkoutSession = {
   createdBy?: string,
   createdAt?: number,
   deletedAt?: number,
-  prompt?: string,
   status?: string,
   workout: Workout
   sets: WorkoutSet[],
@@ -24,7 +23,12 @@ export type WorkoutSession = {
 
 export type WorkoutSet = {
   id?: string,
-  exercise: Exercise,
+  createdBy?: string,
+  createdAt?: number,
+  startedAt?: number,
+  stoppedAt?: number,
+  status?: string,
   duration?: number,
   reps?: number,
+  exercise: Exercise,
 }

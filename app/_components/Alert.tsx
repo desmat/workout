@@ -1,52 +1,26 @@
 'use client'
 
-import { CheckCircleIcon, XMarkIcon } from '@heroicons/react/20/solid'
 import moment from 'moment';
 import { useEffect, useState } from 'react';
+import { CheckCircleIcon, XMarkIcon } from '@heroicons/react/20/solid'
 import useAlert from '../_hooks/alert';
 
 const WIDTH = "700px";
 
 function Alert({
   message,
-  // type,
-  timestamp,
+  closed,
+  handleClose,
 }: {
   message: string,
-  // type: string,
-  timestamp: number
+  closed: boolean,
+  handleClose: any,
 }) {
-  const [dismissedAt, setDismissedAt] = useState<number|undefined>();
-  const [setError] = useAlert((state: any) => [state.error]);
-  // const [lastMessage, setLastMessage] = useState<string|undefined>(message);
-
-  console.log('>> app._components.Alert._Error.render()', { message, timestamp });
-
-  useEffect(() => {
-    console.log('>> app._components.Alert._Error.render() useEffect', { message, timestamp });
-    
-    // make the thing pulse a bit when same message but was not dismissed
-    if (message && !dismissedAt) {
-      setDismissedAt(moment().valueOf());
-      // setError(undefined);
-      setTimeout(() => {
-        setDismissedAt(undefined)
-        // setError(_message);
-      }, 100);
-    }
- 
-    // setLastMessage(message);
-  }, [message, timestamp]);
-
-  const handleClose = () => {
-    setDismissedAt(timestamp); 
-    // setLastMessage(undefined); 
-    setError(undefined);
-  }
+  console.log('>> app._components.Alert.Alert.render()', { message });
 
   return (
-    <div className={`fixed bottom-3 left-3 md:left-[calc(50vw-(${WIDTH}/2))] lg:left-[calc(50vw-((${WIDTH}-8rem)/2))] ${dismissedAt ? "-z-10" : "z-20"}`}>
-      <div className={`${dismissedAt ? "opacity-0" : "opacity-100"} transition-all rounded-md bg-red-50 p-4 w-[calc(100vw-1.5rem)] md:w-[${WIDTH}] shadow-md hover:shadow-lg`}>
+    <div className={`fixed bottom-3 left-3 md:left-[calc(50vw-(${WIDTH}/2))] lg:left-[calc(50vw-((${WIDTH}-8rem)/2))] ${closed ? "-z-10" : "z-20"}`}>
+      <div className={`${closed ? "opacity-0" : "opacity-100"} transition-all rounded-md bg-red-50 p-4 w-[calc(100vw-1.5rem)] md:w-[${WIDTH}] shadow-md hover:shadow-lg`}>
         <div className="flex items-center">
           <div className="flex-shrink-0">
             <CheckCircleIcon className="h-5 w-5 text-red-400" aria-hidden="true" />
@@ -72,21 +46,65 @@ function Alert({
   )
 }
 
+// handle closed and pulse effect
+function WrapForUX({
+  message,
+  timestamp,
+}: {
+  message: string,
+  timestamp: number
+}) {
+  let [dismissedAt, setDismissedAt] = useState<number | undefined>();
+  const [setError] = useAlert((state: any) => [state.error]);
+  let [lastMessage, setLastMessage] = useState<string | undefined>(message);
+
+  console.log('>> app._components.Alert.Wrapper.render()', { message, timestamp, dismissedAt });
+
+  useEffect(() => {
+    console.log('>> app._components.Alert.Alert.render() useEffect', { message, lastMessage, timestamp });
+
+    // make the thing pulse a bit when same message but was not dismissed
+    if (lastMessage && (message == lastMessage) && !dismissedAt) {
+      console.log('>> app._components.Alert.Wrapper.render() useEffect starting pulse', { message, lastMessage, timestamp });
+      dismissedAt = timestamp; // not quite sure why but there's a race condition and this fixes a visual glitch
+      setDismissedAt(moment().valueOf());
+
+      setTimeout(() => {
+        console.log('>> app._components.Alert.Wrapper.render() useEffect finishing pulse', { message, lastMessage, timestamp });
+        setDismissedAt(undefined);
+      }, 50);
+    }
+
+    setLastMessage(message);
+ 
+    if (timestamp != dismissedAt) {
+      setDismissedAt(undefined);
+    }
+
+  }, [message, timestamp]);
+
+  const handleClose = () => {
+    setDismissedAt(timestamp);
+    setError(undefined);
+  }
+
+  if (message) {
+    return (
+      <Alert message={message} closed={!!dismissedAt} handleClose={handleClose} />
+    )
+  }
+}
 
 export function Error({
   message,
 }: {
   message?: string | undefined
 }) {
-  const [_message, type] = useAlert((state: any) => [state.message, state.type]);
+  const [_message] = useAlert((state: any) => [state.message]);
 
-  console.log('>> app._components.Alert.Error.render()', { message });
+  console.log('>> app._components.Alert.Error.render()', { message, _message });
 
-  if (message || _message && type == "error") {
-    return (
-      <Alert message={message || _message} timestamp={moment().valueOf()} />
-    )
-  }
-
-  return <></>
+  return (
+    <WrapForUX message={message || _message} timestamp={moment().valueOf()} />
+  )
 }

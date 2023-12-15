@@ -33,7 +33,7 @@ function Alert({
   }
 
   return (
-    <div className={`fixed bottom-3 left-3 md:left-[calc(50vw-(${WIDTH}/2))] lg:left-[calc(50vw-((${WIDTH}-8rem)/2))] z-20`}>
+    <div className={`fixed bottom-3 left-3 md:left-[calc(50vw-(${WIDTH}/2))] lg:left-[calc(50vw-((${WIDTH}-8rem)/2))] ${dismissedAt ? "-z-10" : "z-20"}`}>
       <div className={`${dismissedAt ? "opacity-0" : "opacity-100"} transition-all rounded-md bg-red-50 p-4 w-[calc(100vw-1.5rem)] md:w-[${WIDTH}] shadow-md hover:shadow-lg`}>
         <div className="flex items-center">
           <div className="flex-shrink-0">

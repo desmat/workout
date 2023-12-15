@@ -3,12 +3,12 @@ import moment from 'moment';
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import { Exercise } from '@/types/Exercise';
+import useAlert from "./alert";
 
 const useExercises: any = create(devtools((set: any, get: any) => ({
   exercises: [],
   deletedExercises: [], // to smooth out visual glitches when deleting
   loaded: false,
-  error: "",
 
   load: async (id?: string) => {
     console.log(">> hooks.exercise.load", { id });
@@ -17,7 +17,7 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
     if (id) {
       fetch(`/api/exercises/${id}`).then(async (res) => {
         if (res.status != 200) {
-          console.error(`Error fetching exercise ${id}: ${res.status} (${res.statusText})`);
+          useAlert.getState().error(`Error fetching exercise ${id}: ${res.status} (${res.statusText})`);        
           set({ loaded: true });
           return;
         }
@@ -31,7 +31,7 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
     } else {
       fetch('/api/exercises').then(async (res) => {
         if (res.status != 200) {
-          console.error(`Error fetching exercises: ${res.status} (${res.statusText})`);
+          useAlert.getState().error(`Error fetching exercises: ${res.status} (${res.statusText})`);        
           return;
         }
 
@@ -68,9 +68,9 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
       body: JSON.stringify({ name }),
     }).then(async (res) => {
       if (res.status != 200) {
-        console.error(`Error adding exercise: ${res.status} (${res.statusText})`);
+        useAlert.getState().error(`Error adding exercise: ${res.status} (${res.statusText})`);
         const exercises = get().exercises.filter((exercise: Exercise) => exercise.id != tempId);        
-        set({ exercises, error: `Error adding exercise: ${res.status} (${res.statusText})` });
+        set({ exercises });
         return;
       }
 
@@ -100,8 +100,8 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
     fetch(`/api/exercises/${id}`, {
       method: "DELETE",
     }).then(async (res) => {
-      if (res.status != 200) {
-        console.error(`Error deleting exercises ${id}: ${res.status} (${res.statusText})`);
+      if (res.status != 200) {        
+        useAlert.getState().error(`Error deleting exercises ${id}: ${res.status} (${res.statusText})`);  
         set({ exercises, deletedExercises });
         return;
       }

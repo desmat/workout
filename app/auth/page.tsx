@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from "react";
 import useUser from "@/app/_hooks/user";
 import { SigninMethod } from "@/types/SigninMethod";
+import useAlert from "@/app/_hooks/alert";
 
 function doLogin(e: any, signinFn: any, form: any, router: any) {
   console.log("** app.profile.auth.page.doLogin");
@@ -12,12 +13,10 @@ function doLogin(e: any, signinFn: any, form: any, router: any) {
 
   signinFn("login-email", form).then(() => {
     router.push("/profile");
-  }).catch((error: any) => {
-    alert(`Error logging in: ${error}`);
-  });
+  })
 }
 
-function doSignup(e: any, signinFn: any, form: any, router: any) {
+function doSignup(e: any, signinFn: any, form: any, router: any, alertFn: any) {
   console.log("** app.profile.auth.page.doSignup");
   e.preventDefault();
 
@@ -28,14 +27,12 @@ function doSignup(e: any, signinFn: any, form: any, router: any) {
     undefined;
 
   if (validationError) {
-    alert(`Error: ${validationError}`);
+    alertFn(`Validation error: ${validationError}`);
     return;
   }  
 
   signinFn("signup-email", form).then(() => {
     router.push("/profile");
-  }).catch((error: any) => {
-    alert(`Error signing up: ${error}`);
   });
 }
 
@@ -62,6 +59,7 @@ export default function Page() {
   const params = useSearchParams();
   const method = params.get("method") as SigninMethod;
   const [form, setForm] = useState({ email: "", password: "", confirmPassword: "" });
+  const [alertError] = useAlert((state: any) => [state.error]);
 
   useEffect(() => {
     console.log("** app.profile.auth.page.useEffect", { method });
@@ -88,7 +86,7 @@ export default function Page() {
         <div className="text-dark-2">
           <Link
             href="/"
-            onClick={(e) => method == "login-email" ? doLogin(e, signin, form, router) : method == "signup-email" ? doSignup(e, signin, form, router) : console.error("Unknown signing method", method)}
+            onClick={(e) => method == "login-email" ? doLogin(e, signin, form, router) : method == "signup-email" ? doSignup(e, signin, form, router, alertError) : console.error("Unknown signing method", method)}
           >
             {method == "login-email" ? "Login" : method == "signup-email" ? "Signup" : "(unknown method)"}
           </Link>

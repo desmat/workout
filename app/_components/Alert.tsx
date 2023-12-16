@@ -2,7 +2,7 @@
 
 import moment from 'moment';
 import { useEffect, useState } from 'react';
-import { CheckCircleIcon, ExclamationTriangleIcon, InformationCircleIcon, XMarkIcon, QuestionMarkCircleIcon, ExclamationCircleIcon } from '@heroicons/react/20/solid'
+import { CheckCircleIcon, ExclamationTriangleIcon, InformationCircleIcon, XMarkIcon, ExclamationCircleIcon } from '@heroicons/react/20/solid'
 import useAlert from '@/app/_hooks/alert';
 import { AlertType } from '@/types/Alert';
 
@@ -25,7 +25,7 @@ function TypedAlert({
 
   switch (type) {
     case 'error':
-      icon = <ExclamationCircleIcon className={`h-5 w-5 text-red-400`} aria-hidden="true" />
+      icon = <ExclamationTriangleIcon className={`h-5 w-5 text-red-400`} aria-hidden="true" />
       colorClasses = [
         'bg-red-50',
         'hover:bg-red-100',

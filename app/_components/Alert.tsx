@@ -26,19 +26,19 @@ function Alert({
   switch (type) {
     case 'error':
       color = "red";
-      icon = <ExclamationCircleIcon className={`h-5 w-5 text-red-400`} aria-hidden="true" />
+      icon = <ExclamationCircleIcon className={`h-5 w-5 text-${color}-400`} aria-hidden="true" />
       break;
     case "warning":
       color = "yellow";
-      icon = <ExclamationCircleIcon className={`h-5 w-5 text-yellow-400`} aria-hidden="true" />
+      icon = <ExclamationCircleIcon className={`h-5 w-5 text-${color}-400`} aria-hidden="true" />
       break;
     case "success":
       color = "green";
-      icon = <CheckCircleIcon className={`h-5 w-5 text-green-400`} aria-hidden="true" />
+      icon = <CheckCircleIcon className={`h-5 w-5 text-${color}-400`} aria-hidden="true" />
       break;
     default: //case "info":
       color = "blue";
-      icon = <InformationCircleIcon className={`h-5 w-5 text-blue-400`} aria-hidden="true" />
+      icon = <InformationCircleIcon className={`h-5 w-5 text-${color}-400`} aria-hidden="true" />
       break;
   }
 

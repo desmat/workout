@@ -340,13 +340,13 @@ export default function Page({ params }: { params: { id: string } }) {
                 return (
                   <div className="flex flex-row _bg-pink-300" key={i}>
                     <div className="flex flex-row flex-grow _bg-yellow-100 text-dark-0 capitalize _font-semibold mr-2">{set.exercise?.name} </div>
-                    (<Timer
+                    <Timer
                       ms={
                         set.status == "started"
                           ? (set?.duration || 0) + moment().valueOf() - (set?.startedAt || 0)
                           : (set?.duration || 0)
                       }
-                    />)
+                    />
                   </div>
                 )
               })

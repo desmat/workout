@@ -248,7 +248,7 @@ export default function Page({ params }: { params: { id: string } }) {
   }
 
   const links = (
-    <div className="flex flex-row gap-3 items-center justify-center mt-2 mb-4">
+    <div className="_bg-yellow-200 flex flex-row gap-3 items-center justify-center mt-2 mb-4">
       <BackLink />
       {/* {workout && <Link onClick={() => setshowDetails(!showDetails)}>{showDetails ? "Hide details" : "Show details"}</Link>} */}
       {workout && user && !session && <Link onClick={() => handleStartSession(user, workout, startSession)}>Start</Link>}
@@ -278,8 +278,8 @@ export default function Page({ params }: { params: { id: string } }) {
   // }
 
   return (
-    <main className="flex flex-col items-left lg:max-w-4xl lg:mx-auto px-4">
-      <h1 className="text-center capitalize">{workout.name} Session ({session?.status || "Not created"})</h1>
+    <main className="_bg-pink-200 flex flex-col items-left lg:max-w-4xl lg:mx-auto pt-4 lg:min-h-[calc(100vh+2rem)] min-h-[calc(100vh-1.5rem)] ">
+      <h1 className="text-center capitalize">{workout.name} ({session?.status || "Not created"})</h1>
       {links}
       <p className='text-center'>
         <span
@@ -395,6 +395,7 @@ export default function Page({ params }: { params: { id: string } }) {
         </div>
       } */}
 
+      <div className="_bg-purple-100 flex flex-row flex-grow items-end gap-3 _items-center justify-center h-full m-0 py-0" />
       {links}
     </main>
   )

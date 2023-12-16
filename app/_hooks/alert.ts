@@ -1,7 +1,6 @@
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
-
-type AlertType = "error";
+import { AlertType } from '@/types/Alert';
 
 const useAlert: any = create(devtools((set: any, get: any) => ({
   message: undefined as string | undefined,
@@ -9,7 +8,22 @@ const useAlert: any = create(devtools((set: any, get: any) => ({
 
   error: async (message?: string) => {
     console.log(">> hooks.alert.error", { message });
-    set({ message, type: "error" });
+    set({ message, type: message && "error" });
+  },
+
+  warning: async (message?: string) => {
+    console.log(">> hooks.alert.warning", { message });
+    set({ message, type: message && "warning" });
+  },
+
+  info: async (message?: string) => {
+    console.log(">> hooks.alert.info", { message });
+    set({ message, type: message && "info" });
+  },
+
+  success: async (message?: string) => {
+    console.log(">> hooks.alert.success", { message });
+    set({ message, type: message && "success" });
   },
 })));
 

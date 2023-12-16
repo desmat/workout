@@ -69,7 +69,7 @@ export default function Page() {
   const params = useSearchParams();
   const method = params.get("method") as SigninMethod;
   const [form, setForm] = useState({ email: "", password: "", confirmPassword: "" });
-  const [alertError] = useAlert((state: any) => [state.error]);
+  const [alertError] = useAlert((state: any) => [state.warning]);
 
   useEffect(() => {
     console.log("** app.profile.auth.page.useEffect", { method });

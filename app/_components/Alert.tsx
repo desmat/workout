@@ -2,35 +2,85 @@
 
 import moment from 'moment';
 import { useEffect, useState } from 'react';
-import { CheckCircleIcon, XMarkIcon } from '@heroicons/react/20/solid'
+import { CheckCircleIcon, ExclamationTriangleIcon, InformationCircleIcon, XMarkIcon, ExclamationCircleIcon } from '@heroicons/react/20/solid'
 import useAlert from '@/app/_hooks/alert';
+import { AlertType } from '@/types/Alert';
 
-function Alert({
+// from https://tailwindui.com/components/application-ui/feedback/alerts
+
+function TypedAlert({
   message,
+  type,
   closed,
   handleClose,
 }: {
   message: string,
+  type: AlertType,
   closed: boolean,
   handleClose: any,
 }) {
-  // console.log('>> app._components.Alert.Alert.render()', { message, closed });
+  console.log('>> app._components.Alert.Alert.render()', { message, type, closed });
+  let icon;
+  let colorClasses;
+
+  switch (type) {
+    case 'error':
+      icon = <ExclamationTriangleIcon className={`h-5 w-5 text-red-400`} aria-hidden="true" />
+      colorClasses = [
+        'bg-red-50',
+        'hover:bg-red-100',
+        'active:bg-red-200',
+        'text-red-800', 
+        'text-red-500',
+      ];
+      break;
+    case "warning":
+      icon = <ExclamationCircleIcon className={`h-5 w-5 text-yellow-400`} aria-hidden="true" />
+      colorClasses = [
+        'bg-yellow-50',
+        'hover:bg-yellow-100',
+        'active:bg-yellow-200',
+        'text-yellow-800', 
+        'text-yellow-500',
+      ];
+      break;
+    case "success":
+      icon = <CheckCircleIcon className={`h-5 w-5 text-green-400`} aria-hidden="true" />
+      colorClasses = [
+        'bg-green-50',
+        'hover:bg-green-100',
+        'active:bg-green-200',
+        'text-green-800', 
+        'text-green-500',
+      ];
+      break;
+    default: //case "info":
+      icon = <InformationCircleIcon className={`h-5 w-5 text-blue-400`} aria-hidden="true" />
+      colorClasses = [
+        'bg-blue-50',
+        'hover:bg-blue-100',
+        'active:bg-blue-200',
+        'text-blue-800', 
+        'text-blue-500',
+      ];
+      break;
+  }
 
   return (
     <div className={`fixed bottom-3 left-3 md:left-[calc(50vw-(700px/2))] lg:left-[calc(50vw-((700px-8rem)/2))] ${closed ? "_-z-10" : "z-20"}`}>
-      <div className={`${closed ? "opacity-0" : "opacity-100"} transition-all rounded-md bg-red-50 p-4 w-[calc(100vw-1.5rem)] md:w-[700px] shadow-md hover:shadow-lg`}>
+      <div className={`${closed ? "opacity-0" : "opacity-100"} transition-all rounded-md ${colorClasses[0]} p-4 w-[calc(100vw-1.5rem)] md:w-[700px] shadow-md hover:shadow-lg`}>
         <div className="flex items-center">
           <div className="flex-shrink-0">
-            <CheckCircleIcon className="h-5 w-5 text-red-400" aria-hidden="true" />
+            {icon}
           </div>
           <div className="ml-3">
-            <p className="text-sm font-medium text-red-800">{message}</p>
+            <p className={`text-sm font-medium ${colorClasses[3]}`}>{message}</p>
           </div>
           <div className="ml-auto pl-3">
             <div className="-mx-1.5 -my-1.5">
               <button
                 type="button"
-                className="inline-flex rounded-md bg-red-50 p-1.5 text-red-500 hover:bg-red-100 focus:outline-none active:bg-red-200 _focus:ring-2 _focus:ring-red-600 focus:ring-offset-2 _focus:ring-offset-red-50"
+                className={`inline-flex rounded-md ${colorClasses[0]} p-1.5 ${colorClasses[4]} ${colorClasses[1]} focus:outline-none ${colorClasses[2]} focus:ring-offset-2`}
                 onClick={handleClose}
               >
                 <span className="sr-only">Dismiss</span>
@@ -47,9 +97,11 @@ function Alert({
 // handle closed and pulse effect
 function AnimatedAlert({
   message,
+  type,
   timestamp,
 }: {
   message: string,
+  type: AlertType,
   timestamp: number
 }) {
   const [setError] = useAlert((state: any) => [state.error]);
@@ -71,7 +123,7 @@ function AnimatedAlert({
         setDismissedAt(undefined);
       }, 50);
     }
-   
+
     if (timestamp != dismissedAt) {
       setDismissedAt(undefined);
     }
@@ -90,21 +142,23 @@ function AnimatedAlert({
 
   if (message) {
     return (
-      <Alert message={message} closed={!!dismissedAt} handleClose={handleClose} />
+      <TypedAlert message={message} type={type} closed={!!dismissedAt} handleClose={handleClose} />
     )
   }
 }
 
-export function Error({
+export default function Alert({
   message,
+  type,
 }: {
-  message?: string | undefined
+  message?: string | undefined,
+  type?: AlertType | undefined
 }) {
-  const [_message] = useAlert((state: any) => [state.message]);
+  const [_message, _type] = useAlert((state: any) => [state.message, state.type]);
 
   // console.log('>> app._components.Alert.Error.render()', { message, _message });
 
   return (
-    <AnimatedAlert message={message || _message} timestamp={moment().valueOf()} />
+    <AnimatedAlert message={message || _message} type={type || _type || "info"} timestamp={moment().valueOf()} />
   )
 }

@@ -77,7 +77,7 @@ function AnimatedAlert({
   timestamp,
 }: {
   message: string,
-  type?: AlertType,
+  type: AlertType,
   timestamp: number
 }) {
   const [setError] = useAlert((state: any) => [state.error]);

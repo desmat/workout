@@ -8,22 +8,22 @@ const useAlert: any = create(devtools((set: any, get: any) => ({
 
   error: async (message?: string) => {
     console.log(">> hooks.alert.error", { message });
-    set({ message, type: "error" });
+    set({ message, type: message && "error" });
   },
 
   warning: async (message?: string) => {
     console.log(">> hooks.alert.warning", { message });
-    set({ message, type: "warning" });
+    set({ message, type: message && "warning" });
   },
 
   info: async (message?: string) => {
     console.log(">> hooks.alert.info", { message });
-    set({ message, type: "info" });
+    set({ message, type: message && "info" });
   },
 
   success: async (message?: string) => {
     console.log(">> hooks.alert.success", { message });
-    set({ message, type: "success" });
+    set({ message, type: message && "success" });
   },
 })));
 

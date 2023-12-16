@@ -8,7 +8,7 @@ import { AlertType } from '@/types/Alert';
 
 // from https://tailwindui.com/components/application-ui/feedback/alerts
 
-function Alert({
+function TypedAlert({
   message,
   type,
   closed,
@@ -142,12 +142,12 @@ function AnimatedAlert({
 
   if (message) {
     return (
-      <Alert message={message} type={type} closed={!!dismissedAt} handleClose={handleClose} />
+      <TypedAlert message={message} type={type} closed={!!dismissedAt} handleClose={handleClose} />
     )
   }
 }
 
-export function Error({
+export default function Alert({
   message,
   type,
 }: {

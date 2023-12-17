@@ -5,6 +5,7 @@ import { User } from 'firebase/auth';
 import { useEffect, useState } from "react";
 import BackLink from '@/app/_components/BackLink';
 import Link from "@/app/_components/Link"
+import { Page, PageLinks } from "@/app/_components/Page";
 import useWorkouts from "@/app/_hooks/workouts";
 import useUser from "@/app/_hooks/user";
 import Loading from "./loading";
@@ -151,7 +152,7 @@ const Timer = ({ ms }: { ms: number }) => {
   )
 }
 
-export default function Page({ params }: { params: { id: string } }) {
+export default function Component({ params }: { params: { id: string } }) {
   // console.log('>> app.workout[id].Page.render()', { id: params.id });
   const [
     workouts,
@@ -248,7 +249,7 @@ export default function Page({ params }: { params: { id: string } }) {
   }
 
   const links = (
-    <div className="_bg-yellow-200 flex flex-row gap-3 items-center justify-center mt-2 mb-4">
+    <PageLinks>
       <BackLink />
       {/* {workout && <Link onClick={() => setshowDetails(!showDetails)}>{showDetails ? "Hide details" : "Show details"}</Link>} */}
       {workout && user && !session && <Link onClick={() => handleStartSession(user, workout, startSession)}>Start</Link>}
@@ -256,7 +257,7 @@ export default function Page({ params }: { params: { id: string } }) {
       {workout && user && sessionStarted && <Link onClick={() => handleStopSession(user, session, stopSession)}>Pause</Link>}
       {workout && user && session?.status == "stopped" && <Link onClick={() => handleResumeSession(user, session, resumeSession)}>Resume</Link>}
       {/* {workout && user && (user.uid == workout.createdBy || user.admin) && <Link style="warning" onClick={() => handleDeleteWorkout(params.id, deleteWorkout, router)}>Delete</Link>} */}
-    </div>
+    </PageLinks>
   );
 
   if (!workout) {
@@ -278,9 +279,11 @@ export default function Page({ params }: { params: { id: string } }) {
   // }
 
   return (
-    <main className="_bg-pink-200 flex flex-col items-left lg:max-w-4xl lg:mx-auto pt-4 lg:min-h-[calc(100vh+2rem)] min-h-[calc(100vh-1.5rem)] ">
+    <Page>
       <h1 className="text-center capitalize">{workout.name} ({session?.status || "Not created"})</h1>
-      {links}
+      <div className="_bg-purple-200 justify-center mt-2 mb-4">
+        {links}
+      </div>
       <p className='text-center'>
         <span
           className={`font-bold text-6xl text-dark-1 transition-all${["stopped", "started"].includes(session?.status) ? " cursor-pointer" : ""}${session?.status == "stopped" ? " animate-pulse" : ""}`}
@@ -395,8 +398,9 @@ export default function Page({ params }: { params: { id: string } }) {
         </div>
       } */}
 
-      <div className="_bg-purple-100 flex flex-row flex-grow items-end gap-3 _items-center justify-center h-full m-0 py-0" />
-      {links}
-    </main>
+      <div className="_bg-purple-100 flex flex-grow items-end justify-center h-full mt-2 -mb-0">
+        {links}
+      </div>
+    </Page>
   )
 }

@@ -4,6 +4,7 @@ import { User } from 'firebase/auth';
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from "react";
 import BackLink from '@/app/_components/BackLink';
+import { Page, PageLinks } from "@/app/_components/Page";
 import Link from "@/app/_components/Link"
 import useWorkouts from "@/app/_hooks/workouts";
 import useUser from "@/app/_hooks/user";
@@ -97,9 +98,7 @@ async function handleStartSession(user: User, workout: Workout, startFn: any, ro
   }
 }
 
-
-
-export default function Page({ params }: { params: { id: string } }) {
+export default function Component({ params }: { params: { id: string } }) {
   // console.log('>> app.workout[id].Page.render()', { id: params.id });
   const router = useRouter();
   const [showDetails, setshowDetails] = useState(false);
@@ -124,13 +123,13 @@ export default function Page({ params }: { params: { id: string } }) {
   }
 
   const links = (
-    <div className="flex flex-row gap-3 items-center justify-center mt-2 mb-4">
+    <PageLinks>
       <BackLink />
       {/* {workout && <Link onClick={() => setshowDetails(!showDetails)}>{showDetails ? "Hide details" : "Show details"}</Link>} */}
       {workout && user && !session && <Link onClick={() => handleStartSession(user, workout, startSession, router)}>Start</Link>}
       {workout && user && session && <Link href={`/workouts/${workout.id}/session`}>Resume</Link>}
       {workout && user && (user.uid == workout.createdBy || user.admin) && <Link style="warning" onClick={() => handleDeleteWorkout(params.id, deleteWorkout, router)}>Delete</Link>}
-    </div>
+    </PageLinks>
   );
 
   if (!workout) {
@@ -143,18 +142,23 @@ export default function Page({ params }: { params: { id: string } }) {
   }
 
   return (
-    <main className="flex flex-col items-left lg:max-w-4xl lg:mx-auto px-4">
+    <Page>
       <h1 className="text-center capitalize">{workout.name}</h1>
       <p className='italic text-center'>
         Press Start to begin a workout
       </p>
-      {links}
+      <div className="my-4">
+        {links}
+      </div>
       {workout && workout.exercises && (workout.exercises.length as number) > 0 &&
         <div className="self-center">
           <WorkoutDetails {...{ ...workout, showDetails }} />
         </div>
       }
       {workout && workout?.exercises.length > 4 && links}
-    </main>
+      <div className="flex flex-grow items-end justify-center h-full mt-2">
+        {links}
+      </div>
+    </Page>
   )
 }

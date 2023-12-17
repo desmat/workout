@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect } from "react";
 import FilterButton from '@/app/_components/FilterButton';
 import Link from "@/app/_components/Link"
+import { Page, PageLinks } from "@/app/_components/Page";
 import useAlert from '../_hooks/alert';
 import useExercises from '@/app/_hooks/exercises';
 import useUser from '@/app/_hooks/user';
@@ -64,7 +65,7 @@ async function handleCreateExercise(createExercise: any, router: any, user: User
   return false;
 }
 
-export default function Page() {
+export default function Component() {
   const router = useRouter();
   const [user] = useUser((state: any) => [state.user]);
   const [exercises, loaded, load, createExercise, error] = useExercises((state: any) => [state.exercises, state.loaded, state.load, state.createExercise, state.error]);
@@ -86,7 +87,7 @@ export default function Page() {
   }, [error]);
 
   const links = (
-    <div className="flex flex-row gap-3 items-center justify-center mt-2 mb-4">
+    <PageLinks>
       <div title={user ? "" : "Login to create new exercise"}>
         <Link
           className={user ? "" : "cursor-not-allowed"}
@@ -96,7 +97,7 @@ export default function Page() {
         </Link>
       </div>
       {/* <Link>View Leaderboard</Link> */}
-    </div>
+    </PageLinks>
   );
 
   if (!loaded) {
@@ -104,39 +105,43 @@ export default function Page() {
   }
 
   return (
-    <>
-      <main className="flex flex-col items-left lg:max-w-4xl lg:mx-auto px-4">
-        <FilterButton href="/exercises" userId={user?.uid} isFiltered={!!uidFilter} />
+    <Page>
+      <FilterButton href="/exercises" userId={user?.uid} isFiltered={!!uidFilter} />
 
-        <h1 className="text-center">Exercises</h1>
+      <h1 className="text-center">Exercises</h1>
 
-        <p className='italic text-center'>
-          Let ChatGPT create exercises for you!
-        </p>
-        {/* <p className='italic text-center'>
+      <p className='italic text-center'>
+        Let ChatGPT create exercises for you!
+      </p>
+      {/* <p className='italic text-center'>
           Try these: {SuggestedExerciseTypes.join(", ")}
         </p> */}
+      <div className="mt-4 mb-6">
         {links}
-        {filteredExercises && filteredExercises.length > 0 &&
-          <div className="self-center flex flex-col gap-3">
-            {
-              filteredExercises
-                // .filter(...)
-                .sort(byName)
-                .map((exercise: any) => {
-                  return (
-                    <span key={exercise.id}>
-                      <ExerciseEntry exercise={exercise} user={user} />
-                    </span>)
-                })
-            }
-          </div>
-        }
-        {(!filteredExercises || filteredExercises.length == 0) &&
-          <p className='italic text-center'>No exercises yet :(</p>
-        }
-        {filteredExercises && filteredExercises.length > 4 && links}
-      </main>
-    </>
+      </div>
+
+      {filteredExercises && filteredExercises.length > 0 &&
+        <div className="self-center flex flex-col gap-3">
+          {
+            filteredExercises
+              // .filter(...)
+              .sort(byName)
+              .map((exercise: any) => {
+                return (
+                  <span key={exercise.id}>
+                    <ExerciseEntry exercise={exercise} user={user} />
+                  </span>)
+              })
+          }
+        </div>
+      }
+      {(!filteredExercises || filteredExercises.length == 0) &&
+        <p className='italic text-center'>No exercises yet :(</p>
+      }
+      <div className="flex flex-grow items-end justify-center h-full mt-2">
+        {links}
+      </div>
+    </Page>
+
   )
 }

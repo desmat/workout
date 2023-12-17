@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from "react";
 import BackLink from '@/app/_components/BackLink';
 import Link from "@/app/_components/Link"
+import { Page, PageLinks } from "@/app/_components/Page";
 import useExercises from "@/app/_hooks/exercises";
 import useUser from "@/app/_hooks/user";
 import Loading from "./loading";
@@ -99,7 +100,7 @@ async function handleDeleteExercise(id: string, deleteFn: any, router: any) {
   }
 }
 
-export default function Page({ params }: { params: { id: string } }) {
+export default function Component({ params }: { params: { id: string } }) {
   // console.log('>> app.trivia[id].page.render()', { id: params.id });
   const router = useRouter();
   const [showDetails, setshowDetails] = useState(false);
@@ -118,12 +119,12 @@ export default function Page({ params }: { params: { id: string } }) {
   }
 
   const links = (
-    <div className="flex flex-row gap-3 items-center justify-center mt-2 mb-4">
+    <PageLinks>
       <BackLink />
       {/* {exercise && <Link onClick={() => setshowDetails(!showDetails)}>{showDetails ? "Hide details" : "Show details"}</Link>} */}
       {/* {game && <Link onClick={() => handlePlayGame(params.id, startGame, router)}>Play</Link>} */}
       {exercise && user && (user.uid == exercise.createdBy || user.admin) && <Link style="warning" onClick={() => handleDeleteExercise(params.id, deleteExercise, router)}>Delete</Link>}
-    </div>
+    </PageLinks>
   );
 
   if (!exercise) {
@@ -136,18 +137,22 @@ export default function Page({ params }: { params: { id: string } }) {
   }
 
   return (
-    <main className="flex flex-col items-left lg:max-w-4xl lg:mx-auto px-4">
+    <Page>
       <h1 className="text-center capitalize">{exercise.name}</h1>
       <p className='italic text-center'>
         (summary here)
       </p>
-      {links}
+      <div className="mt-4 mb-6">
+        {links}
+      </div>
       {exercise && exercise.items && (exercise.items.length as number) > 0 &&
         <div className="self-center">
           <Exercise {...{ ...exercise, showDetails }} />
         </div>
       }
-      {exercise && exercise.items && exercise.items.length > 4 && links}
-    </main>
+      <div className="flex flex-grow items-end justify-center h-full mt-2">
+        {links}
+      </div>
+    </Page>
   )
 }

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect } from "react";
 import FilterButton from '@/app/_components/FilterButton';
 import Link from "@/app/_components/Link"
+import { Page, PageLinks } from "@/app/_components/Page";
 import useWorkouts from '@/app/_hooks/workouts';
 import useUser from '@/app/_hooks/user';
 import { Workout, WorkoutSession, WorkoutSet } from "@/types/Workout"
@@ -66,7 +67,7 @@ async function handleCreateWorkout(createWorkout: any, router: any, user: User |
   return false;
 }
 
-export default function Page() {
+export default function Component() {
   const router = useRouter();
   const [user] = useUser((state: any) => [state.user]);
   const [workouts, loaded, load, createWorkout] = useWorkouts((state: any) => [state.workouts, state.loaded, state.load, state.createWorkout]);
@@ -81,14 +82,14 @@ export default function Page() {
   }, []);
 
   const links = (
-    <div className="flex flex-row gap-3 items-center justify-center mt-2 mb-4">
+    <PageLinks>
       <div title={user ? "" : "Login to create new workout"}>
         <Link className={user ? "" : "cursor-not-allowed"} onClick={() => /* user && */ handleCreateWorkout(createWorkout, router, user)}>
           Create New Workout
         </Link>
       </div>
       {/* <Link>View Leaderboard</Link> */}
-    </div>
+    </PageLinks>
   );
 
   if (!loaded) {
@@ -97,7 +98,7 @@ export default function Page() {
 
   return (
     <>
-      <main className="flex flex-col items-left lg:max-w-4xl lg:mx-auto px-4">
+      <Page>
         <FilterButton href="/workouts" userId={user?.uid} isFiltered={!!uidFilter} />
 
         <h1 className="text-center">Workouts</h1>
@@ -108,7 +109,11 @@ export default function Page() {
         {/* <p className='italic text-center'>
           Try these: {SuggestedWorkoutTypes.join(", ")}
         </p> */}
-        {links}
+
+        <div className="mt-4 mb-6">
+          {links}
+        </div>
+
         {filteredWorkouts && filteredWorkouts.length > 0 &&
           <div className="self-center flex flex-col gap-3">
             {
@@ -128,8 +133,11 @@ export default function Page() {
         {(!filteredWorkouts || filteredWorkouts.length == 0) &&
           <p className='italic text-center'>No workouts yet :(</p>
         }
-        {filteredWorkouts && filteredWorkouts.length > 4 && links}
-      </main>
+
+        <div className="flex flex-grow items-end justify-center h-full mt-2">
+          {links}
+        </div>
+      </Page>
     </>
   )
 }

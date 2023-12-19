@@ -10,70 +10,23 @@ import useWorkouts from "@/app/_hooks/workouts";
 import useUser from "@/app/_hooks/user";
 import Loading from "./loading";
 import { Workout, WorkoutSession } from '@/types/Workout';
+import { ExerciseEntry } from '@/app/_components/Exercise';
 
-function ExerciseEntry({ id, name, /* description,*/ showDetails }: any) {
-  const [showDetail, setshowDetail] = useState(false);
-  // const maxShortIngredients = 5;
-  // const shortIngredients = ingredients?.length > 0 ?
-  //   ingredients.length > maxShortIngredients
-  //     ? ingredients.map(stripIngredientQuantity).slice(0, maxShortIngredients).join(", ")
-  //     : ingredients.map(stripIngredientQuantity).join(", ")
-  //   : "";
-  const summary = undefined; // "(TODO: summary)";
-  const details = undefined; // "(TODO: details)";
-  const description = undefined; // "(TODO: description)";
-
-  console.log('>> app.workouts[id].ExerciseEntry.render()', { name, description });
-
-  useEffect(() => {
-    if (showDetails) {
-      setshowDetail(false);
-    }
-  }, [showDetails]);
-
-  return (
-    <p className="text-center flex flex-col gap-2 pb-2 mx-auto" >
-      {/* <Link style="parent" onClick={() => !showDetails && setshowDetail(!showDetail)}> */}
-      <Link style="parent" className=" _bg-yellow-200" href={`/exercises/${id}`}>
-        <div className="">
-          <span className="capitalize font-semibold">{name}</span>{description ? `: ${description}` : ""}
-          {/* {details && !showDetails &&
-            <>
-              <Link style="child light" className="ml-2">{showDetail ? "Hide details" : "Show details"}</Link>
-            </>
-          } */}
-          <Link style="child light" className="ml-2 absolute">View</Link>
-        </div>
-        {summary && !showDetail && !showDetails &&
-          <div className="capitalize italic text-dark-3 -mt-1">{summary}</div>
-        }
-        {/* {ingredients.length > maxShortIngredients &&
-        <span className="italic">
-          {` (and ${ingredients.length - maxShortIngredients} more)`}
-        </span>
-      } */}
-        {details && (showDetails || showDetail) &&
-          <div className="mb-2">
-            <div className="font-semibold">Details:</div>
-            <div>{details}</div>
-          </div>
-        }
-      </Link>
-    </p>
-  );
-}
-
-function WorkoutDetails({ id, prompt, exercises, showDetails }: any) {
+function WorkoutDetails({ id, prompt, exercises, showDetails, user }: any) {
   console.log('>> app.workouts[id].WorkoutDetails.render()', { id, exercises });
 
   return (
     <p className="text-left pb-4">
       {exercises && exercises.length > 0 &&
-        <div>
+        <div className="flex flex-col gap-3">
           {
             exercises
               // .sort((a: Post, b: Post) => b.postedAt.valueOf() - a.postedAt.valueOf())
-              .map((exercise: any, offset: number) => <div className="ml-2 flex" key={offset}><ExerciseEntry {...{ ...exercise, offset, showDetails }} /></div>)
+              .map((exercise: any, offset: number) => (
+                <div className="ml-2 flex" key={offset}>
+                  <ExerciseEntry exercise={exercise} user={user} />
+                </div>
+              ))
           }
         </div>
       }
@@ -152,7 +105,7 @@ export default function Component({ params }: { params: { id: string } }) {
       </div>
       {workout && workout.exercises && (workout.exercises.length as number) > 0 &&
         <div className="self-center">
-          <WorkoutDetails {...{ ...workout, showDetails }} />
+          <WorkoutDetails {...{ ...workout, showDetails, user }} />
         </div>
       }
       {workout && workout?.exercises.length > 4 && links}

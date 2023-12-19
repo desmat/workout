@@ -10,7 +10,7 @@ import useWorkouts from '@/app/_hooks/workouts';
 import useUser from '@/app/_hooks/user';
 import { Workout, WorkoutSession, WorkoutSet } from "@/types/Workout"
 import Loading from "./loading";
-import { Exercise } from '@/types/Exercise';
+import { Exercise, SuggestedExerciseTypes } from '@/types/Exercise';
 import { byCreatedAt, byCreatedAtDesc, byName } from '@/utils/sort';
 
 function WorkoutEntry({ workout, user }: any) {
@@ -52,7 +52,7 @@ async function handleCreateWorkout(createWorkout: any, router: any, user: User |
   const name = window.prompt("Name?", "");
 
   if (name) {
-    const exercises = window.prompt("Exercises?", "Push ups, Pull ups, sit ups");
+    const exercises = window.prompt("Exercises?", SuggestedExerciseTypes.join(", "));
 
     if (exercises) {
       const id = await createWorkout(user, name, exercises);

@@ -9,24 +9,8 @@ import useExercises from "@/app/_hooks/exercises";
 import useUser from "@/app/_hooks/user";
 import Loading from "./loading";
 
-function stripIngredientQuantity(ingredient: string) {
-  const regex = /^(?:\w+\s+of\s+)?(?:\d+\s*\w+\s+of\s+)?(?:\d+\s*\w+\s+)?(?:\d+\s+)?(.+)$/i;
-  const match = ingredient.match(regex);
-  if (match && match.length > 1) {
-    return match[1];
-  }
-
-  return ingredient;
-}
-
-function ExerciseItem({ name, description, ingredients, preparation, showDetails }: any) {
+function ExerciseVariation({ name, description, instructions, level, showDetails }: any) {
   const [showDetail, setshowDetail] = useState(false);
-  const maxShortIngredients = 5;
-  const shortIngredients = ingredients?.length > 0 ?
-    ingredients.length > maxShortIngredients
-      ? ingredients.map(stripIngredientQuantity).slice(0, maxShortIngredients).join(", ")
-      : ingredients.map(stripIngredientQuantity).join(", ")
-    : "";
 
   // console.log('>> app.exercises[id].page.render()', { name, shortIngredients, ingredients });
 
@@ -37,55 +21,80 @@ function ExerciseItem({ name, description, ingredients, preparation, showDetails
   }, [showDetails]);
 
   return (
-    <p className="text-left flex flex-col gap-2 pb-6" >
-      <Link style="parent" onClick={() => !showDetails && setshowDetail(!showDetail)}>
-        <div className="">
-          <span className="capitalize font-semibold">{name}</span>: {description}
-          {!showDetails &&
+    <div className="flex flex-col gap-0">
+      {/* <Link style="parent" onClick={() => !showDetails && setshowDetail(!showDetail)}> */}
+      <div className="">
+        <span className="capitalize _text-dark-1 font-semibold">{name}{level ? ` (${level})` : ""}</span>
+        {description &&
+          <>
+            : <span className="_opacity-60 _italic">{description}</span>
+          </>
+        }
+        {/* {!showDetails &&
             <>
               <Link style="child light" className="ml-2">{showDetail ? "Hide details" : "Show details"}</Link>
             </>
-          }
+          } */}
+      </div>
+      {/* {description &&
+        <div className="_opacity-60 _italic">
+          {description}
         </div>
-        {!showDetail && !showDetails &&
-          <div className="capitalize italic text-dark-3 -mt-1">{shortIngredients}</div>
-        }
-        {/* {ingredients.length > maxShortIngredients &&
-        <span className="italic">
-          {` (and ${ingredients.length - maxShortIngredients} more)`}
-        </span>
       } */}
-        {(showDetails || showDetail) &&
-          <div>
-            <div className="font-semibold">Ingredients:</div>
-            <ul className="ml-4">
-              {
-                ingredients.map((ingredient: string, offset: number) => <li key={offset} className="capitalize">{ingredient}</li>)
-              }
-            </ul>
-          </div>
+      {instructions &&
+        // <div className="_opacity-60 _italic">
+        //   {instructions}
+        // </div>
+        <ul className="list-disc ml-6 mt-1">
+        {
+          instructions
+            .split(/\.\s?/)
+            .map((step: string) => step.trim())
+            .filter(Boolean)
+            .map((step: string) => <li>{step}</li>)
         }
-        {(showDetails || showDetail) &&
-          <div className="mb-2">
-            <div className="font-semibold">Preparation:</div>
-            <div>{preparation}</div>
-          </div>
-        }
-      </Link>
-    </p>
+      </ul>
+
+      }
+      {/* </link> */}
+    </div>
   );
 }
 
-function Exercise({ id, prompt, items, showDetails }: any) {
+function Exercise({ id, instructions, variations, showDetails }: any) {
   return (
-    <p className="text-left pb-4">
-      {items && items.length > 0 &&
-        <div>
-          {
-            items
-              // .sort((a: Post, b: Post) => b.postedAt.valueOf() - a.postedAt.valueOf())
-              .map((item: any, offset: number) => <div className="ml-2 flex" key={offset}><ExerciseItem {...{ ...item, offset, showDetails }} /></div>)
-          }
+    <p className="text-left pb-4 flex flex-col gap-4">
+      {instructions &&
+        <div className="flex flex-col _gap-2">
+          {/* <div className="text-dark-1 font-bold">Instructions</div> */}
+          <h2>Instructions</h2>
+          <ul className="list-disc ml-6">
+            {
+              instructions
+                .split(/\.\s?/)
+                .map((step: string) => step.trim())
+                .filter(Boolean)
+                .map((step: string) => <li>{step}</li>)
+            }
+          </ul>
+        </div>
+      }
+      {variations && variations.length > 0 &&
+        <div className="flex flex-col _gap-2">
+          {/* <div className="text-dark-1 font-bold">Variations</div> */}
+          <h2>Variations</h2>
+          <div className="flex flex-col gap-3">
+            {
+              variations
+                // .sort((a: Post, b: Post) => b.postedAt.valueOf() - a.postedAt.valueOf())
+                .map((item: any, offset: number) => (
+                  <div key={offset}>
+                    <ExerciseVariation {...{ ...item, offset, showDetails }} />
+                  </div>
+                )
+                )
+            }
+          </div>
         </div>
       }
     </p>
@@ -139,16 +148,16 @@ export default function Component({ params }: { params: { id: string } }) {
   return (
     <Page>
       <h1 className="text-center capitalize">{exercise.name}</h1>
-      <p className='italic text-center'>
-        (summary here)
-      </p>
+      {exercise.description &&
+        <p className='italic text-center'>
+          {exercise.description}
+        </p>
+      }
       <div className="mt-4 mb-6">
         {links}
       </div>
-      {exercise && exercise.items && (exercise.items.length as number) > 0 &&
-        <div className="self-center">
-          <Exercise {...{ ...exercise, showDetails }} />
-        </div>
+      {exercise &&
+        <Exercise {...{ ...exercise, showDetails }} />
       }
       <div className="flex flex-grow items-end justify-center h-full mt-2">
         {links}

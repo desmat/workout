@@ -1,25 +1,20 @@
 
 export const SuggestedExerciseTypes = [
-  "Classic Cocktails",
-  "Classic Pasta Dishes",
-  "Fast Food Dishes",
-  "Salads",
-  "Appetizers",
+  "Push Up",
+  "Pull Up",
+  "Sit Up",
 ]
 
 export type Exercise = {
+  name: string,
   id?: string,
   createdBy?: string,
   createdAt?: number,
   deletedAt?: number,
   prompt?: string,
   status?: string,
-  name: string,
-  items?: ExerciseItem[],
-};
-
-export type ExerciseItem = {
-  id?: string,
-  name: string,
   description?: string,
-}
+  instructions?: string,
+  level?: string,
+  variations?: Exercise[],
+};

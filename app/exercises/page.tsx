@@ -23,10 +23,10 @@ async function handleCreateExercise(createExercise: any, router: any, user: User
   const name = window.prompt("Name?", "");
 
   if (name) {
-    const id = await createExercise(user, name);
+    const ret = await createExercise(user, name);
 
-    if (id) {
-      // router.push(`/exercises/${id}`);
+    if (ret) {
+      router.push(`/exercises/${ret.id}`);
       return true
     }
 

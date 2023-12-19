@@ -14,7 +14,7 @@ export type Exercise = {
   prompt?: string,
   status?: string,
   description?: string,
-  instructions?: string,
+  instructions?: string[],
   level?: string,
   variations?: Exercise[],
 };

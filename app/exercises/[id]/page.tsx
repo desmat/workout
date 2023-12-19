@@ -46,14 +46,9 @@ function ExerciseVariation({ name, description, instructions, level, showDetails
         //   {instructions}
         // </div>
         <ul className="list-disc ml-6 mt-1">
-        {
-          instructions
-            .split(/\.\s?/)
-            .map((step: string) => step.trim())
-            .filter(Boolean)
-            .map((step: string) => <li>{step}</li>)
-        }
-      </ul>
+          {instructions && instructions.map((step: string) => <li>{step}</li>)
+          }
+        </ul>
 
       }
       {/* </link> */}
@@ -69,12 +64,7 @@ function Exercise({ id, instructions, variations, showDetails }: any) {
           {/* <div className="text-dark-1 font-bold">Instructions</div> */}
           <h2>Instructions</h2>
           <ul className="list-disc ml-6">
-            {
-              instructions
-                .split(/\.\s?/)
-                .map((step: string) => step.trim())
-                .filter(Boolean)
-                .map((step: string) => <li>{step}</li>)
+            {instructions && instructions .map((step: string) => <li>{step}</li>)
             }
           </ul>
         </div>

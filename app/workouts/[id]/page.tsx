@@ -46,7 +46,7 @@ async function handleDeleteWorkout(id: string, deleteFn: any, router: any) {
 async function handleStartSession(user: User, workout: Workout, startFn: any, router: any) {
   console.log('>> app.workout[id].Page.render()', { user, workout });
 
-  const session = startFn(user, workout.id);
+  const session = await startFn(user, workout.id);
   if (session) {
     router.push(`/workouts/${workout.id}/session`);
   }

@@ -23,7 +23,7 @@ const stopSet = (session: WorkoutSession, status = "stopped") => {
   return session;
 }
 
-const fetchSession = (putOrPost: "PUT" | "POST", get: any, set: any, newSession: WorkoutSession) => {
+const fetchSession = (putOrPost: "PUT" | "POST", get: any, set: any, newSession: WorkoutSession, callback?: any) => {
   const workoutId = newSession.workout.id;
   const sessionId = newSession.id;
   const url = putOrPost == "PUT"
@@ -54,6 +54,10 @@ const fetchSession = (putOrPost: "PUT" | "POST", get: any, set: any, newSession:
     // remove previous session
     const filteredSessions = sessions.filter((session: WorkoutSession) => session.id != sessionId);
     set({ sessions: [...filteredSessions, savedSession] });
+
+    if (callback) {
+      callback(savedSession);
+    }
   });
 }
 
@@ -243,7 +247,11 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
       sets: [],
     };
 
-    fetchSession("POST", get, set, session);
+    fetchSession("POST", get, set, session, (newSession: WorkoutSession) => {
+      console.log(">> hooks.workout.startSession fetch callback", { newSession });
+      const firstExercise = newSession.workout?.exercises && newSession.workout?.exercises[0]
+      get().startSet(user, id, newSession.id, firstExercise);
+    });
 
     return session;
   },

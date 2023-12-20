@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { getExercise, generateExercise } from '@/services/exercise';
 import { validateUserSession } from '@/services/users';
 
+export const maxDuration = 300;
+
 export async function POST(
     request: Request,
     { params }: { params: { id: string } }

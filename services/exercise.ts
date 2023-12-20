@@ -20,24 +20,24 @@ async function generateExercise(name: string): Promise<any> {
   // // for testing
   // return new Promise((resolve, reject) => resolve({ prompt: "THE PROMPT", items: SAMPLE_EXERCISE.items as ExerciseItem[] }));
 
-  const prompt = `Requested exercise: ${name}`;
-  const completion = await openai.chat.completions.create({
-    // model: 'gpt-3.5-turbo',
-    model: 'gpt-4',
-    // model: "gpt-3.5-turbo-1106",
-    // response_format: { type: "json_object" },    
-    messages: [
-      {
+const prompt = `Requested exercise: ${name}`;
+const completion = await openai.chat.completions.create({
+// model: 'gpt-3.5-turbo',
+model: 'gpt-4',
+// model: "gpt-3.5-turbo-1106",
+// response_format: { type: "json_object" },    
+messages: [
+{
         role: 'system',
-        content: `You are an assistant that, for the requested exercise, will generate a short description, detailed instructions, and also provide a few of variations indicating difficulty level. 
+content: `You are an assistant that, for the requested exercise, will generate a short description, detailed instructions, and also provide a few of variations indicating difficulty level. 
 Provide the answer in JSON using the following keys: name, description, instructions and variations. 
 The variations should have the following keys: name, level, description and instructions.`},
-      {
+{
         role: 'user',
-        content: prompt,
-      }
+content: prompt,
+}
     ],
-  });
+});
 
   try {
     console.log("*** RESULTS FROM API", completion);
@@ -106,7 +106,7 @@ export async function createExercise(user: User, name: string): Promise<Exercise
   }
 
   res = fixInstructions(res);
-  res.variation = res.variations.map(fixInstructions);
+  res.variations = res.variations.map(fixInstructions);
 
   console.log(">> services.exercise.createExercise (fixed instructions)", { res });
 

@@ -24,6 +24,8 @@ async function handleCreateExercise(createExercise: any, router: any, user: User
 
   if (name) {
     const ret = await createExercise(user, name);
+    console.log("*** handleCreateExercise", { ret });
+    
 
     if (ret) {
       router.push(`/exercises/${ret.id}`);

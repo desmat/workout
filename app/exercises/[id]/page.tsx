@@ -41,7 +41,7 @@ function ExerciseVariation({ name, description, instructions, level, showDetails
           {description}
         </div>
       } */}
-      {instructions &&
+      {instructions && instructions.length > 0 && 
         // <div className="_opacity-60 _italic">
         //   {instructions}
         // </div>
@@ -59,7 +59,7 @@ function ExerciseVariation({ name, description, instructions, level, showDetails
 function Exercise({ id, instructions, variations, showDetails }: any) {
   return (
     <p className="text-left pb-4 flex flex-col gap-4">
-      {instructions &&
+      {instructions && instructions.length > 0 && 
         <div className="flex flex-col _gap-2">
           {/* <div className="text-dark-1 font-bold">Instructions</div> */}
           <h2>Instructions</h2>

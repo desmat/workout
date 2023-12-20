@@ -15,7 +15,7 @@ import { byName } from '@/utils/sort';
 
 function WorkoutEntry({ workout, user }: any) {
   const isReady = ["created"].includes(workout.status);
-  const maxSummaryItems = 3;
+  const maxSummaryItems = 4;
   const summary = workout?.exercises?.length > 0
     ? workout?.exercises?.length > maxSummaryItems
       ? workout.exercises.sort(byName).slice(0, maxSummaryItems).map((exercise: Exercise) => exercise.name).join(", ") + ` and ${workout.exercises.length - maxSummaryItems} more`

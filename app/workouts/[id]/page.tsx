@@ -22,7 +22,7 @@ function WorkoutDetails({ id, prompt, exercises, showDetails, user }: any) {
         <div className="flex flex-col gap-3">
           {
             exercises
-              .sort(byName)
+              // .sort(byName)
               .map((exercise: any, offset: number) => (
                 <div className="ml-2 flex" key={offset}>
                   <ExerciseEntry exercise={exercise} user={user} />

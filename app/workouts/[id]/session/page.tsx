@@ -320,7 +320,7 @@ export default function Component({ params }: { params: { id: string } }) {
           <div className="self-center flex flex-col gap-2 p-2 _-mr-8 _bg-pink-200">
             {
               workout.exercises
-                .sort(byName)
+                // .sort(byName)
                 .map((exercise: Exercise, i: number) => {
                   return (
                     <Link key={i} style="primary" className="_bg-yellow-200 mx-auto text-2xl" onClick={() => handleStartSet(user, workout, session, exercise, startSet, startSession)}>

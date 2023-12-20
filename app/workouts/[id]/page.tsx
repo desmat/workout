@@ -11,6 +11,7 @@ import useUser from "@/app/_hooks/user";
 import Loading from "./loading";
 import { Workout, WorkoutSession } from '@/types/Workout';
 import { ExerciseEntry } from '@/app/_components/Exercise';
+import { byName } from '@/utils/sort';
 
 function WorkoutDetails({ id, prompt, exercises, showDetails, user }: any) {
   console.log('>> app.workouts[id].WorkoutDetails.render()', { id, exercises });
@@ -21,7 +22,7 @@ function WorkoutDetails({ id, prompt, exercises, showDetails, user }: any) {
         <div className="flex flex-col gap-3">
           {
             exercises
-              // .sort((a: Post, b: Post) => b.postedAt.valueOf() - a.postedAt.valueOf())
+              .sort(byName)
               .map((exercise: any, offset: number) => (
                 <div className="ml-2 flex" key={offset}>
                   <ExerciseEntry exercise={exercise} user={user} />

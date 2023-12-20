@@ -11,7 +11,7 @@ import useUser from '@/app/_hooks/user';
 import { Workout, WorkoutSession, WorkoutSet } from "@/types/Workout"
 import Loading from "./loading";
 import { Exercise, SuggestedExerciseTypes } from '@/types/Exercise';
-import { byCreatedAt, byCreatedAtDesc, byName } from '@/utils/sort';
+import { byName } from '@/utils/sort';
 
 function WorkoutEntry({ workout, user }: any) {
   const isReady = ["created"].includes(workout.status);
@@ -118,8 +118,7 @@ export default function Component() {
           <div className="self-center flex flex-col gap-3">
             {
               filteredWorkouts
-                // .filter(...)
-                .sort(byCreatedAtDesc)
+                .sort(byName)
                 .map((workout: any) => {
                   return (
                     <span key={workout.id}>

@@ -1,10 +1,8 @@
 // 'use server'
 
-import moment from 'moment';
 import { kv } from "@vercel/kv";
-import { Exercise, ExerciseItem } from '@/types/Exercise';
+import { Exercise } from '@/types/Exercise';
 import { Workout, WorkoutSession, WorkoutSet } from '@/types/Workout';
-import { sampleExercises } from './samples';
 
 const exercisesKey = "exercises";
 const workoutsKey = "workouts";

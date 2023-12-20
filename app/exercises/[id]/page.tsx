@@ -46,7 +46,7 @@ function ExerciseVariation({ name, description, instructions, level, showDetails
         //   {instructions}
         // </div>
         <ul className="list-disc ml-6 mt-1">
-          {instructions && instructions.map((step: string) => <li>{step}</li>)
+          {instructions && instructions.map((step: string, i: number) => <li key={i}>{step}</li>)
           }
         </ul>
 
@@ -64,7 +64,7 @@ function Exercise({ id, instructions, variations, showDetails }: any) {
           {/* <div className="text-dark-1 font-bold">Instructions</div> */}
           <h2>Instructions</h2>
           <ul className="list-disc ml-6">
-            {instructions && instructions .map((step: string) => <li>{step}</li>)
+            {instructions && instructions .map((step: string, i: number) => <li key={i}>{step}</li>)
             }
           </ul>
         </div>

@@ -5,6 +5,7 @@ export type Workout = {
   createdBy?: string,
   createdAt?: number,
   deletedAt?: number,
+  updatedAt?: number,
   prompt?: string,
   status?: string,
   name: string,
@@ -16,6 +17,7 @@ export type WorkoutSession = {
   createdBy?: string,
   createdAt?: number,
   deletedAt?: number,
+  updatedAt?: number,
   status?: string,
   workout: Workout
   sets: WorkoutSet[],

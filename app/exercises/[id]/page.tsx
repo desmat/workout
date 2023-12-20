@@ -1,5 +1,6 @@
 'use client'
 
+import { User } from 'firebase/auth';
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from "react";
 import BackLink from '@/app/_components/BackLink';
@@ -7,6 +8,7 @@ import Link from "@/app/_components/Link"
 import { Page, PageLinks } from "@/app/_components/Page";
 import useExercises from "@/app/_hooks/exercises";
 import useUser from "@/app/_hooks/user";
+import { Exercise } from "@/types/Exercise";
 import Loading from "./loading";
 
 function ExerciseVariation({ name, description, instructions, level, showDetails }: any) {
@@ -41,7 +43,7 @@ function ExerciseVariation({ name, description, instructions, level, showDetails
           {description}
         </div>
       } */}
-      {instructions && instructions.length > 0 && 
+      {instructions && instructions.length > 0 &&
         // <div className="_opacity-60 _italic">
         //   {instructions}
         // </div>
@@ -59,12 +61,12 @@ function ExerciseVariation({ name, description, instructions, level, showDetails
 function Exercise({ id, instructions, variations, showDetails }: any) {
   return (
     <p className="text-left pb-4 flex flex-col gap-4">
-      {instructions && instructions.length > 0 && 
+      {instructions && instructions.length > 0 &&
         <div className="flex flex-col _gap-2">
           {/* <div className="text-dark-1 font-bold">Instructions</div> */}
           <h2>Instructions</h2>
           <ul className="list-disc ml-6">
-            {instructions && instructions .map((step: string, i: number) => <li key={i}>{step}</li>)
+            {instructions && instructions.map((step: string, i: number) => <li key={i}>{step}</li>)
             }
           </ul>
         </div>
@@ -99,11 +101,18 @@ async function handleDeleteExercise(id: string, deleteFn: any, router: any) {
   }
 }
 
+const handleRegenerate = (user: User, exercise: Exercise, generateFn: any) => {
+  console.log('>> app.trivia[id].page.regenerate()', { exercise, user });
+  generateFn(user, exercise).then((res: any) => {
+    console.log('>> app.trivia[id].page.regenerate() after generate', { res });
+  });
+}
+
 export default function Component({ params }: { params: { id: string } }) {
   // console.log('>> app.trivia[id].page.render()', { id: params.id });
   const router = useRouter();
   const [showDetails, setshowDetails] = useState(false);
-  const [exercises, loaded, load, deleteExercise] = useExercises((state: any) => [state.exercises, state.loaded, state.load, state.deleteExercise]);
+  const [exercises, loaded, load, deleteExercise, generateExercise] = useExercises((state: any) => [state.exercises, state.loaded, state.load, state.deleteExercise, state.generateExercise]);
   const [user] = useUser((state: any) => [state.user]);
   const exercise = exercises.filter((exercise: any) => exercise.id == params.id)[0];
 
@@ -120,8 +129,7 @@ export default function Component({ params }: { params: { id: string } }) {
   const links = (
     <PageLinks>
       <BackLink />
-      {/* {exercise && <Link onClick={() => setshowDetails(!showDetails)}>{showDetails ? "Hide details" : "Show details"}</Link>} */}
-      {/* {game && <Link onClick={() => handlePlayGame(params.id, startGame, router)}>Play</Link>} */}
+      {exercise && user && (user.uid == exercise.createdBy || user.admin) && <Link onClick={() => handleRegenerate(user, exercise, generateExercise)}>Regenerate</Link>}
       {exercise && user && (user.uid == exercise.createdBy || user.admin) && <Link style="warning" onClick={() => handleDeleteExercise(params.id, deleteExercise, router)}>Delete</Link>}
     </PageLinks>
   );
@@ -138,9 +146,14 @@ export default function Component({ params }: { params: { id: string } }) {
   return (
     <Page>
       <h1 className="text-center capitalize">{exercise.name}</h1>
-      {exercise.description &&
+      {exercise.description && exercise.status != "generating" &&
         <p className='italic text-center'>
           {exercise.description}
+        </p>
+      }
+      {exercise.status == "generating" &&
+        <p className='italic text-center'>
+          (Generating...)
         </p>
       }
       <div className="mt-4 mb-6">

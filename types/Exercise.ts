@@ -11,6 +11,7 @@ export type Exercise = {
   createdBy?: string,
   createdAt?: number,
   deletedAt?: number,
+  updatedAt?: number,
   prompt?: string,
   status?: string,
   description?: string,

@@ -11,7 +11,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const model = "gpt-3.5-turbo";
+const model = "gpt-3.5-turbo"; // seems good and fast enough for now
 // const model = "gpt-4";
 
 export async function generateExercise(name: string): Promise<any> {
@@ -19,7 +19,7 @@ export async function generateExercise(name: string): Promise<any> {
 
   // // for testing
   // return new Promise((resolve, reject) => resolve(  {
-  //   "name": "NAME",
+  //   "name": name,
   //   "description": "DESCRIPTION",
   //   "instructions": "1. STEP 1\n2. STEP 2",
   // },));

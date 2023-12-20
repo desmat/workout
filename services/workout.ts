@@ -2,7 +2,6 @@
 
 import { User } from 'firebase/auth';
 import moment from 'moment';
-import OpenAI from 'openai';
 import { Exercise } from "@/types/Exercise";
 import { Workout, WorkoutSession, WorkoutSet } from '@/types/Workout';
 import { createExercise, getExercises } from './exercise';
@@ -12,42 +11,39 @@ import(`@/services/stores/${process.env.STORE_TYPE}`).then((importedStore) => {
   store = importedStore;
 });
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+function summarizeExercise(exercise: Exercise): Exercise {
+  console.log(`>> services.workout.summarizeExercise`, { exercise });
+  return {
+    id: exercise.id,
+    name: exercise.name, 
+    description: exercise.description,
+    status: exercise.status,
+  };
+}
 
-async function generateWorkout(type: string, numItems: number): Promise<any> {
-  console.log(`>> services.workout.generateWorkout`, { type, numItems });
+function summarizeWorkout(workout: Workout): Workout {
+  console.log(`>> services.workout.summarizeWorkout`, { workout });
+  return {
+    ...workout,
+    exercises: workout.exercises ? workout.exercises.map(summarizeExercise) : [],
+  }
+}
 
-  // // for testing
-  // return new Promise((resolve, reject) => resolve({ prompt: "THE PROMPT", items: SAMPLE_WORKOUT.items as WorkoutSet[] }));
+function summarizeWorkoutSession(session: WorkoutSession): WorkoutSession {
+  console.log(`>> services.workout.summarizeWorkoutSession`, { session });
+  return {
+    ...session,
+    workout: summarizeWorkout(session.workout),
+    sets: session.sets ? session.sets.map(summarizeWorkoutSet) : [],
+  }
+}
 
-  //   const prompt = `Generate a menu with ${numItems} ${type} items.`;
-  //   const completion = await openai.chat.completions.create({
-  //     // model: 'gpt-3.5-turbo',
-  //     model: 'gpt-4',
-  //     // model: "gpt-3.5-turbo-1106",
-  //     // response_format: { type: "json_object" },    
-  //     messages: [
-  //       {
-  //         role: 'system',
-  //         content: `You are an assistant that receives a request to create a menu with a given style. 
-  // Please respond ONLY with JSON data containing name, a short description, ingredients and preparation instructions with only the following keys: "name", "description", "ingredients", "preparation" with root key "menu"`
-  //       },
-  //       {
-  //         role: 'user',
-  //         content: prompt,
-  //       }
-  //     ],
-  //   });
-
-  //   try {
-  //     console.log("*** RESULTS FROM API", completion);
-  //     console.log("*** RESULTS FROM API (as json)", JSON.stringify(JSON.parse(completion.choices[0].message.content || "{}")));
-  //     return { type, prompt, response: JSON.parse(completion.choices[0]?.message?.content || "{}")};
-  //   } catch (error) {
-  //     console.error("Error reading results", { completion, error });
-  //   }  
+function summarizeWorkoutSet(set: WorkoutSet): WorkoutSet {
+  console.log(`>> services.workout.summarizeWorkoutSet`, { set });
+  return {
+    ...set,
+    exercise: summarizeExercise(set.exercise),
+  }
 }
 
 export async function getWorkouts(user?: User): Promise<Workout[]> {
@@ -60,7 +56,7 @@ export async function getWorkouts(user?: User): Promise<Workout[]> {
   const allExercises = new Map((await getExercises({ ids: exerciseIds })).map((exercise: Exercise) => [exercise.id, exercise]));
 
   // console.log(`>> services.workout.getWorkouts`, { exerciseIds, allExercises });
-
+  
   // const workoutDetails = Promise.all(
   //   workouts.map(async (workout: Workout) => {
   //     if (workout.id) return await getWorkout(workout.id);
@@ -72,7 +68,7 @@ export async function getWorkouts(user?: User): Promise<Workout[]> {
     let exercises = workout.exercises;
     if (workout.exercises) {
       exercises = workout.exercises.map((exercise: Exercise) => {
-        const e = allExercises.get(exercise.id)
+        const e = allExercises.get(exercise.id);
         return e || exercise;
       })
     }
@@ -81,6 +77,7 @@ export async function getWorkouts(user?: User): Promise<Workout[]> {
   });
 
   return workoutDetails;
+
 }
 
 export async function getWorkout(id: string): Promise<Workout> {
@@ -89,9 +86,6 @@ export async function getWorkout(id: string): Promise<Workout> {
   const workout = await store.getWorkout(id);
   console.log(`>> services.workout.getWorkout`, { id, workout });
 
-  // const exercises = workout.exercises && workout.exercises.length > 0
-  //   ? await Promise.all(workout.exercises.map((exercise: Exercise) => getExercise(exercise.id as string)))
-  //   : [];
   const exerciseIds = workout.exercises.map((exercise: Exercise) => exercise.id);
   const exercises = await getExercises({ ids: exerciseIds });
 
@@ -109,20 +103,20 @@ export async function createWorkout(user: User, name: string, exerciseNames: str
     name,
   } as Workout;
 
-  const allExercises = new Map((await getExercises()).map((exercise: Exercise) => [exercise.name.toLocaleLowerCase(), exercise]));
-  const exerciseDetails = await Promise.all(
+  // bring in existing exercises, or create new
+  const allExerciseNames = new Map((await getExercises()).map((exercise: Exercise) => [exercise.name.toLocaleLowerCase(), exercise]));
+  // console.log(`>> services.workout.createworkout`, { allExerciseNames });
+  const exercises = await Promise.all(
     exerciseNames.map((exerciseName: string) => {
-      const exercise = allExercises.get(exerciseName.toLowerCase());
+      const exercise = allExerciseNames.get(exerciseName.toLowerCase());
       if (exercise) return exercise;
 
-      return createExercise(user, exerciseName)
+      // console.log(`>> services.workout.createworkout creating new exercise`, { exerciseName });
+      return createExercise(user, exerciseName);
     })
   );
 
-  const exercises = exerciseDetails.map((exercise: Exercise) => {
-    return { id: exercise.id, name: exercise.name }
-  });
-  const createdWorkout = await store.addWorkout({ ...workout, status: "created", exercises })
+  const createdWorkout = await store.addWorkout(summarizeWorkout({ ...workout, exercises, status: "created" }))
 
   return getWorkout(createdWorkout.id);
 }
@@ -182,19 +176,20 @@ export async function getSessions(user?: User): Promise<WorkoutSession[]> {
   // );
 
   // link up exercises
-  const sessionDetails = sessions.map((session: WorkoutSession) => {
-    let exercises = session.workout?.exercises;
-    if (session.workout?.exercises) {
-      exercises = session.workout?.exercises.map((exercise: Exercise) => {
-        const e = allExercises.get(exercise.id)
-        return e || exercise;
-      })
-    }
+  // const sessionDetails = sessions.map((session: WorkoutSession) => {
+  //   let exercises = session.workout?.exercises;
+  //   if (session.workout?.exercises) {
+  //     exercises = session.workout?.exercises.map((exercise: Exercise) => {
+  //       const e = allExercises.get(exercise.id)
+  //       return e || exercise;
+  //     })
+  //   }
 
-    return { ...session, exercises }
-  });
+  //   return { ...session, exercises }
+  // });
 
-  return sessionDetails;
+  // return sessionDetails;
+  return sessions;
 }
 
 export async function getSession(id: string): Promise<WorkoutSession> {
@@ -217,18 +212,19 @@ export async function getSession(id: string): Promise<WorkoutSession> {
 export async function createSession(user: User, data: any): Promise<WorkoutSession> {
   console.log(`>> services.workout.createSession`, { user, data });
 
+  // only store summaries
   const session = {
     id: data?.id,
     createdBy: user.uid,
     createdAt: moment().valueOf(),
     status: "created",
-    workout: data?.workout as Workout,
+    workout: data.workout,
     sets: [] as WorkoutSet[],
   } as WorkoutSession;
 
   console.log(`>> services.workout.createSession`, { session });
 
-  const createdSession = await store.addWorkoutSession(session);
+  const createdSession = await store.addWorkoutSession(summarizeWorkoutSession(session));
 
   console.log(`>> services.workout.createSession`, { createdSession });
 
@@ -243,7 +239,7 @@ export async function saveSession(user: User, session: WorkoutSession): Promise<
 
   // TODO check something here?
 
-  const savedSession = await store.saveWorkoutSession(session)
+  const savedSession = await store.saveWorkoutSession(summarizeWorkoutSession(session));
 
   return savedSession;
 }

@@ -15,9 +15,9 @@ export function ExerciseEntry({ exercise, user }: any) {
             <Link style="child light" className="ml-2 absolute">View</Link>
           </>
         }
-        {!isReady &&
+        {!isReady && 
           <>
-            {` (${exercise.status})`}
+            {` (${exercise.status || "Unknown"})`}
           </>
         }
       </span>

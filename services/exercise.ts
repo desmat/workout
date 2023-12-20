@@ -12,7 +12,7 @@ import(`@/services/stores/${process.env.STORE_TYPE}`).then((importedStore) => {
 
 
 function parseGeneratedExercise(response: any): Exercise {
-  console.log(`>> services.exercise.parseGeneratedExercise XXX`, { response });
+  console.log(`>> services.exercise.parseGeneratedExercise`, { response });
 
   let res = response.response?.exercise || response.response || response?.exercise || response;
   if (!res) {

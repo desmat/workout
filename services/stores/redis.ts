@@ -48,8 +48,8 @@ export async function getExercises(query?: any): Promise<Exercise[]> {
 
   // console.log(">> services.stores.redis.getExercises", { response });
 
-  if (!response || !response.length) {
-    // console.log('>> services.stores.redis.getExercises(): empty redis key, creating empty list');
+  if (!query && (!response || !response.length)) {
+    console.log('>> services.stores.redis.getExercises(): empty redis key, creating empty list');
     await kv.json.set(exercisesKey, "$", "[]");
     response = await kv.json.get(exercisesKey, jsonGetNotDeleted);
   }

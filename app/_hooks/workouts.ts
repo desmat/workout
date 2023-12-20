@@ -41,11 +41,11 @@ const fetchSession = (putOrPost: "PUT" | "POST", get: any, set: any, newSession:
     body: JSON.stringify(newSession),
   }).then(async (res) => {
     if (res.status != 200) {
-      useAlert.getState().error(`Error ${putOrPost == "PUT" ? "saving" : "creating"} workout session set: ${res.status} (${res.statusText})`);        
+      useAlert.getState().error(`Error ${putOrPost == "PUT" ? "saving" : "creating"} workout session set: ${res.status} (${res.statusText})`);
 
       // revert optimistic 
       const filteredSessions = sessions.filter((session: WorkoutSession) => session?.id != sessionId);
-      set({ sessions: [...filteredSessions, session] });      
+      set({ sessions: [...filteredSessions, session] });
       return;
     }
 
@@ -135,7 +135,7 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
     }
   },
 
-  createWorkout: async (user: User, name: string, exercises: string) => {
+  createWorkout: async (user: User, name: string, exerciseNames: string) => {
     console.log(">> hooks.workout.createWorkout", { name });
 
     // optimistic
@@ -151,9 +151,36 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
     }
     set({ workouts: [...get().workouts, workout] });
 
+    // check if some of the exercises haven't been created yet: if so change status since we'll be generating those
+
+    fetch('/api/exercises', {
+      method: "GET",
+    }).then(async (res) => {
+      if (res.status != 200) {
+        useAlert.getState().error(`Error adding workout: error fetching existing exercises: ${res.status} (${res.statusText})`);
+        return;
+      }
+
+      const data = await res.json();
+      const existingExerciseNames = data.exercises.map((e: Exercise) => e.name.toLowerCase());
+      const nonExistingExercisesNames = exerciseNames
+        .split(/\s*,\s*/)
+        .map((name: string) => name.toLowerCase())
+        .filter((name: string) => !existingExerciseNames.includes(name));
+
+      // update optimistic 
+      if (nonExistingExercisesNames.length > 0) {
+        workout.status = "generating";
+        const workouts = get().workouts.filter((workout: Workout) => workout.id != tempId);
+        set({ workouts: [...workouts, workout] });
+      }
+    });
+
+    // create the workout
+
     fetch('/api/workouts', {
       method: "POST",
-      body: JSON.stringify({ name, exercises }),
+      body: JSON.stringify({ name, exercises: exerciseNames }),
     }).then(async (res) => {
       if (res.status != 200) {
         useAlert.getState().error(`Error adding workout: ${res.status} (${res.statusText})`);
@@ -164,7 +191,7 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
 
       const data = await res.json();
       const workout = data.workout;
-      // remove optimistic post
+      // remove optimistic
       const workouts = get().workouts.filter((workout: Workout) => workout.id != tempId);
       set({ workouts: [...workouts, workout] });
     });

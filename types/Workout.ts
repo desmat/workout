@@ -19,7 +19,7 @@ export type WorkoutSession = {
   deletedAt?: number,
   updatedAt?: number,
   status?: string,
-  workout: Workout
+  workout: Workout,
   sets: WorkoutSet[],
 };
 

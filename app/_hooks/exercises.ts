@@ -13,7 +13,6 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
   load: async (id?: string) => {
     console.log(">> hooks.exercise.load", { id });
 
-    // rest api (optimistic: all or just the one)
     if (id) {
       fetch(`/api/exercises/${id}`).then(async (res) => {
         if (res.status != 200) {
@@ -76,10 +75,71 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
 
       const data = await res.json();
       const exercise = data.exercise;
-      // remove optimistic post
+      // replace optimistic 
       const exercises = get().exercises.filter((exercise: Exercise) => exercise.id != tempId);
       set({ exercises: [...exercises, exercise] });
     });
+  },
+
+  saveExercise: async (user: User, exercise: Exercise) => {
+    console.log(">> hooks.exercise.saveExercise", { exercise });
+
+    // optimistic
+    exercise.status = "generating"
+    const exercises = get().exercises.filter((e: Exercise) => e.id != exercise.id);
+    set({ exercises: [...exercises, exercise] });
+
+    fetch(`/api/exercises/${exercise.id}`, {
+      method: "PUT",
+      body: JSON.stringify({ exercises }),
+    }).then(async (res) => {
+      if (res.status != 200) {
+        useAlert.getState().error(`Error saving exercise: ${res.status} (${res.statusText})`);
+        const exercises = get().exercises.filter((e: Exercise) => e.id != exercise.id);        
+        set({ exercises });
+        return;
+      }
+
+      const data = await res.json();
+      const exercise = data.exercise;
+      // replace optimistic 
+      const exercises = get().exercises.filter((e: Exercise) => e.id != exercise.id);
+      set({ exercises: [...exercises, exercise] });
+    });
+
+    return exercise;
+  },
+
+  generateExercise: async (user: User, exercise: Exercise) => {
+    console.log(">> hooks.exercise.generateExercise", { exercise });
+
+    // optimistic
+    exercise.status = "generating"
+    exercise.description = undefined;
+    exercise.instructions = undefined;
+    exercise.variations = undefined;
+    const exercises = get().exercises.filter((e: Exercise) => e.id != exercise.id);
+    set({ exercises: [...exercises, exercise] });
+
+    fetch(`/api/exercises/${exercise.id}/generate`, {
+      method: "POST",
+      body: JSON.stringify({ exercise }),
+    }).then(async (res) => {
+      if (res.status != 200) {
+        useAlert.getState().error(`Error generating exercise: ${res.status} (${res.statusText})`);
+        const exercises = get().exercises.filter((e: Exercise) => e.id != exercise.id);        
+        set({ exercises });
+        return;
+      }
+
+      const data = await res.json();
+      const updatedExercise = data.exercise as Exercise;
+      // replace optimistic 
+      const exercises = get().exercises.filter((e: Exercise) => e.id != exercise.id);
+      set({ exercises: [...exercises, updatedExercise] });
+    });
+
+    return exercise;
   },
 
   deleteExercise: async (id: string) => {

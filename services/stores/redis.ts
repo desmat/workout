@@ -1,10 +1,8 @@
 // 'use server'
 
-import moment from 'moment';
 import { kv } from "@vercel/kv";
-import { Exercise, ExerciseItem } from '@/types/Exercise';
+import { Exercise } from '@/types/Exercise';
 import { Workout, WorkoutSession, WorkoutSet } from '@/types/Workout';
-import { sampleExercises } from './samples';
 
 const exercisesKey = "exercises";
 const workoutsKey = "workouts";
@@ -76,6 +74,19 @@ export async function addExercise(exercise: Exercise): Promise<Exercise> {
   console.log(">> services.stores.redis.addExercise", { exercise });
 
   const response = await kv.json.arrappend(exercisesKey, "$", exercise);
+  // console.log("REDIS response", response);
+
+  return new Promise((resolve) => resolve(exercise));
+}
+
+export async function saveExercise(exercise: Exercise): Promise<Exercise> {
+  console.log(">> services.stores.redis.saveExercise", { exercise });
+
+  if (!exercise.id) {
+    throw `Cannot save exercise with null id`;
+  }
+
+  const response = await kv.json.set(exercisesKey, jsonGetById(exercise.id), exercise);
   // console.log("REDIS response", response);
 
   return new Promise((resolve) => resolve(exercise));
@@ -197,7 +208,7 @@ export async function saveWorkoutSession(session: WorkoutSession): Promise<Worko
   }
 
   const response = await kv.json.set(workoutSessionKey, jsonGetById(session.id), session);
-  console.log("REDIS response", response);
+  // console.log("REDIS response", response);
 
   return new Promise((resolve) => resolve(session));
 }

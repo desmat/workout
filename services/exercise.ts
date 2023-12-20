@@ -2,53 +2,57 @@
 
 import { User } from 'firebase/auth';
 import moment from 'moment';
-import OpenAI from 'openai';
-import { Exercise, ExerciseItem } from "@/types/Exercise";
+import * as openai from "@/services/openai";
+import { Exercise } from "@/types/Exercise";
 
 let store: any;
 import(`@/services/stores/${process.env.STORE_TYPE}`).then((importedStore) => {
-    store = importedStore;
+  store = importedStore;
 });
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
 
-const SAMPLE_EXERCISE = {name: "The Exercise", items: []};
+function parseGeneratedExercise(response: any): Exercise {
+  console.log(`>> services.exercise.parseGeneratedExercise XXX`, { response });
 
+  let res = response.response?.exercise || response.response || response?.exercise || response;
+  if (!res) {
+    console.error("No exercise items generated");
+    throw `No exercise items generated`
+  }
 
-async function generateExercise(type: string, numItems: number): Promise<any> {
-  console.log(`>> services.exercise.generateExercise`, { type, numItems });
+  console.log(">> services.exercise.parseGeneratedExercise", { res });
 
-  // for testing
-  return new Promise((resolve, reject) => resolve({ prompt: "THE PROMPT", items: SAMPLE_EXERCISE.items as ExerciseItem[] }));
+  const parseInstructionRegex = /(?:(?:Step\s*)?\d+\.?\s*)?(.*)\s?/i;  
+  const parseInstruction = (step: string) => {
+    const match = step.match(parseInstructionRegex)
+    if (match && match.length > 0) {
+      return match[1];
+    }
 
-//   const prompt = `Generate a menu with ${numItems} ${type} items.`;
-//   const completion = await openai.chat.completions.create({
-//     // model: 'gpt-3.5-turbo',
-//     model: 'gpt-4',
-//     // model: "gpt-3.5-turbo-1106",
-//     // response_format: { type: "json_object" },    
-//     messages: [
-//       {
-//         role: 'system',
-//         content: `You are an assistant that receives a request to create a menu with a given style. 
-// Please respond ONLY with JSON data containing name, a short description, ingredients and preparation instructions with only the following keys: "name", "description", "ingredients", "preparation" with root key "menu"`
-//       },
-//       {
-//         role: 'user',
-//         content: prompt,
-//       }
-//     ],
-//   });
+    return step;
+  }
 
-//   try {
-//     console.log("*** RESULTS FROM API", completion);
-//     console.log("*** RESULTS FROM API (as json)", JSON.stringify(JSON.parse(completion.choices[0].message.content || "{}")));
-//     return { type, prompt, response: JSON.parse(completion.choices[0]?.message?.content || "{}")};
-//   } catch (error) {
-//     console.error("Error reading results", { completion, error });
-//   }  
+  const fixInstructions = (exercise: any) => {
+    console.log(">> services.exercise.parseGeneratedExercise.fixInstructions", { exercise });
+    exercise.instructions = Array.isArray(exercise?.instructions)
+      ? exercise.instructions
+        .map(parseInstruction)
+        .filter(Boolean)
+      : exercise.instructions
+        .split(/\n/)
+        .map(parseInstruction)
+        .filter(Boolean);
+
+    return exercise;
+  }
+
+  res = fixInstructions(res);
+
+  if (res.variations) {
+    res.variations = res.variations.map(fixInstructions);
+  }
+
+  return res as Exercise;
 }
 
 export async function getExercises(query?: any): Promise<Exercise[]> {
@@ -72,22 +76,36 @@ export async function getExercise(id: string): Promise<Exercise> {
 }
 
 export async function createExercise(user: User, name: string): Promise<Exercise> {
-  // const res = await generateExercise(type, numItems);
-  
-  // if (!res.response.exercise || !res.response) {
-  //   console.error("No exercise items generated", res.response);
-  //   throw `No exercise items generated`
-  // }
+  console.log(">> services.exercise.createExercise", { name, user });
 
-  const exercise = {
+  let exercise = {
     id: crypto.randomUUID(),
     createdBy: user.uid,
     createdAt: moment().valueOf(),
-    status: "created",
+    status: "generating",
     name,
-  }
+  } as Exercise;
 
-  return store.addExercise(exercise);
+  let savedExercise = await store.addExercise(exercise);
+
+  return await generateExercise(user, savedExercise);
+}
+
+export async function generateExercise(user: User, exercise: Exercise): Promise<Exercise> {
+  console.log(">> services.exercise.generateExercise", { exercise, user });
+
+  exercise.status = "generating";
+  exercise.instructions = undefined;
+  exercise.variations = undefined
+
+  let res = await openai.generateExercise(exercise.name);
+  let generatedExercise = parseGeneratedExercise(res);
+
+  console.log(">> services.exercise.createExercise (fixed instructions)", { generatedExercise });
+
+  exercise = { ...exercise, ...generatedExercise, status: "created", updatedAt: moment().valueOf() };
+
+  return store.saveExercise(exercise);
 }
 
 export async function deleteExercise(user: any, id: string): Promise<void> {
@@ -106,6 +124,15 @@ export async function deleteExercise(user: any, id: string): Promise<void> {
     throw `Unauthorized`;
   }
 
-  store.deleteExercise(id);
-  return new Promise((resolve, reject) => resolve());
+  return store.deleteExercise(id);
+}
+
+export async function saveExercise(user: any, exercise: Exercise): Promise<void> {
+  console.log(">> services.exercise.deleteExercise", { exercise, user });
+
+  if (!(exercise.createdBy == user.uid || user.customClaims?.admin)) {
+    throw `Unauthorized`;
+  }
+
+  return store.savedExercise(exercise);
 }

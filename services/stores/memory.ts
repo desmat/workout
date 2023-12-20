@@ -50,20 +50,16 @@ export async function getExercise(id: string): Promise<Exercise | null> {
 export async function addExercise(exercise: Exercise): Promise<Exercise> {
     console.log(">> services.stores.memory.addExercise content:", { exercise });
     
-    // console.log('>> services.stores.memory.addExercise(): waiting...');
-    // await new Promise((resolve) => setTimeout(() => resolve(42), 1000));
-    // console.log('>> services.stores.memory.getExercise(): done waiting!');
-
     exercise.status = "created";
     memoryStore.exercises.push(exercise);
     return exercise;
 }
 
-export async function editExercise(exercise: Exercise): Promise<Exercise> {
-    console.log(">> services.stores.memory.editExercise exercise:", exercise);
+export async function saveExercise(exercise: Exercise): Promise<Exercise> {
+    console.log(">> services.stores.memory.saveExercise:", { exercise });
 
     if (!exercise.id) {
-        throw `Cannot delete exercise with null id`;
+        throw `Cannot save exercise with null id`;
     } 
 
     const exercises = memoryStore.exercises.filter((p: Exercise) => p.id != exercise.id);

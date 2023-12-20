@@ -3,7 +3,7 @@
 import { User } from 'firebase/auth';
 import moment from 'moment';
 import OpenAI from 'openai';
-import { Exercise, ExerciseItem } from "@/types/Exercise";
+import { Exercise } from "@/types/Exercise";
 import { Workout, WorkoutSession, WorkoutSet } from '@/types/Workout';
 import { createExercise, getExercises } from './exercise';
 

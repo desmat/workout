@@ -1,9 +1,9 @@
-export const maxDuration = 300;
-// export const dynamic = 'force-dynamic';
-
 import { NextResponse } from 'next/server'
 import { getExercises, createExercise } from '@/services/exercise';
 import { validateUserSession } from '@/services/users';
+
+export const maxDuration = 300;
+// export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
   console.log('>> app.api.exercises.GET');

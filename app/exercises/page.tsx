@@ -14,24 +14,19 @@ import Loading from "./loading";
 import { byName } from '@/utils/sort';
 // import { sortByName } from '@/utils/arrays';
 
-async function handleCreateExercise(createExercise: any, router: any, user: User | undefined) {
-  // console.log("*** handleCreateGame", { user, name: user.displayName?.split(/\s+/) });
-  // const userName = (user && !user.isAnonymous && user.displayName)
-  //   ? `${user.displayName.split(/\s+/)[0]}'s`
-  //   : "A";
-
+async function handleCreateExercise(createExercise: any, generateExercise: any, router: any, user: User | undefined) {
   const name = window.prompt("Name?", "");
 
   if (name) {
-    const ret = await createExercise(user, name);
-    console.log("*** handleCreateExercise", { ret });
-    
+    const created = await createExercise(user, name);
+    // console.log("*** handleCreateExercise", { created });
 
-    if (ret) {
-      router.push(`/exercises/${ret.id}`);
+    if (created) {
+      const generating = generateExercise(user, created);
+      // console.log("*** handleCreateExercise", { generating });
+      router.push(`/exercises/${created.id}`);
       return true
     }
-
   }
 
   return false;
@@ -40,7 +35,7 @@ async function handleCreateExercise(createExercise: any, router: any, user: User
 export default function Component() {
   const router = useRouter();
   const [user] = useUser((state: any) => [state.user]);
-  const [exercises, loaded, load, createExercise, error] = useExercises((state: any) => [state.exercises, state.loaded, state.load, state.createExercise, state.error]);
+  const [exercises, loaded, load, createExercise, generateExercise] = useExercises((state: any) => [state.exercises, state.loaded, state.load, state.createExercise, state.generateExercise]);
   const params = useSearchParams();
   const uidFilter = params.get("uid");
   const filteredExercises = uidFilter ? exercises.filter((exercise: Exercise) => exercise.createdBy == uidFilter) : exercises;
@@ -56,7 +51,7 @@ export default function Component() {
       <div title={user ? "" : "Login to create new exercise"}>
         <Link
           className={user ? "" : "cursor-not-allowed"}
-          onClick={() => /* user && */ handleCreateExercise(createExercise, router, user)}
+          onClick={() => /* user && */ handleCreateExercise(createExercise, generateExercise, router, user)}
         >
           Create New Exercise
         </Link>

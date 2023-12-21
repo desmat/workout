@@ -127,15 +127,15 @@ async function handleCompleteSession(user: User, session: WorkoutSession, fn: an
   // }
 }
 
-async function handleStartSet(user: User, workout: Workout, session: WorkoutSession, exercise: Exercise, startSetFn: any, startSessionFn: any) {
-  console.log('>> app.workout[id].session.handleStartSet()', { user, workout, session, exercise });
+async function handleStartSet(user: User, workout: Workout, session: WorkoutSession, exercise: Exercise, offset: number, startSetFn: any, startSessionFn: any) {
+  console.log('>> app.workout[id].session.handleStartSet()', { user, workout, session, exercise, offset });
 
   let _session = session;
   if (!_session) {
     _session = await startSessionFn(user, workout.id);
   }
 
-  const set = startSetFn(user, workout.id, _session.id, exercise);
+  const set = startSetFn(user, workout.id, _session.id, exercise, offset);
   console.log('>> app.workout[id].session.handleStartSet()', { set });
   // if (session) {
   //   router.push(`/workouts/${workout.id}/session`);
@@ -143,6 +143,7 @@ async function handleStartSet(user: User, workout: Workout, session: WorkoutSess
 }
 
 const Timer = ({ ms }: { ms: number }) => {
+  // console.log('>> app.workout[id].Page. Timer', { ms });
   const s = Math.floor(ms / 1000) % 60;
   const m = Math.floor(ms / 1000 / 60) % 60;
   const h = Math.floor(ms / 60 / 60 / 1000);
@@ -185,19 +186,14 @@ export default function Component({ params }: { params: { id: string } }) {
   const workout = workouts && workouts.filter((workout: any) => workout.id == params.id)[0];
   const filteredSessions = sessions && workout && sessions.filter((session: WorkoutSession) => session?.workout?.id == workout.id);
   const session = filteredSessions && filteredSessions[filteredSessions.length - 1];
-  const sessionStarted = session?.status == "started";
+  const sessionStarted = ["stopped", "started"].includes(session?.status);
+  const sessionPaused = ["stopped"].includes(session?.status);
   const currentSet = session && sessionStarted && session.sets && session.sets.sort(byCreatedAtDesc)[0];
   const [previousSet, setPreviousSet] = useState<WorkoutSet | undefined>(undefined);
   const [currentSetDuration, setCurrentSetDuration] = useState(0);
   let [timer, setTimer] = useState(0);
 
-  const updateCurrentSetDurection = () => {
-    if (currentSet && currentSet.startedAt) {
-      // console.log('>> app.workouts[id].session.Page useEffect(currentSet) TIC TOK!', { currentSet, timer });
-      setCurrentSetDuration((currentSet.duration || 0) + moment().valueOf() - currentSet.startedAt);
-    }
-  }
-  // console.log('>> app.workouts[id].session.Page.render()', { id: params.id, workout, sessions, session });
+  console.log('>> app.workouts[id].session.Page.render()', { id: params.id, workout, sessions, session, currentSet });
 
   useEffect(() => {
     load(params.id);
@@ -207,13 +203,6 @@ export default function Component({ params }: { params: { id: string } }) {
     if (workout?.id) loadSessions(workout.id);
   }, [workout?.id]);
 
-  useEffect(() => {
-    setCurrentSetDuration(0);
-
-    return () => {
-      setCurrentSetDuration(0);
-    }
-  }, [session]);
 
   useEffect(() => {
     console.log('>> app.workouts[id].session.Page useEffect(currentSet)', { currentSet, previousSet });
@@ -225,13 +214,18 @@ export default function Component({ params }: { params: { id: string } }) {
         setTimer(0);
       }
 
-      timer = setInterval(() => updateCurrentSetDurection(), 500) as any;
+      timer = setInterval(() => {
+        if (currentSet && currentSet.startedAt) {
+          console.log('>> app.workouts[id].session.Page useEffect(currentSet) TIC TOK!', { currentSet, timer });
+          setCurrentSetDuration((currentSet.duration || 0) + moment().valueOf() - currentSet.startedAt);
+        }
+      }, 500) as any;
 
       console.log('>> app.workouts[id].session.Page useEffect(currentSet) timer kicked off', { currentSet, timer });
 
       setTimer(timer);
       setPreviousSet(currentSet);
-      setCurrentSetDuration(0);
+      setCurrentSetDuration(currentSet.duration);
     }
 
     return () => {
@@ -242,7 +236,7 @@ export default function Component({ params }: { params: { id: string } }) {
         setPreviousSet(undefined);
       }
     }
-  }, [currentSet?.id, session?.id]);
+  }, [currentSet?.id, session?.id, session?.status]);
 
   if (!loaded) {
     return <Loading />
@@ -253,9 +247,10 @@ export default function Component({ params }: { params: { id: string } }) {
       <BackLink />
       {/* {workout && <Link onClick={() => setshowDetails(!showDetails)}>{showDetails ? "Hide details" : "Show details"}</Link>} */}
       {workout && user && !session && <Link onClick={() => handleStartSession(user, workout, startSession)}>Start</Link>}
-      {workout && user && ["stopped", "started"].includes(session?.status) && <Link onClick={() => handleCompleteSession(user, session, completeSession)}>Complete</Link>}
-      {workout && user && sessionStarted && <Link onClick={() => handleStopSession(user, session, stopSession)}>Pause</Link>}
+      {workout && user && sessionStarted && !sessionPaused && <Link onClick={() => handleStopSession(user, session, stopSession)}>Pause</Link>}
       {workout && user && session?.status == "stopped" && <Link onClick={() => handleResumeSession(user, session, resumeSession)}>Resume</Link>}
+      {workout && user && sessionStarted && <Link onClick={() => handleCompleteSession(user, session, completeSession)}>Complete</Link>}
+      {workout && user && sessionStarted && (currentSet.offset < workout.exercises.length - 1) && <Link onClick={() => handleStartSet(user, workout, session, workout.exercises[currentSet.offset + 1], currentSet.offset + 1, startSet, startSession)}>Next</Link>}
       {/* {workout && user && (user.uid == workout.createdBy || user.admin) && <Link style="warning" onClick={() => handleDeleteWorkout(params.id, deleteWorkout, router)}>Delete</Link>} */}
     </PageLinks>
   );
@@ -286,7 +281,7 @@ export default function Component({ params }: { params: { id: string } }) {
       </div>
       <p className='text-center'>
         <span
-          className={`font-bold text-6xl text-dark-1 transition-all${["stopped", "started"].includes(session?.status) ? " cursor-pointer" : ""}${session?.status == "stopped" ? " animate-pulse" : ""}`}
+          className={`font-bold text-6xl text-dark-1 transition-all${["stopped", "started"].includes(session?.status) ? " cursor-pointer" : ""}${session?.status == "stopped" ? " animate-pulse opacity-50" : ""}`}
           title={
             session?.status == "stopped"
               ? "Resume"
@@ -304,7 +299,7 @@ export default function Component({ params }: { params: { id: string } }) {
                 : null;
           }}
         >
-          <Timer ms={currentSetDuration} />
+          <Timer ms={sessionPaused && currentSet && currentSet.duration || currentSetDuration || 0} />
         </span>
       </p>
       {workout && workout.exercises && workout.exercises.length > 0 &&
@@ -323,8 +318,17 @@ export default function Component({ params }: { params: { id: string } }) {
                 // .sort(byName)
                 .map((exercise: Exercise, i: number) => {
                   return (
-                    <Link key={i} style="primary" className="_bg-yellow-200 mx-auto text-2xl" onClick={() => handleStartSet(user, workout, session, exercise, startSet, startSession)}>
-                      <span className={`_text-dark-1 capitalize ${exercise.id == currentSet?.exercise?.id ? " text-dark-1 font-bold" : " font-semibold"}`}>{exercise.id == currentSet?.exercise?.id ? `>> ${exercise.name} <<` : exercise.name}</span>
+                    <Link
+                      key={i}
+                      style="primary"
+                      className="_bg-yellow-200 mx-auto text-2xl"
+                      onClick={() => handleStartSet(user, workout, session, exercise, i, startSet, startSession)}
+                    >
+                      <span
+                        className={`_text-dark-1 capitalize ${i == currentSet?.offset && sessionStarted && !sessionPaused ? " text-dark-1 font-bold" : " font-semibold"}`}
+                      >
+                        {i == currentSet?.offset ? `>> ${exercise.name} <<` : exercise.name}
+                      </span>
                       {/* <Link style="child light" className="ml-2 absolute">{sessionStarted ? "Next" : "Start"}</Link> */}
                     </Link>
                   )
@@ -355,48 +359,7 @@ export default function Component({ params }: { params: { id: string } }) {
               })
           }
         </div>
-      }
-      {
-        // session &&
-        //   <div className="md:self-center flex flex-col gap-3 p-6">
-        //     <div className="md:self-center font-bold">Session details</div>
-        //     {
-        //       Object.entries(session)
-        //         .filter(([k, v]) => !["workout", "_sets"].includes(k))
-        //         .map(([k, v]: any) => {
-        //           // if (k == "sets") {
-        //           //   return (
-        //           //     <div className="_px-0.5">
-        //           //       <span className="text-dark-0 font-semibold">Sets:</span> {v.map((set: WorkoutSet) => `${set.exercise.id} (${set.status})`).join(", ")}
-        //           //       {/* <span className="text-dark-0 font-semibold">Sets:</span> {v.length} */}
-        //           //     </div>
-        //           //   )
-        //           // }
-        //           return (
-        //             <div className="_px-0.5">
-        //               <span className="text-dark-0 font-semibold">{k}:</span> {JSON.stringify(v)}
-        //             </div>
-        //           )
-        //         })
-        //     }
-        //   </div>
-      }
-      {/* {currentSet &&
-        <div className="md:self-center flex flex-col gap-3 p-6">
-          <div className="md:self-center font-bold">Current Set</div>
-          {
-            Object.entries(currentSet)
-              .filter(([k, v]) => !["workout", "sets"].includes(k))
-              .map(([k, v]: any) => {
-                return (
-                  <div className="_px-0.5">
-                    <span className="text-dark-0 font-semibold">{k}:</span> {JSON.stringify(v)}
-                  </div>
-                )
-              })
-          }
-        </div>
-      } */}
+      }       
 
       <div className="_bg-purple-100 flex flex-grow items-end justify-center h-full mt-2 -mb-0">
         {links}

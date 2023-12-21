@@ -10,7 +10,6 @@ import(`@/services/stores/${process.env.STORE_TYPE}`).then((importedStore) => {
   store = importedStore;
 });
 
-
 function parseGeneratedExercise(response: any): Exercise {
   console.log(`>> services.exercise.parseGeneratedExercise`, { response });
 
@@ -24,7 +23,7 @@ function parseGeneratedExercise(response: any): Exercise {
 
   const parseInstructionRegex = /(?:(?:Step\s*)?\d+\.?\s*)?(.*)\s?/i;  
   const parseInstruction = (step: string) => {
-    const match = step.match(parseInstructionRegex)
+    const match = step && step.match(parseInstructionRegex)
     if (match && match.length > 0) {
       return match[1];
     }
@@ -34,14 +33,16 @@ function parseGeneratedExercise(response: any): Exercise {
 
   const fixInstructions = (exercise: any) => {
     console.log(">> services.exercise.parseGeneratedExercise.fixInstructions", { exercise });
-    exercise.instructions = Array.isArray(exercise?.instructions)
-      ? exercise.instructions
-        .map(parseInstruction)
-        .filter(Boolean)
-      : exercise.instructions
-        .split(/\n/)
-        .map(parseInstruction)
-        .filter(Boolean);
+    if (exercise?.instructions) {
+      exercise.instructions = Array.isArray(exercise.instructions)
+        ? exercise.instructions
+          .map(parseInstruction)
+          .filter(Boolean)
+        : exercise.instructions
+          .split(/\n/)
+          .map(parseInstruction)
+          .filter(Boolean);
+    }
 
     return exercise;
   }
@@ -82,13 +83,11 @@ export async function createExercise(user: User, name: string): Promise<Exercise
     id: crypto.randomUUID(),
     createdBy: user.uid,
     createdAt: moment().valueOf(),
-    status: "generating",
+    status: "created",
     name,
   } as Exercise;
 
-  let savedExercise = await store.addExercise(exercise);
-
-  return await generateExercise(user, savedExercise);
+  return store.addExercise(exercise);
 }
 
 export async function generateExercise(user: User, exercise: Exercise): Promise<Exercise> {

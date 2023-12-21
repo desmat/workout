@@ -33,4 +33,5 @@ export type WorkoutSet = {
   duration?: number,
   reps?: number,
   exercise: Exercise,
+  offset: number,
 }

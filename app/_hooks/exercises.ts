@@ -16,7 +16,7 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
     if (id) {
       fetch(`/api/exercises/${id}`).then(async (res) => {
         if (res.status != 200) {
-          useAlert.getState().error(`Error fetching exercise ${id}: ${res.status} (${res.statusText})`);        
+          useAlert.getState().error(`Error fetching exercise ${id}: ${res.status} (${res.statusText})`);
           set({ loaded: true });
           return;
         }
@@ -30,7 +30,7 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
     } else {
       fetch('/api/exercises').then(async (res) => {
         if (res.status != 200) {
-          useAlert.getState().error(`Error fetching exercises: ${res.status} (${res.statusText})`);        
+          useAlert.getState().error(`Error fetching exercises: ${res.status} (${res.statusText})`);
           return;
         }
 
@@ -62,22 +62,25 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
     }
     set({ exercises: [...get().exercises, exercise] });
 
-    fetch('/api/exercises', {
-      method: "POST",
-      body: JSON.stringify({ name }),
-    }).then(async (res) => {
-      if (res.status != 200) {
-        useAlert.getState().error(`Error adding exercise: ${res.status} (${res.statusText})`);
-        const exercises = get().exercises.filter((exercise: Exercise) => exercise.id != tempId);        
-        set({ exercises });
-        return;
-      }
+    return new Promise((resolve, reject) => {
+      fetch('/api/exercises', {
+        method: "POST",
+        body: JSON.stringify({ name }),
+      }).then(async (res) => {
+        if (res.status != 200) {
+          useAlert.getState().error(`Error adding exercise: ${res.status} (${res.statusText})`);
+          const exercises = get().exercises.filter((exercise: Exercise) => exercise.id != tempId);
+          set({ exercises });
+          return reject(res.statusText);
+        }
 
-      const data = await res.json();
-      const exercise = data.exercise;
-      // replace optimistic 
-      const exercises = get().exercises.filter((exercise: Exercise) => exercise.id != tempId);
-      set({ exercises: [...exercises, exercise] });
+        const data = await res.json();
+        const exercise = data.exercise;
+        // replace optimistic 
+        const exercises = get().exercises.filter((exercise: Exercise) => exercise.id != tempId);
+        set({ exercises: [...exercises, exercise] });
+        return resolve(exercise);
+      });
     });
   },
 
@@ -85,61 +88,63 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
     console.log(">> hooks.exercise.saveExercise", { exercise });
 
     // optimistic
-    exercise.status = "generating"
+    exercise.status = "saving";
     const exercises = get().exercises.filter((e: Exercise) => e.id != exercise.id);
     set({ exercises: [...exercises, exercise] });
 
-    fetch(`/api/exercises/${exercise.id}`, {
-      method: "PUT",
-      body: JSON.stringify({ exercises }),
-    }).then(async (res) => {
-      if (res.status != 200) {
-        useAlert.getState().error(`Error saving exercise: ${res.status} (${res.statusText})`);
-        const exercises = get().exercises.filter((e: Exercise) => e.id != exercise.id);        
-        set({ exercises });
-        return;
-      }
+    return new Promise((resolve, reject) => {
+      fetch(`/api/exercises/${exercise.id}`, {
+        method: "PUT",
+        body: JSON.stringify({ exercise }),
+      }).then(async (res) => {
+        if (res.status != 200) {
+          useAlert.getState().error(`Error saving exercise: ${res.status} (${res.statusText})`);
+          const exercises = get().exercises.filter((e: Exercise) => e.id != exercise.id);
+          set({ exercises });
+          return reject(res.statusText);
+        }
 
-      const data = await res.json();
-      const exercise = data.exercise;
-      // replace optimistic 
-      const exercises = get().exercises.filter((e: Exercise) => e.id != exercise.id);
-      set({ exercises: [...exercises, exercise] });
+        const data = await res.json();
+        const exercise = data.exercise;
+        // replace optimistic 
+        const exercises = get().exercises.filter((e: Exercise) => e.id != exercise.id);
+        set({ exercises: [...exercises, exercise] });
+        return resolve(exercise);
+      });
     });
-
-    return exercise;
   },
 
   generateExercise: async (user: User, exercise: Exercise) => {
     console.log(">> hooks.exercise.generateExercise", { exercise });
 
     // optimistic
-    exercise.status = "generating"
+    exercise.status = "generating";
     exercise.description = undefined;
     exercise.instructions = undefined;
     exercise.variations = undefined;
     const exercises = get().exercises.filter((e: Exercise) => e.id != exercise.id);
     set({ exercises: [...exercises, exercise] });
 
-    fetch(`/api/exercises/${exercise.id}/generate`, {
-      method: "POST",
-      body: JSON.stringify({ exercise }),
-    }).then(async (res) => {
-      if (res.status != 200) {
-        useAlert.getState().error(`Error generating exercise: ${res.status} (${res.statusText})`);
-        const exercises = get().exercises.filter((e: Exercise) => e.id != exercise.id);        
-        set({ exercises });
-        return;
-      }
+    return new Promise((resolve, reject) => {
+      fetch(`/api/exercises/${exercise.id}/generate`, {
+        method: "POST",
+        body: JSON.stringify({ exercise }),
+      }).then(async (res) => {
+        if (res.status != 200) {
+          useAlert.getState().error(`Error generating exercise: ${res.status} (${res.statusText})`);
+          const exercises = get().exercises.filter((e: Exercise) => e.id != exercise.id);
+          set({ exercises });
+          return reject(res.statusText);
+        }
 
-      const data = await res.json();
-      const updatedExercise = data.exercise as Exercise;
-      // replace optimistic 
-      const exercises = get().exercises.filter((e: Exercise) => e.id != exercise.id);
-      set({ exercises: [...exercises, updatedExercise] });
+        const data = await res.json();
+        const updatedExercise = data.exercise as Exercise;
+        // replace optimistic 
+        const exercises = get().exercises.filter((e: Exercise) => e.id != exercise.id);
+        set({ exercises: [...exercises, updatedExercise] });
+        return resolve(updatedExercise);
+      });
     });
-
-    return exercise;
   },
 
   deleteExercise: async (id: string) => {
@@ -160,8 +165,8 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
     fetch(`/api/exercises/${id}`, {
       method: "DELETE",
     }).then(async (res) => {
-      if (res.status != 200) {        
-        useAlert.getState().error(`Error deleting exercises ${id}: ${res.status} (${res.statusText})`);  
+      if (res.status != 200) {
+        useAlert.getState().error(`Error deleting exercises ${id}: ${res.status} (${res.statusText})`);
         set({ exercises, deletedExercises });
         return;
       }

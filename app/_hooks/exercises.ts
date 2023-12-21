@@ -3,6 +3,7 @@ import moment from 'moment';
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import { Exercise } from '@/types/Exercise';
+import { uuid } from '@/utils/misc';
 import useAlert from "./alert";
 
 const useExercises: any = create(devtools((set: any, get: any) => ({
@@ -48,7 +49,7 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
     console.log(">> hooks.exercise.createExercise", { name });
 
     // optimistic
-    const tempId = crypto.randomUUID();
+    const tempId = uuid();
     const exercise = {
       id: tempId,
       createdBy: user.uid,

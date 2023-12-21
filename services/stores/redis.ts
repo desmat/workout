@@ -5,7 +5,8 @@ import { Exercise } from '@/types/Exercise';
 import { Workout, WorkoutSession, WorkoutSet } from '@/types/Workout';
 import moment from "moment";
 
-const exercisesKey = "exercises";
+const exercisesKey = (userId: string) => `exercises`; // a bit verbose, let's KISS while in dev // `exercises:${userId}`;
+const exerciseKey = (userId: string, id: string) => `exercise:${id}`; // a bit verbose, let's KISS while in dev // `exercise:${userId}:${id}`;
 const workoutsKey = "workouts";
 const workoutSessionKey = "workout-sessions";
 const jsonGetNotDeleted = "$[?((@.deletedAt > 0) == false)]";
@@ -14,6 +15,7 @@ const jsonGetByIds = (ids: string[]) => {
   const regex = ids.map((id: string) => `(${id})`).join("|")
   return `$[?(@.id ~= "${regex}")]`;
 }
+
 
 /*
     Some useful commands
@@ -25,58 +27,46 @@ const jsonGetByIds = (ids: string[]) => {
     json.get things '$[?(@.postedBy=="Mathieu Desjarlais")]'
     json.get things '$[?(@.content ~= "(?i)lorem")]'
     json.get things '$[?(@.id ~= "(ID1)|(ID2)")]
-    del things
+    scan 0 match thing:*
+    del thing1 thing2 etc
 */
 
+
+async function checkKey(key: string) {
+  const response = await kv.json.get(key, "$");
+
+  if (!response || !response.length) {
+    console.log('>> services.stores.redis.checkKey(): empty redis key, creating empty list', { key });
+    return kv.json.set(key, "$", "[]");    
+  }  
+}
 
 //
 // Exercises 
 //
 
-export async function getExercises(query?: any): Promise<Exercise[]> {
+export async function getExercises(userId: string, query?: any): Promise<Exercise[]> {
   console.log('>> services.stores.redis.getExercises()', { query });
-
-  // let response;
-  // // if (query) {
-  //   if (query && query.ids && query.ids.length > 0) {
-  //     const keys = query.ids.map((id: string) => `exercise:${id}`);
-  //     console.log(">> services.stores.redis.getExercises", { keys });
-
-  //     response = (await kv.json.mget(keys, "$")).flat();
-  //   // } else {
-  //   //   throw `Unknown query type: ${JSON.stringify(query)}`;
-  //   // }
-  // } 
-  // else {
-  //   response = await kv.json.get("exercise-list", jsonGetNotDeleted);
-  // }
 
   let keys;
   if (query && query.ids && query.ids.length > 0) {
-    keys = query.ids.map((id: string) => `exercise:${id}`);
+    keys = query.ids.map((id: string) => exerciseKey(userId, id));
   } else {
-    const exerciseList = await kv.json.get("exercise-list", jsonGetNotDeleted);
-    keys = exerciseList.map((exercise: Exercise) => `exercise:${exercise.id}`);
+    const exerciseList = await kv.json.get(exercisesKey(userId), jsonGetNotDeleted);
+    keys = exerciseList && exerciseList.map((exercise: Exercise) => exercise.id && exerciseKey(userId, exercise.id)).filter(Boolean);
   }
 
-  console.log(">> services.stores.redis.getExercises", { keys });
-  
-  const response = keys && keys.length > 0 && (await kv.json.mget(keys, "$")).flat() || [];
+  // console.log(">> services.stores.redis.getExercises", { keys });
 
-  // if (!query && (!response || !response.length)) {
-  //   console.log('>> services.stores.redis.getExercises(): empty redis key, creating empty list');
-  //   await kv.json.set(exercisesKey, "$", "[]");
-  //   response = await kv.json.get(exercisesKey, jsonGetNotDeleted);
-  // }
+  const response = keys && keys.length > 0 && (await kv.json.mget(keys, "$")).flat() || [];
 
   return response as Exercise[];
 }
 
-export async function getExercise(id: string): Promise<Exercise | null> {
+export async function getExercise(userId: string, id: string): Promise<Exercise | null> {
   console.log(`>> services.stores.redis.getExercise(${id})`, { id });
 
-  // const response = await kv.json.get(exercisesKey, jsonGetById(id));
-  const response = await kv.json.get(`exercise:${id}`, "$");
+  const response = await kv.json.get(exerciseKey(userId, id), "$");
 
   let exercise: Exercise | null = null;
   if (response) {
@@ -86,46 +76,51 @@ export async function getExercise(id: string): Promise<Exercise | null> {
   return exercise;
 }
 
-export async function addExercise(exercise: Exercise): Promise<Exercise> {
+export async function addExercise(userId: string, exercise: Exercise): Promise<Exercise> {
   console.log(">> services.stores.redis.addExercise", { exercise });
 
-  const response = await kv.json.arrappend(exercisesKey, "$", exercise);
-  const response2 = await kv.json.set(`exercise:${exercise.id}`, "$", exercise);
-  const response3 = await kv.json.arrappend("exercise-list", "$", { id: exercise.id, name: exercise.name });
+  if (!exercise.id) {
+    throw `Cannot save add with null id`;
+  }
 
-  console.log(">> services.stores.redis.saveExercise", { response, response2, response3 });
+  await checkKey(exercisesKey(userId));
+  const responses = await Promise.all([
+    kv.json.arrappend(exercisesKey(userId), "$", exercise),
+    kv.json.set(exerciseKey(userId, exercise.id), "$", exercise),
+  ]);
+
+  console.log(">> services.stores.redis.addExercise", { responses });
 
   return new Promise((resolve) => resolve(exercise));
 }
 
-export async function saveExercise(exercise: Exercise): Promise<Exercise> {
+export async function saveExercise(userId: string, exercise: Exercise): Promise<Exercise> {
   console.log(">> services.stores.redis.saveExercise", { exercise });
 
   if (!exercise.id) {
     throw `Cannot save exercise with null id`;
   }
 
-  const response = await kv.json.set(exercisesKey, jsonGetById(exercise.id), exercise);
-  const response2 = await kv.json.set(`exercise:${exercise.id}`, "$", exercise);
+  const response = await kv.json.set(exerciseKey(userId, exercise.id), "$", exercise);
 
-  console.log(">> services.stores.redis.saveExercise", { response, response2 });
+  console.log(">> services.stores.redis.saveExercise", { response });
 
   return new Promise((resolve) => resolve(exercise));
 }
 
-export async function deleteExercise(id: string): Promise<void> {
+export async function deleteExercise(userId: string, id: string): Promise<void> {
   console.log(">> services.stores.redis.deleteExercise", { id });
 
   if (!id) {
     throw `Cannot delete trivia exercise with null id`;
   }
 
-  // const response = await kv.json.set(exercisesKey, `${jsonGetById(id)}.deletedAt`, moment().valueOf());
-  const response = await kv.json.del(exercisesKey, `${jsonGetById(id)}`);
-  const response2 = await kv.json.set("exercise-list", `${jsonGetById(id)}.deletedAt`, moment().valueOf());
-  const response3 = await kv.json.del(`exercise:${id}`, "$");
+  const responsea = await Promise.all([
+    kv.json.set(exercisesKey(userId), `${jsonGetById(id)}.deletedAt`, moment().valueOf()),
+    kv.json.del(exerciseKey(userId, id), "$")
+  ]);
 
-  console.log(">> services.stores.redis.deleteExercise", { response, response2, response3 });
+  // console.log(">> services.stores.redis.deleteExercise", { responsea });
 }
 
 
@@ -164,6 +159,7 @@ export async function getWorkout(id: string): Promise<Workout | null> {
 export async function addWorkout(workout: Workout): Promise<Workout> {
   console.log(">> services.stores.redis.addWorkout", { workout });
 
+  await checkKey(exercisesKey(workoutsKey));
   const response = await kv.json.arrappend(workoutsKey, "$", workout);
   // console.log("REDIS response", response);
 
@@ -218,6 +214,7 @@ export async function getWorkoutSession(id: string): Promise<WorkoutSession | nu
 export async function addWorkoutSession(session: WorkoutSession): Promise<WorkoutSession> {
   console.log(">> services.stores.redis.addSession", { session });
 
+  await checkKey(exercisesKey(workoutSessionKey));
   const response = await kv.json.arrappend(workoutSessionKey, "$", session);
   // console.log("REDIS response", response);
 

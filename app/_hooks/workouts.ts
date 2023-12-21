@@ -4,6 +4,7 @@ import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import { Workout, WorkoutSession, WorkoutSet } from '@/types/Workout';
 import { Exercise } from '@/types/Exercise';
+import { uuid } from '@/utils/misc';
 import { byCreatedAtDesc } from '@/utils/sort';
 import useAlert from "./alert";
 
@@ -143,7 +144,7 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
     console.log(">> hooks.workout.createWorkout", { name });
 
     // optimistic
-    const tempId = crypto.randomUUID();
+    const tempId = uuid();
     const workout = {
       id: tempId,
       createdBy: user.uid,
@@ -242,7 +243,7 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
     const { workouts } = get();
     const workout = workouts.filter((workout: Workout) => workout.id == id)[0]
     const session = {
-      id: crypto.randomUUID(),
+      id: uuid(),
       createdBy: user.uid,
       createdAt: moment().valueOf(),
       status: "creating",
@@ -360,7 +361,7 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
     session = stopSet(session, "completed");
 
     const sessionSet = {
-      id: crypto.randomUUID(),
+      id: uuid(),
       createdBy: user.uid,
       createdAt: moment().valueOf(),
       startedAt: moment().valueOf(),

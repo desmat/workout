@@ -114,7 +114,10 @@ export default function Component() {
         <h1 className="text-center">Workouts</h1>
 
         <p className='italic text-center'>
-          Let ChatGPT create workouts for you!
+          Let ChatGPT create workouts for you! 
+        </p>
+        <p className='italic text-center'>
+          Simply provide a list of exercise names and our trained AI will fill in the rest!
         </p>
         {/* <p className='italic text-center'>
           Try these: {SuggestedWorkoutTypes.join(", ")}

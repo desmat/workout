@@ -52,7 +52,7 @@ async function handleCreateWorkout(createWorkout: any, router: any, user: User |
   // console.log("*** handleCreateGame", { user, name: user.displayName?.split(/\s+/) });
   const userName = (user && !user.isAnonymous && user.displayName)
     ? `${user.displayName.split(/\s+/)[0]}'s`
-    : "A";
+    : "";
   const hoursSinceMorning = Number(moment().startOf('day').fromNow().split(/\s+/)[0]);
   const prefix = hoursSinceMorning < 13
     ? "Morning"

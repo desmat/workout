@@ -58,14 +58,7 @@ function parseGeneratedExercise(response: any): Exercise {
 
 export async function getExercises(query?: any): Promise<Exercise[]> {
   const exercises = await store.getExercises(query);
-  // const exercises = [
-  //   {id: "1", name: "NAME 1", status: "created", items: SAMPLE_MENU.menu},
-  //   {id: "2", name: "NAME 2", status: "created", items: SAMPLE_MENU.menu},
-  //   {id: "3", name: "NAME 3247973432842", status: "created", items: SAMPLE_MENU.menu},
-  //   {id: "3", status: "created", name: "Italian Pasta", items: SAMPLE_MENU.menu},
-  //   {id: "3", status: "generating", name: "New brunch menu", items: SAMPLE_MENU.menu},
-  // ];
-  return new Promise((resolve, reject) => resolve(exercises));
+  return new Promise((resolve, reject) => resolve(exercises.filter(Boolean)));
 }
 
 export async function getExercise(id: string): Promise<Exercise> {

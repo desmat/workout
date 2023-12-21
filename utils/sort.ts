@@ -1,6 +1,6 @@
 
 export const byName = (a: any, b: any) => {
-  if (a.name.toLowerCase() > b.name.toLowerCase()) return 1;
+  if (a && a.name && b && b.name && a.name.toLowerCase() > b.name.toLowerCase()) return 1;
   return -1;
 }
 

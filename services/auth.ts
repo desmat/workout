@@ -7,17 +7,17 @@ export let app: FirebaseApp;
 export let auth: Auth;
 
 export async function init(callbacks?: any) {
-  // console.log("*** services.auth.init firebaseConfig:", firebaseConfig);
+  console.log("*** services.auth.init firebaseConfig:", firebaseConfig);
 
   const authStateChanged = callbacks?.onAuthStateChanged || function(user: User) {
     if (user) {
       // // User is signed in, see docs for a list of available properties
       // // https://firebase.google.com/docs/reference/js/firebase.User
       // const uid = user.uid;
-      // console.log('onAuthStateChanged', { user });
+      // console.log('*** services.auth.init onAuthStateChanged', { user });
     } else {
       // // User is signed out
-      // console.log('onAuthStateChanged signed out');
+      // console.log('*** services.auth.init onAuthStateChanged signed out');
     }
   };
   
@@ -36,7 +36,7 @@ export async function init(callbacks?: any) {
 }
 
 export function signInAnonymously() {
-  console.log("*** services.auth.signInAnonymously firebaseConfig:", firebaseConfig);
+  // console.log("*** services.auth.signInAnonymously firebaseConfig:", firebaseConfig);
 
   return new Promise((resolve, reject) => {
     // try to avoid warnings when running on server side

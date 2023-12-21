@@ -53,18 +53,17 @@ const useUser: any = create(devtools((set: any, get: any) => ({
             const authToken = await user.getIdToken();
             console.log('>> hooks.User.useUser.onAuthStateChanged doSignInAnonymously completed', { loading, loaded, user, authToken });
 
-            // fetch('/api/user', {
-            //   method: "POST",
-            //   body: JSON.stringify({ uid: user.uid }),
-            //   headers: {
-            //     Authorization: `Bearer ${authToken}`,
-            //   },
-            // }).then(async (response: any) => {
-            //   const updatedUser = await response.json();
-            //   console.log('>> hooks.User.useUser.onAuthStateChanged doSignInAnonymously fetch user completed', { updatedUser });
-            //   set({ user: { ...user, admin: updatedUser.customClaims?.admin }, loaded: true, loading: false });              
-            // });
-            set({ loading: false });
+            fetch('/api/user', {
+              method: "POST",
+              body: JSON.stringify({ uid: user.uid }),
+              headers: {
+                Authorization: `Bearer ${authToken}`,
+              },
+            }).then(async (response: any) => {
+              const updatedUser = await response.json();
+              console.log('>> hooks.User.useUser.onAuthStateChanged doSignInAnonymously fetch user completed', { updatedUser });
+              set({ user: { ...user, admin: updatedUser.customClaims?.admin }, loaded: true, loading: false });              
+            });
           });
         }
       }

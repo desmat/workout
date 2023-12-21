@@ -89,9 +89,11 @@ export async function getWorkout(id: string): Promise<Workout> {
   console.log(`>> services.workout.getWorkout`, { id, workout });
 
   // link up exercise details
-  const exerciseIds = workout.exercises.map((exercise: Exercise) => exercise.id);
-  const exercises = new Map((await getExercises({ ids: exerciseIds })).map((e: Exercise) => [e.id, e]));
-  workout.exercises = workout.exercises.map((e: Exercise) => exercises.get(e.id));
+  // const exerciseIds = workout.exercises.map((exercise: Exercise) => exercise.id);
+  // const exercises = new Map((await getExercises({ ids: exerciseIds })).map((e: Exercise) => [e.id, e]));
+  // workout.exercises = workout.exercises.map((e: Exercise) => exercises.get(e.id) || e);
+
+  // console.log(`>> services.workout.getWorkout`, { exerciseIds, exercises, workout });
 
   return workout;
 }
@@ -109,23 +111,31 @@ export async function createWorkout(user: User, name: string, exerciseNames: str
 
   // bring in existing exercises, or create new
   const allExerciseNames = new Map((
-    await getExercises()).map((exercise: Exercise) => [exercise.name.toLocaleLowerCase(), exercise]));
+    await getExercises()).map((exercise: Exercise) => [exercise.name.toLowerCase(), exercise]));
   // note: requested exercise names might repeat
-  const exerciseNamesToCreate = Array.from(new Set(exerciseNames.filter((name: string) => !allExerciseNames.has(name))));
+  const exerciseNamesToCreate = Array.from(
+    new Set(
+      exerciseNames
+      .map((name: string) => name.toLowerCase())
+      .filter((name: string) => !allExerciseNames.has(name))));
   console.log(`>> services.workout.createworkout`, { allExerciseNames, exerciseNamesToCreate });
 
   const createdExercises = new Map((
     await Promise.all(
-      exerciseNamesToCreate.map(async (name: string) => { 
-        const created = await createExercise(user, name);
-        return generateExercise(user, created);
-      })
+      exerciseNamesToCreate
+        .filter(Boolean)
+        .map(async (name: string) => {
+          const created = await createExercise(user, name);
+          return generateExercise(user, created);
+        })
     )).map((exercise: Exercise) => [exercise.name.toLocaleLowerCase(), exercise]))
 
-  const exercises = exerciseNames.map((exerciseName: string) => {
-    const name = exerciseName.toLowerCase();
-    return allExerciseNames.get(name) || createdExercises.get(name);
-  }) as Exercise[];
+  const exercises = exerciseNames
+    .map((exerciseName: string) => {
+      const name = exerciseName.toLowerCase();
+      return allExerciseNames.get(name) || createdExercises.get(name);
+    })
+    .filter(Boolean) as Exercise[];
 
   return store.addWorkout(summarizeWorkout({ ...workout, exercises, status: "created" }))
 }

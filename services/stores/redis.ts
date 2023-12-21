@@ -3,6 +3,7 @@
 import { kv } from "@vercel/kv";
 import { Exercise } from '@/types/Exercise';
 import { Workout, WorkoutSession, WorkoutSet } from '@/types/Workout';
+import moment from "moment";
 
 const exercisesKey = "exercises";
 const workoutsKey = "workouts";
@@ -35,24 +36,38 @@ const jsonGetByIds = (ids: string[]) => {
 export async function getExercises(query?: any): Promise<Exercise[]> {
   console.log('>> services.stores.redis.getExercises()', { query });
 
-  let response;
-  if (query) {
-    if (query.ids) {
-      response = await kv.json.get(exercisesKey, jsonGetByIds(query.ids));
-    } else {
-      throw `Unknown query type: ${JSON.stringify(query)}`;
-    }
+  // let response;
+  // // if (query) {
+  //   if (query && query.ids && query.ids.length > 0) {
+  //     const keys = query.ids.map((id: string) => `exercise:${id}`);
+  //     console.log(">> services.stores.redis.getExercises", { keys });
+
+  //     response = (await kv.json.mget(keys, "$")).flat();
+  //   // } else {
+  //   //   throw `Unknown query type: ${JSON.stringify(query)}`;
+  //   // }
+  // } 
+  // else {
+  //   response = await kv.json.get("exercise-list", jsonGetNotDeleted);
+  // }
+
+  let keys;
+  if (query && query.ids && query.ids.length > 0) {
+    keys = query.ids.map((id: string) => `exercise:${id}`);
   } else {
-    response = await kv.json.get(exercisesKey, jsonGetNotDeleted);
+    const exerciseList = await kv.json.get("exercise-list", jsonGetNotDeleted);
+    keys = exerciseList.map((exercise: Exercise) => `exercise:${exercise.id}`);
   }
 
-  // console.log(">> services.stores.redis.getExercises", { response });
+  console.log(">> services.stores.redis.getExercises", { keys });
+  
+  const response = keys && keys.length > 0 && (await kv.json.mget(keys, "$")).flat() || [];
 
-  if (!query && (!response || !response.length)) {
-    console.log('>> services.stores.redis.getExercises(): empty redis key, creating empty list');
-    await kv.json.set(exercisesKey, "$", "[]");
-    response = await kv.json.get(exercisesKey, jsonGetNotDeleted);
-  }
+  // if (!query && (!response || !response.length)) {
+  //   console.log('>> services.stores.redis.getExercises(): empty redis key, creating empty list');
+  //   await kv.json.set(exercisesKey, "$", "[]");
+  //   response = await kv.json.get(exercisesKey, jsonGetNotDeleted);
+  // }
 
   return response as Exercise[];
 }
@@ -60,7 +75,8 @@ export async function getExercises(query?: any): Promise<Exercise[]> {
 export async function getExercise(id: string): Promise<Exercise | null> {
   console.log(`>> services.stores.redis.getExercise(${id})`, { id });
 
-  const response = await kv.json.get(exercisesKey, jsonGetById(id));
+  // const response = await kv.json.get(exercisesKey, jsonGetById(id));
+  const response = await kv.json.get(`exercise:${id}`, "$");
 
   let exercise: Exercise | null = null;
   if (response) {
@@ -74,7 +90,10 @@ export async function addExercise(exercise: Exercise): Promise<Exercise> {
   console.log(">> services.stores.redis.addExercise", { exercise });
 
   const response = await kv.json.arrappend(exercisesKey, "$", exercise);
-  // console.log("REDIS response", response);
+  const response2 = await kv.json.set(`exercise:${exercise.id}`, "$", exercise);
+  const response3 = await kv.json.arrappend("exercise-list", "$", { id: exercise.id, name: exercise.name });
+
+  console.log(">> services.stores.redis.saveExercise", { response, response2, response3 });
 
   return new Promise((resolve) => resolve(exercise));
 }
@@ -87,7 +106,9 @@ export async function saveExercise(exercise: Exercise): Promise<Exercise> {
   }
 
   const response = await kv.json.set(exercisesKey, jsonGetById(exercise.id), exercise);
-  // console.log("REDIS response", response);
+  const response2 = await kv.json.set(`exercise:${exercise.id}`, "$", exercise);
+
+  console.log(">> services.stores.redis.saveExercise", { response, response2 });
 
   return new Promise((resolve) => resolve(exercise));
 }
@@ -101,7 +122,10 @@ export async function deleteExercise(id: string): Promise<void> {
 
   // const response = await kv.json.set(exercisesKey, `${jsonGetById(id)}.deletedAt`, moment().valueOf());
   const response = await kv.json.del(exercisesKey, `${jsonGetById(id)}`);
-  // console.log("REDIS response", response);
+  const response2 = await kv.json.set("exercise-list", `${jsonGetById(id)}.deletedAt`, moment().valueOf());
+  const response3 = await kv.json.del(`exercise:${id}`, "$");
+
+  console.log(">> services.stores.redis.deleteExercise", { response, response2, response3 });
 }
 
 

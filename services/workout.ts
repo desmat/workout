@@ -116,8 +116,8 @@ export async function createWorkout(user: User, name: string, exerciseNames: str
   const exerciseNamesToCreate = Array.from(
     new Set(
       exerciseNames
-      .map((name: string) => name.toLowerCase())
-      .filter((name: string) => !allExerciseNames.has(name))));
+        .map((name: string) => name.toLowerCase())
+        .filter((name: string) => !allExerciseNames.has(name))));
   console.log(`>> services.workout.createWorkout`, { allExerciseNames, exerciseNamesToCreate });
 
   const createdExercises = new Map((
@@ -125,8 +125,9 @@ export async function createWorkout(user: User, name: string, exerciseNames: str
       exerciseNamesToCreate
         .filter(Boolean)
         .map(async (name: string) => {
-          const created = await createExercise(user, name);
-          return await generateExercise(user, created);
+          return createExercise(user, name).then((created: Exercise) => {
+            return generateExercise(user, created);
+          });
         })
     )).map((exercise: Exercise) => [exercise.name.toLocaleLowerCase(), exercise]));
 
@@ -137,7 +138,7 @@ export async function createWorkout(user: User, name: string, exerciseNames: str
     })
     .filter(Boolean) as Exercise[];
 
-  console.log(`>> services.workout.createWorkout`, { createdExercises, exercises });    
+  console.log(`>> services.workout.createWorkout`, { createdExercises, exercises });
 
   return store.addWorkout(summarizeWorkout({ ...workout, exercises, status: "created" }))
 }

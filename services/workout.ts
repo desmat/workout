@@ -99,7 +99,7 @@ export async function getWorkout(id: string): Promise<Workout> {
 }
 
 export async function createWorkout(user: User, name: string, exerciseNames: string[]): Promise<Workout> {
-  console.log(`>> services.workout.createworkout`, { user, name, exerciseNames });
+  console.log(`>> services.workout.createWorkout`, { user, name, exerciseNames });
 
   const workout = {
     id: crypto.randomUUID(),
@@ -118,7 +118,7 @@ export async function createWorkout(user: User, name: string, exerciseNames: str
       exerciseNames
       .map((name: string) => name.toLowerCase())
       .filter((name: string) => !allExerciseNames.has(name))));
-  console.log(`>> services.workout.createworkout`, { allExerciseNames, exerciseNamesToCreate });
+  console.log(`>> services.workout.createWorkout`, { allExerciseNames, exerciseNamesToCreate });
 
   const createdExercises = new Map((
     await Promise.all(
@@ -126,9 +126,9 @@ export async function createWorkout(user: User, name: string, exerciseNames: str
         .filter(Boolean)
         .map(async (name: string) => {
           const created = await createExercise(user, name);
-          return generateExercise(user, created);
+          return await generateExercise(user, created);
         })
-    )).map((exercise: Exercise) => [exercise.name.toLocaleLowerCase(), exercise]))
+    )).map((exercise: Exercise) => [exercise.name.toLocaleLowerCase(), exercise]));
 
   const exercises = exerciseNames
     .map((exerciseName: string) => {
@@ -136,6 +136,8 @@ export async function createWorkout(user: User, name: string, exerciseNames: str
       return allExerciseNames.get(name) || createdExercises.get(name);
     })
     .filter(Boolean) as Exercise[];
+
+  console.log(`>> services.workout.createWorkout`, { createdExercises, exercises });    
 
   return store.addWorkout(summarizeWorkout({ ...workout, exercises, status: "created" }))
 }

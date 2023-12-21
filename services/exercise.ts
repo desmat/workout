@@ -4,6 +4,7 @@ import { User } from 'firebase/auth';
 import moment from 'moment';
 import * as openai from "@/services/openai";
 import { Exercise } from "@/types/Exercise";
+import { uuid } from '@/utils/misc';
 
 let store: any;
 import(`@/services/stores/${process.env.STORE_TYPE}`).then((importedStore) => {
@@ -56,15 +57,15 @@ function parseGeneratedExercise(response: any): Exercise {
   return res as Exercise;
 }
 
-export async function getExercises(query?: any): Promise<Exercise[]> {
-  const exercises = await store.getExercises(query);
+export async function getExercises(user: User, query?: any): Promise<Exercise[]> {
+  const exercises = await store.getExercises(user.uid, query);
   return new Promise((resolve, reject) => resolve(exercises.filter(Boolean)));
 }
 
-export async function getExercise(id: string): Promise<Exercise> {
+export async function getExercise(user: User, id: string): Promise<Exercise> {
   console.log(`>> services.exercise.getExercise`, { id });
 
-  const exercise = await store.getExercise(id);
+  const exercise = await store.getExercise(user.uid, id);
   console.log(`>> services.exercise.getExercise`, { id, exercise });
   return new Promise((resolve, reject) => resolve(exercise));
 }
@@ -73,14 +74,14 @@ export async function createExercise(user: User, name: string): Promise<Exercise
   console.log(">> services.exercise.createExercise", { name, user });
 
   let exercise = {
-    id: crypto.randomUUID(),
+    id: uuid(),
     createdBy: user.uid,
     createdAt: moment().valueOf(),
     status: "created",
     name,
   } as Exercise;
 
-  return store.addExercise(exercise);
+  return store.addExercise(user.uid, exercise);
 }
 
 export async function generateExercise(user: User, exercise: Exercise): Promise<Exercise> {
@@ -97,7 +98,7 @@ export async function generateExercise(user: User, exercise: Exercise): Promise<
 
   exercise = { ...exercise, ...generatedExercise, status: "created", updatedAt: moment().valueOf() };
 
-  return store.saveExercise(exercise);
+  return store.saveExercise(user.uid, exercise);
 }
 
 export async function deleteExercise(user: any, id: string): Promise<void> {
@@ -107,7 +108,7 @@ export async function deleteExercise(user: any, id: string): Promise<void> {
     throw `Cannot delete exercise with null id`;
   }
 
-  const exercise = await getExercise(id);
+  const exercise = await getExercise(user, id);
   if (!exercise) {
     throw `Exercise not found: ${id}`;
   }
@@ -116,7 +117,7 @@ export async function deleteExercise(user: any, id: string): Promise<void> {
     throw `Unauthorized`;
   }
 
-  return store.deleteExercise(id);
+  return store.deleteExercise(user.uid, id);
 }
 
 export async function saveExercise(user: any, exercise: Exercise): Promise<void> {
@@ -126,5 +127,5 @@ export async function saveExercise(user: any, exercise: Exercise): Promise<void>
     throw `Unauthorized`;
   }
 
-  return store.savedExercise(exercise);
+  return store.savedExercise(user.uid, exercise);
 }

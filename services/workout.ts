@@ -4,6 +4,7 @@ import { User } from 'firebase/auth';
 import moment from 'moment';
 import { Exercise } from "@/types/Exercise";
 import { Workout, WorkoutSession, WorkoutSet } from '@/types/Workout';
+import { uuid } from '@/utils/misc';
 import { createExercise, getExercises, generateExercise } from './exercise';
 
 let store: any;
@@ -46,14 +47,14 @@ function summarizeWorkoutSet(set: WorkoutSet): WorkoutSet {
   }
 }
 
-export async function getWorkouts(user?: User): Promise<Workout[]> {
+export async function getWorkouts(user: User): Promise<Workout[]> {
   const workouts = await store.getWorkouts();
   const exerciseIds = Array.from(
     new Set(
       workouts
         .map((workout: Workout) => workout.exercises && workout.exercises.map((exercise: Exercise) => exercise.id))
         .flat()))
-  const allExercises = new Map((await getExercises({ ids: exerciseIds })).map((exercise: Exercise) => [exercise.id, exercise]));
+  const allExercises = new Map((await getExercises(user, { ids: exerciseIds })).map((exercise: Exercise) => [exercise.id, exercise]));
 
   // console.log(`>> services.workout.getWorkouts`, { exerciseIds, allExercises });
 
@@ -99,10 +100,10 @@ export async function getWorkout(id: string): Promise<Workout> {
 }
 
 export async function createWorkout(user: User, name: string, exerciseNames: string[]): Promise<Workout> {
-  console.log(`>> services.workout.createworkout`, { user, name, exerciseNames });
+  console.log(`>> services.workout.createWorkout`, { user, name, exerciseNames });
 
   const workout = {
-    id: crypto.randomUUID(),
+    id: uuid(),
     createdBy: user.uid,
     createdAt: moment().valueOf(),
     status: "creating",
@@ -111,24 +112,25 @@ export async function createWorkout(user: User, name: string, exerciseNames: str
 
   // bring in existing exercises, or create new
   const allExerciseNames = new Map((
-    await getExercises()).map((exercise: Exercise) => [exercise.name.toLowerCase(), exercise]));
+    await getExercises(user)).map((exercise: Exercise) => [exercise.name.toLowerCase(), exercise]));
   // note: requested exercise names might repeat
   const exerciseNamesToCreate = Array.from(
     new Set(
       exerciseNames
-      .map((name: string) => name.toLowerCase())
-      .filter((name: string) => !allExerciseNames.has(name))));
-  console.log(`>> services.workout.createworkout`, { allExerciseNames, exerciseNamesToCreate });
+        .map((name: string) => name.toLowerCase())
+        .filter((name: string) => !allExerciseNames.has(name))));
+  console.log(`>> services.workout.createWorkout`, { allExerciseNames, exerciseNamesToCreate });
 
   const createdExercises = new Map((
     await Promise.all(
       exerciseNamesToCreate
         .filter(Boolean)
         .map(async (name: string) => {
-          const created = await createExercise(user, name);
-          return generateExercise(user, created);
+          return createExercise(user, name).then((created: Exercise) => {
+            return generateExercise(user, created);
+          });
         })
-    )).map((exercise: Exercise) => [exercise.name.toLocaleLowerCase(), exercise]))
+    )).map((exercise: Exercise) => [exercise.name.toLocaleLowerCase(), exercise]));
 
   const exercises = exerciseNames
     .map((exerciseName: string) => {
@@ -136,6 +138,8 @@ export async function createWorkout(user: User, name: string, exerciseNames: str
       return allExerciseNames.get(name) || createdExercises.get(name);
     })
     .filter(Boolean) as Exercise[];
+
+  console.log(`>> services.workout.createWorkout`, { createdExercises, exercises });
 
   return store.addWorkout(summarizeWorkout({ ...workout, exercises, status: "created" }))
 }
@@ -177,14 +181,14 @@ export async function deleteWorkout(user: any, id: string): Promise<void> {
 
 
 
-export async function getSessions(user?: User): Promise<WorkoutSession[]> {
+export async function getSessions(user: User): Promise<WorkoutSession[]> {
   const sessions = await store.getWorkoutSessions();
   const exerciseIds = Array.from(
     new Set(
       sessions
         .map((session: WorkoutSession) => session.workout?.exercises && session.workout.exercises.map((exercise: Exercise) => exercise.id))
         .flat()))
-  const allExercises = new Map((await getExercises({ ids: exerciseIds })).map((exercise: Exercise) => [exercise.id, exercise]));
+  const allExercises = new Map((await getExercises(user, { ids: exerciseIds })).map((exercise: Exercise) => [exercise.id, exercise]));
 
   console.log(`>> services.workout.getSessions`, { exerciseIds, allExercises });
 

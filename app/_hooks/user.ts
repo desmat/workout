@@ -28,7 +28,7 @@ const useUser: any = create(devtools((set: any, get: any) => ({
             method: "GET"
           }).then(async (response: any) => {
             if (response.status != 200) {
-              console.error(`Error fetching user ${user.uid}: ${response.status} (${response.statusText})`);
+              useAlert.getState().error(`Error fetching user ${user.uid}: ${response.status} (${response.statusText})`);
               set({ loaded: true, loading: false, fetching: false });
               return;
             }

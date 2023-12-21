@@ -8,7 +8,15 @@ export const maxDuration = 300;
 export async function GET(request: Request) {
   console.log('>> app.api.exercises.GET');
 
-  const exercises = await getExercises();
+  const { user } = await validateUserSession(request);
+  if (!user) {
+    return NextResponse.json(
+      { success: false, message: 'authentication failed' },
+      { status: 401 }
+    );
+  }
+
+  const exercises = await getExercises(user);
   return NextResponse.json({ exercises });
 }
 

@@ -12,14 +12,19 @@ import { Workout, WorkoutSession, WorkoutSet } from "@/types/Workout"
 import Loading from "./loading";
 import { Exercise, SuggestedExerciseTypes } from '@/types/Exercise';
 import { byName } from '@/utils/sort';
+import moment from 'moment';
 
 function WorkoutEntry({ workout, user }: any) {
   const isReady = ["created"].includes(workout.status);
-  const maxSummaryItems = 4;
-  const summary = workout?.exercises?.length > 0
-    ? workout?.exercises?.length > maxSummaryItems
-      ? workout.exercises.sort(byName).slice(0, maxSummaryItems).map((exercise: Exercise) => exercise.name).join(", ") + ` and ${workout.exercises.length - maxSummaryItems} more`
-      : workout?.exercises?.map((exercise: Exercise) => exercise.name).join(", ") || ""
+  const maxSummaryItems = 5;
+  const uniqueExerciseNames = workout.exercises
+    ? Array.from(new Set(workout.exercises.map((e: Exercise) => e.name)))
+    : [];
+  const summary = uniqueExerciseNames.length > 0
+    ? uniqueExerciseNames.sort().slice(0, maxSummaryItems).join(", ")
+    : "";
+  const summaryMore = uniqueExerciseNames.length > maxSummaryItems
+    ? ` and ${workout.exercises.length - maxSummaryItems} more`
     : "";
   console.log('>> app.workouts.page.WorkoutEntry.render()', { workout, user, summary });
 
@@ -29,7 +34,7 @@ function WorkoutEntry({ workout, user }: any) {
         <span className="capitalize font-semibold">{workout.name}</span>
         {isReady &&
           <>
-            <span className="capitalize">{` (${summary})`}</span>
+            <span><span className="capitalize">{` (${summary}`}</span>{summaryMore})</span>
             <Link style="child light" className="ml-2 absolute">View</Link>
           </>
         }
@@ -45,20 +50,25 @@ function WorkoutEntry({ workout, user }: any) {
 
 async function handleCreateWorkout(createWorkout: any, router: any, user: User | undefined) {
   // console.log("*** handleCreateGame", { user, name: user.displayName?.split(/\s+/) });
-  // const userName = (user && !user.isAnonymous && user.displayName)
-  //   ? `${user.displayName.split(/\s+/)[0]}'s`
-  //   : "A";
+  const userName = (user && !user.isAnonymous && user.displayName)
+    ? `${user.displayName.split(/\s+/)[0]}'s`
+    : "A";
+  const hoursSinceMorning = Number(moment().startOf('day').fromNow().split(/\s+/)[0]);
+  const prefix = hoursSinceMorning < 13
+    ? "Morning"
+    : hoursSinceMorning < 19
+      ? "Afternoon"
+      : "Evening"
+  const workoutName = `${userName} ${prefix} Workout`;
 
-  const name = window.prompt("Name?", "");
-
+  const name = window.prompt("Name?", workoutName);
   if (name) {
     const exercises = window.prompt("Exercises?", SuggestedExerciseTypes.join(", "));
-
     if (exercises) {
-      const id = await createWorkout(user, name, exercises);
+      const created = await createWorkout(user, name, exercises);
 
-      if (id) {
-        // router.push(`/workouts/${id}`);
+      if (created) {
+        router.push(`/workouts/${created.id}`);
         return true
       }
     }

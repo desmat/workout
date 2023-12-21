@@ -99,7 +99,7 @@ export default function Component({ params }: { params: { id: string } }) {
     <Page>
       <h1 className="text-center capitalize">{workout.name}</h1>
       <p className='italic text-center'>
-        Press Start to begin a workout
+        Press Start to begin a workout session
       </p>
       <div className="my-4">
         {links}

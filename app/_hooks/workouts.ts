@@ -182,22 +182,25 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
 
     // create the workout
 
-    fetch('/api/workouts', {
-      method: "POST",
-      body: JSON.stringify({ name, exercises: exerciseNames }),
-    }).then(async (res) => {
-      if (res.status != 200) {
-        useAlert.getState().error(`Error adding workout: ${res.status} (${res.statusText})`);
-        const workouts = get().workouts.filter((workout: Workout) => workout.id != tempId);
-        set({ workouts });
-        return;
-      }
+    return new Promise((resolve, reject) => {
+      fetch('/api/workouts', {
+        method: "POST",
+        body: JSON.stringify({ name, exercises: exerciseNames }),
+      }).then(async (res) => {
+        if (res.status != 200) {
+          useAlert.getState().error(`Error adding workout: ${res.status} (${res.statusText})`);
+          const workouts = get().workouts.filter((workout: Workout) => workout.id != tempId);
+          set({ workouts });
+          return reject(res.statusText);
+        }
 
-      const data = await res.json();
-      const workout = data.workout;
-      // remove optimistic
-      const workouts = get().workouts.filter((workout: Workout) => workout.id != tempId);
-      set({ workouts: [...workouts, workout] });
+        const data = await res.json();
+        const workout = data.workout;
+        // remove optimistic
+        const workouts = get().workouts.filter((workout: Workout) => workout.id != tempId);
+        set({ workouts: [...workouts, workout] });
+        return resolve(workout);
+      });
     });
   },
 
@@ -250,7 +253,7 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
     fetchSession("POST", get, set, session, (newSession: WorkoutSession) => {
       console.log(">> hooks.workout.startSession fetch callback", { newSession });
       const firstExercise = newSession.workout?.exercises && newSession.workout?.exercises[0]
-      get().startSet(user, id, newSession.id, firstExercise);
+      get().startSet(user, id, newSession.id, firstExercise, 0);
     });
 
     return session;
@@ -338,10 +341,10 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
     return session;
   },
 
-  startSet: async (user: User, workoutId: string, sessionId: string, exercise: Exercise) => {
+  startSet: async (user: User, workoutId: string, sessionId: string, exercise: Exercise, offset: number) => {
     const exerciseId = exercise.id;
     const exerciseName = exercise.name;
-    console.log(">> hooks.workout.startSet", { user, workoutId, sessionId, exerciseId });
+    console.log(">> hooks.workout.startSet", { user, workoutId, sessionId, exerciseId, offset });
 
     if (!workoutId || !sessionId || !exerciseId) {
       throw `Cannot create workout set with null id`;
@@ -363,6 +366,7 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
       startedAt: moment().valueOf(),
       status: "started",
       exercise: { id: exerciseId, name: exerciseName },
+      offset,
     };
 
     session.status = "started";

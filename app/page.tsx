@@ -16,9 +16,9 @@ export default function Component() {
       <div className="lg:self-center flex flex-col gap-4">
         <p>Let AI generate for you the perfect workouts!</p>
         <div className="flex flex-col gap-0">
-          <p>&#8226;&nbsp;<Link href="/exercises" style="parent" className="group">Generate <Link style="child">exercises</Link></Link></p>
-          <p>&#8226;&nbsp;<Link href="/workouts" style="plain" className="group">Track your <Link style="child">workouts</Link></Link></p>
-          <p>&#8226;&nbsp;<Link href="/profile" style="plain" className="group">See your <Link style="child">profile</Link></Link></p>
+          <p>&#8226;&nbsp;<Link href="/exercises" style="parent" className="group">Create <Link style="child">exercises</Link> and review AI-generated instructions and variations</Link></p>
+          <p>&#8226;&nbsp;<Link href="/workouts" style="plain" className="group">Prepare and track your own <Link style="child">workouts</Link></Link></p>
+          <p>&#8226;&nbsp;<Link href="/profile" style="plain" className="group"><Link style="child">Sign-in</Link> to keep track of your progress</Link></p>
         </div>
         {userLoaded && !user &&
           <p className="text-center"><Link href="/profile">Signup now!</Link></p>

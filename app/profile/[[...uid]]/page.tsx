@@ -3,10 +3,9 @@
 import Link from "next/link";
 import { useEffect } from "react";
 import useUser from "@/app/_hooks/user";
-import useMenus from "@/app/_hooks/exercises";
-import * as users from "@/services/users";
-import {  } from "@/types/Exercise";
 import useWorkouts from "@/app/_hooks/workouts";
+import Page from "@/app/_components/Page"
+import * as users from "@/services/users";
 import { Workout } from "@/types/Workout";
 
 function doSigninWithGoogle(e: any, signinFn: any) {
@@ -27,7 +26,7 @@ function doLogout(e: any, logoutFn: any) {
   logoutFn();
 }
 
-export default function Page({ params }: { params: { uid?: string } }) {
+export default function Component({ params }: { params: { uid?: string } }) {
   // console.log('>> app.profile.page.render()', params.uid);
   const [user, userLoaded, loadUser, signin, logout] = useUser((state: any) => [state.user, state.loaded, state.load, state.signin, state.logout]);
   const [workouts, workoutsLoaded, loadWorkouts] = useWorkouts((state: any) => [state.workouts, state.loaded, state.load]);
@@ -42,21 +41,19 @@ export default function Page({ params }: { params: { uid?: string } }) {
 
   if (!userLoaded) {
     return (
-      <main className="flex flex-col items-center _justify-between _p-24">
-        <h1>
-          Profile
-        </h1>
-        <p className='italic text-center animate-pulse'>Loading...</p>
-      </main>
+      <Page
+        title="Profile"
+        subtitle="Loading..."
+      />
     );
   }
 
   if (params.uid || !params.uid && !user) { // TODO UNCRIPPLE
     return (
-      <main className="flex flex-col items-center _justify-between _p-24">
-        <h1>
-          Profile
-        </h1>
+      <Page
+        className="flex flex-col items-center"
+        title="Profile"
+      >
         <div className="flex flex-col lg:flex-row lg:space-x-4 items-center justify-center mt-4">
           <div className="text-dark-2">
             <Link href="/" onClick={(e) => doSigningAnonymously(e, signin)}>Signin Anonymously</Link>
@@ -71,18 +68,20 @@ export default function Page({ params }: { params: { uid?: string } }) {
             <Link href="/" onClick={(e) => doSigninWithGoogle(e, signin)}>Signin with Google</Link>
           </div>
         </div>
-      </main>
+      </Page>
     )
   }
 
   return (
-    <main className="flex flex-col items-center _justify-between _p-24">
-      <h1>
+    <Page
+      className="flex flex-col items-center"
+      title={<>
         Profile
         {params.uid &&
           <span>: {params.uid}</span>
         }
-      </h1>
+      </>}
+    >
       {user &&
         <>
           <h2>{users.getUserName(user)}{user.isAnonymous ? "" : ` (${users.getProviderName(user)})`}</h2>
@@ -115,7 +114,7 @@ export default function Page({ params }: { params: { uid?: string } }) {
       }
       {!params.uid &&
         <div className="flex flex-col lg:flex-row lg:space-x-4 items-center justify-center mt-4">
-          {user && myWorkouts.length > 0 && 
+          {user && myWorkouts.length > 0 &&
             <div className="text-dark-2">
               <Link href={`/workouts?uid=${user.uid}`}>Workouts ({myWorkouts.length})</Link>
             </div>
@@ -147,6 +146,6 @@ export default function Page({ params }: { params: { uid?: string } }) {
           } */}
         </div>
       }
-    </main>
+    </Page>
   )
 }

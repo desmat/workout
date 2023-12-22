@@ -4,7 +4,7 @@ import { User } from 'firebase/auth';
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from "react";
 import BackLink from '@/app/_components/BackLink';
-import { Page, PageLinks } from "@/app/_components/Page";
+import Page from "@/app/_components/Page";
 import Link from "@/app/_components/Link"
 import useWorkouts from "@/app/_hooks/workouts";
 import useUser from "@/app/_hooks/user";
@@ -76,42 +76,34 @@ export default function Component({ params }: { params: { id: string } }) {
     return <Loading />
   }
 
-  const links = (
-    <PageLinks>
-      <BackLink />
-      {/* {workout && <Link onClick={() => setshowDetails(!showDetails)}>{showDetails ? "Hide details" : "Show details"}</Link>} */}
-      {workout && user && !session && <Link onClick={() => handleStartSession(user, workout, startSession, router)}>Start</Link>}
-      {workout && user && session && <Link href={`/workouts/${workout.id}/session`}>Resume</Link>}
-      {workout && user && (user.uid == workout.createdBy || user.admin) && <Link style="warning" onClick={() => handleDeleteWorkout(params.id, deleteWorkout, router)}>Delete</Link>}
-    </PageLinks>
-  );
+  const links = [
+    <BackLink />,
+    // workout && <Link onClick={() => setshowDetails(!showDetails)}>{showDetails ? "Hide details" : "Show details"}</Link>},
+    workout && user && !session && <Link onClick={() => handleStartSession(user, workout, startSession, router)}>Start</Link>,
+    workout && user && session && <Link href={`/workouts/${workout.id}/session`}>Resume</Link>,
+    workout && user && (user.uid == workout.createdBy || user.admin) && <Link style="warning" onClick={() => handleDeleteWorkout(params.id, deleteWorkout, router)}>Delete</Link>,
+  ];
 
   if (!workout) {
     return (
-      <main className="flex flex-col">
-        <h1 className="text-center">Workout {params.id} not found</h1>
-        {links}
-      </main>
+      <Page
+        title={<>Workout {params.id} not found</>}
+        links={links}
+      />
     )
   }
 
   return (
-    <Page>
-      <h1 className="text-center capitalize">{workout.name}</h1>
-      <p className='italic text-center'>
-        Press Start to begin a workout session
-      </p>
-      <div className="my-4">
-        {links}
-      </div>
+    <Page
+      title={workout.name}
+      subtitle="Press Start to begin a workout session"
+      links={links}
+    >
       {workout && workout.exercises && (workout.exercises.length as number) > 0 &&
         <div className="self-center">
           <WorkoutDetails {...{ ...workout, showDetails, user }} />
         </div>
       }
-      <div className="flex flex-grow items-end justify-center h-full mt-2">
-        {links}
-      </div>
     </Page>
   )
 }

@@ -1,18 +1,18 @@
 'use client'
 
 import { User } from 'firebase/auth';
+import moment from 'moment';
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect } from "react";
 import FilterButton from '@/app/_components/FilterButton';
 import Link from "@/app/_components/Link"
-import { Page, PageLinks } from "@/app/_components/Page";
+import Page from "@/app/_components/Page";
 import useWorkouts from '@/app/_hooks/workouts';
 import useUser from '@/app/_hooks/user';
-import { Workout, WorkoutSession, WorkoutSet } from "@/types/Workout"
-import Loading from "./loading";
+import { Workout } from "@/types/Workout"
 import { Exercise, SuggestedExerciseTypes } from '@/types/Exercise';
 import { byName } from '@/utils/sort';
-import moment from 'moment';
+import Loading from "./loading";
 
 function WorkoutEntry({ workout, user }: any) {
   const isReady = ["created"].includes(workout.status);
@@ -91,16 +91,14 @@ export default function Component() {
     load();
   }, []);
 
-  const links = (
-    <PageLinks>
-      <div title={user ? "" : "Login to create new workout"}>
-        <Link className={user ? "" : "cursor-not-allowed"} onClick={() => /* user && */ handleCreateWorkout(createWorkout, router, user)}>
-          Create New Workout
-        </Link>
-      </div>
-      {/* <Link>View Leaderboard</Link> */}
-    </PageLinks>
-  );
+  const links = [
+    <div title={user ? "" : "Login to create new workout"}>
+      <Link className={user ? "" : "cursor-not-allowed"} onClick={() => /* user && */ handleCreateWorkout(createWorkout, router, user)}>
+        Create New Workout
+      </Link>
+    </div>,
+    // <Link>View Leaderboard</Link>,
+  ];
 
   if (!loaded) {
     return <Loading />
@@ -108,24 +106,16 @@ export default function Component() {
 
   return (
     <>
-      <Page>
-        <FilterButton href="/workouts" userId={user?.uid} isFiltered={!!uidFilter} />
-
-        <h1 className="text-center">Workouts</h1>
-
-        <p className='italic text-center'>
-          Let ChatGPT create workouts for you! 
-        </p>
-        <p className='italic text-center'>
+      <Page
+        title="Workouts"
+        subtitle={<>
+          Let ChatGPT create workouts for you!
+          <br />
           Simply provide a list of exercise names and our trained AI will fill in the rest!
-        </p>
-        {/* <p className='italic text-center'>
-          Try these: {SuggestedWorkoutTypes.join(", ")}
-        </p> */}
-
-        <div className="mt-4 mb-6">
-          {links}
-        </div>
+        </>}
+        links={links}
+      >
+        <FilterButton href="/workouts" userId={user?.uid} isFiltered={!!uidFilter} />
 
         {filteredWorkouts && filteredWorkouts.length > 0 &&
           <div className="self-center flex flex-col gap-3">
@@ -145,10 +135,6 @@ export default function Component() {
         {(!filteredWorkouts || filteredWorkouts.length == 0) &&
           <p className='italic text-center'>No workouts yet :(</p>
         }
-
-        <div className="flex flex-grow items-end justify-center h-full mt-2">
-          {links}
-        </div>
       </Page>
     </>
   )

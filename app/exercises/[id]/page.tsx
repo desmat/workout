@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from "react";
 import BackLink from '@/app/_components/BackLink';
 import Link from "@/app/_components/Link"
-import { Page, PageLinks } from "@/app/_components/Page";
+import Page from "@/app/_components/Page";
 import useExercises from "@/app/_hooks/exercises";
 import useUser from "@/app/_hooks/user";
 import { Exercise } from "@/types/Exercise";
@@ -126,13 +126,11 @@ export default function Component({ params }: { params: { id: string } }) {
     return <Loading />
   }
 
-  const links = (
-    <PageLinks>
-      <BackLink />
-      {exercise && user && (user.uid == exercise.createdBy || user.admin) && <Link onClick={() => handleRegenerate(user, exercise, generateExercise)}>Regenerate</Link>}
-      {exercise && user && (user.uid == exercise.createdBy || user.admin) && <Link style="warning" onClick={() => handleDeleteExercise(params.id, deleteExercise, router)}>Delete</Link>}
-    </PageLinks>
-  );
+  const links = [
+    <BackLink />,
+    exercise && user && (user.uid == exercise.createdBy || user.admin) && <Link onClick={() => handleRegenerate(user, exercise, generateExercise)}>Regenerate</Link>,
+    exercise && user && (user.uid == exercise.createdBy || user.admin) && <Link style="warning" onClick={() => handleDeleteExercise(params.id, deleteExercise, router)}>Delete</Link>,
+  ];
 
   if (!exercise) {
     return (
@@ -144,27 +142,18 @@ export default function Component({ params }: { params: { id: string } }) {
   }
 
   return (
-    <Page>
-      <h1 className="text-center capitalize">{exercise.name}</h1>
-      {exercise.description && exercise.status != "generating" &&
+    <Page
+      title={exercise.name}
+      subtitle={exercise.description && exercise.status != "generating" &&
         <p className='italic text-center'>
           {exercise.description}
         </p>
       }
-      {exercise.status == "generating" &&
-        <p className='italic text-center'>
-          (Generating...)
-        </p>
-      }
-      <div className="mt-4 mb-6">
-        {links}
-      </div>
+      links={links}
+    >
       {exercise &&
         <Exercise {...{ ...exercise, showDetails }} />
       }
-      <div className="flex flex-grow items-end justify-center h-full mt-2">
-        {links}
-      </div>
     </Page>
   )
 }

@@ -49,7 +49,7 @@ export function PageLinks({
   children: React.ReactNode
 }) {
   return (
-    <div className="_bg-yellow-200 flex flex-row gap-3 items-center justify-center">
+    <div className="_bg-yellow-200 flex flex-row gap-3 items-center justify-center font-semibold">
       {children}
     </div>
   )

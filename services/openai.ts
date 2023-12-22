@@ -1,6 +1,8 @@
 // 'use server'
 
 import OpenAI from 'openai';
+import { sampleExercises } from './stores/samples';
+import delay from '@/utils/delay';
 
 let store: any;
 import(`@/services/stores/${process.env.STORE_TYPE}`).then((importedStore) => {
@@ -11,20 +13,31 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const model = "gpt-3.5-turbo"; // seems good and fast enough for now
-// const model = "gpt-4";
+// const model = "gpt-3.5-turbo"; // seems good and fast enough for now
+const model = "gpt-4";
 
 export async function generateExercise(name: string): Promise<any> {
   console.log(`>> services.openai.generateExercise`, { name });
+  const prompt = `Requested exercise: ${name}`;
 
   // // for testing
-  // return new Promise((resolve, reject) => resolve(  {
-  //   "name": name,
-  //   "description": "DESCRIPTION",
-  //   "instructions": "1. STEP 1\n2. STEP 2",
-  // },));
+  // // return new Promise((resolve, reject) => resolve(  {
+  // //   "name": name,
+  // //   "description": "DESCRIPTION",
+  // //   "instructions": "1. STEP 1\n2. STEP 2",
+  // // },));
 
-  const prompt = `Requested exercise: ${name}`;
+  // // await delay(3000);
+  // return {
+  //   name,
+  //   prompt,
+  //   response: {
+  //     name,
+  //     description: sampleExercises[0].description,
+  //     instructions: sampleExercises[0].instructions,
+  //     variations: sampleExercises[0].variations
+  //   }
+  // };
 
   const completion = await openai.chat.completions.create({
     model,

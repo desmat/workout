@@ -127,17 +127,17 @@ export default function Component({ params }: { params: { id: string } }) {
   }
 
   const links = [
-    <BackLink />,
-    exercise && user && (user.uid == exercise.createdBy || user.admin) && <Link onClick={() => handleRegenerate(user, exercise, generateExercise)}>Regenerate</Link>,
-    exercise && user && (user.uid == exercise.createdBy || user.admin) && <Link style="warning" onClick={() => handleDeleteExercise(params.id, deleteExercise, router)}>Delete</Link>,
+    <BackLink key="0" />,
+    exercise && user && (user.uid == exercise.createdBy || user.admin) && <Link key="1" onClick={() => handleRegenerate(user, exercise, generateExercise)}>Regenerate</Link>,
+    exercise && user && (user.uid == exercise.createdBy || user.admin) && <Link key="2" style="warning" onClick={() => handleDeleteExercise(params.id, deleteExercise, router)}>Delete</Link>,
   ];
 
   if (!exercise) {
     return (
-      <main className="flex flex-col">
-        <h1 className="text-center">Exercise {params.id} not found</h1>
-        {links}
-      </main>
+      <Page
+        title={<>Exercise {params.id} not found</>}
+        links={links}
+      />
     )
   }
 

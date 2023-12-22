@@ -11,13 +11,13 @@ export default function Component() {
   console.log('>> app.page.render()');
 
   const links = [
-    <Link href="https://www.desmat.ca" target="_blank" className="_bg-yellow-200 flex flex-row gap-1 align-text-bottom">
+    <Link key="0" href="https://www.desmat.ca" target="_blank" className="_bg-yellow-200 flex flex-row gap-1 align-text-bottom">
       <MdHome className="mt-[5px]" />www.desmat.ca
     </Link>,
-    // <Link href="mailto:mail@desmat.ca" target="_blank" className="_bg-yellow-200 flex flex-row gap-1.5 align-text-bottom">
+    // <Link key="1" href="mailto:mail@desmat.ca" target="_blank" className="_bg-yellow-200 flex flex-row gap-1.5 align-text-bottom">
     //   <MdMail className="mt-1.5" />mail@desmat.ca
     // </Link>,
-    <Link href="https://github.com/desmat" target="_blank" className="_bg-yellow-200 flex flex-row gap-1.5 align-text-bottom">
+    <Link key="2" href="https://github.com/desmat" target="_blank" className="_bg-yellow-200 flex flex-row gap-1.5 align-text-bottom">
       <BsGithub className="mt-1.5" />github.com/desmat
     </Link>,
   ];

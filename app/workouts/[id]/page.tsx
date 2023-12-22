@@ -77,11 +77,11 @@ export default function Component({ params }: { params: { id: string } }) {
   }
 
   const links = [
-    <BackLink />,
+    <BackLink key="0" />,
     // workout && <Link onClick={() => setshowDetails(!showDetails)}>{showDetails ? "Hide details" : "Show details"}</Link>},
-    workout && user && !session && <Link onClick={() => handleStartSession(user, workout, startSession, router)}>Start</Link>,
-    workout && user && session && <Link href={`/workouts/${workout.id}/session`}>Resume</Link>,
-    workout && user && (user.uid == workout.createdBy || user.admin) && <Link style="warning" onClick={() => handleDeleteWorkout(params.id, deleteWorkout, router)}>Delete</Link>,
+    workout && user && !session && <Link key="1" onClick={() => handleStartSession(user, workout, startSession, router)}>Start</Link>,
+    workout && user && session && <Link key="2" href={`/workouts/${workout.id}/session`}>Resume</Link>,
+    workout && user && (user.uid == workout.createdBy || user.admin) && <Link key="3" style="warning" onClick={() => handleDeleteWorkout(params.id, deleteWorkout, router)}>Delete</Link>,
   ];
 
   if (!workout) {

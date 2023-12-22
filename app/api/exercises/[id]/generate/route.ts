@@ -18,7 +18,7 @@ export async function POST(
       );
     } 
 
-    const exercise = await getExercise(user, params.id);
+    const exercise = await getExercise(params.id);
     if (!exercise) {
         return NextResponse.json({ exercise: {} }, { status: 404 });
     }

@@ -92,12 +92,12 @@ export default function Component() {
   }, []);
 
   const links = [
-    <div title={user ? "" : "Login to create new workout"}>
+    <div key="0" title={user ? "" : "Login to create new workout"}>
       <Link className={user ? "" : "cursor-not-allowed"} onClick={() => /* user && */ handleCreateWorkout(createWorkout, router, user)}>
         Create New Workout
       </Link>
     </div>,
-    // <Link>View Leaderboard</Link>,
+    // <Link key="1">View Leaderboard</Link>,
   ];
 
   if (!loaded) {

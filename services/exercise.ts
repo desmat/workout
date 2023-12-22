@@ -23,7 +23,7 @@ function parseGeneratedExercise(response: any): Exercise {
 
   console.log(">> services.exercise.parseGeneratedExercise", { res });
 
-  const parseInstructionRegex = /(?:(?:Step\s*)?\d+\.?\s*)?(.*)\s?/i;  
+  const parseInstructionRegex = /(?:(?:Step\s*)?\d+\.?\s*)?(.*)\s?/i;
   const parseInstruction = (step: string) => {
     const match = step && step.match(parseInstructionRegex)
     if (match && match.length > 0) {
@@ -94,10 +94,16 @@ export async function generateExercise(user: User, exercise: Exercise): Promise<
 
   let res = await openai.generateExercise(exercise.name);
   let generatedExercise = parseGeneratedExercise(res);
-
   console.log(">> services.exercise.createExercise (fixed instructions)", { generatedExercise });
 
-  exercise = { ...exercise, ...generatedExercise, status: "created", updatedAt: moment().valueOf() };
+  exercise = {
+    ...exercise,
+    description: generatedExercise.description,
+    instructions: generatedExercise.instructions,
+    variations: generatedExercise.variations,
+    status: "created",
+    updatedAt: moment().valueOf()
+  };
 
   return store.saveExercise(user.uid, exercise);
 }

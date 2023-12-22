@@ -109,7 +109,6 @@ export default function Component({ params }: { params: { id: string } }) {
           <WorkoutDetails {...{ ...workout, showDetails, user }} />
         </div>
       }
-      {workout && workout?.exercises.length > 4 && links}
       <div className="flex flex-grow items-end justify-center h-full mt-2">
         {links}
       </div>

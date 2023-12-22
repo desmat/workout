@@ -47,7 +47,7 @@ export default function Component() {
   }, []);
 
   const links = [
-    <div title={user ? "" : "Login to create new exercise"}>
+    <div key="0" title={user ? "" : "Login to create new exercise"}>
       <Link
         className={user ? "" : "cursor-not-allowed"}
         onClick={() => /* user && */ handleCreateExercise(createExercise, generateExercise, router, user)}

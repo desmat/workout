@@ -205,9 +205,9 @@ export default function Component({ params }: { params: { id: string } }) {
 
 
   useEffect(() => {
-    console.log('>> app.workouts[id].session.Page useEffect(currentSet)', { currentSet, previousSet });
+    // console.log('>> app.workouts[id].session.Page useEffect(currentSet)', { currentSet, previousSet });
     if (currentSet && (currentSet.id != previousSet?.id || currentSet.status != previousSet?.status)) {
-      console.log('>> app.workouts[id].session.Page useEffect(currentSet) KICKOFF TIMER!', { currentSet, timer });
+      // console.log('>> app.workouts[id].session.Page useEffect(currentSet) KICKOFF TIMER!', { currentSet, timer });
 
       if (timer) {
         clearInterval(timer);
@@ -216,12 +216,12 @@ export default function Component({ params }: { params: { id: string } }) {
 
       timer = setInterval(() => {
         if (currentSet && currentSet.startedAt) {
-          console.log('>> app.workouts[id].session.Page useEffect(currentSet) TIC TOK!', { currentSet, timer });
+          // console.log('>> app.workouts[id].session.Page useEffect(currentSet) TIC TOK!', { currentSet, timer });
           setCurrentSetDuration((currentSet.duration || 0) + moment().valueOf() - currentSet.startedAt);
         }
       }, 500) as any;
 
-      console.log('>> app.workouts[id].session.Page useEffect(currentSet) timer kicked off', { currentSet, timer });
+      // console.log('>> app.workouts[id].session.Page useEffect(currentSet) timer kicked off', { currentSet, timer });
 
       setTimer(timer);
       setPreviousSet(currentSet);
@@ -229,7 +229,7 @@ export default function Component({ params }: { params: { id: string } }) {
     }
 
     return () => {
-      console.log('>> app.workouts[id].session.Page useEffect(currentSet) KILL TIMER!', { currentSet, timer });
+      // console.log('>> app.workouts[id].session.Page useEffect(currentSet) KILL TIMER!', { currentSet, timer });
       if (timer) {
         clearInterval(timer);
         setTimer(0);
@@ -243,14 +243,14 @@ export default function Component({ params }: { params: { id: string } }) {
   }
 
   const links = [
-    <BackLink />,
-    // {workout && <Link onClick={() => setshowDetails(!showDetails)}>{showDetails ? "Hide details" : "Show details"}</Link>},
-    workout && user && !session && <Link onClick={() => handleStartSession(user, workout, startSession)}>Start</Link>,
-    workout && user && sessionStarted && !sessionPaused && <Link onClick={() => handleStopSession(user, session, stopSession)}>Pause</Link>,
-    workout && user && session?.status == "stopped" && <Link onClick={() => handleResumeSession(user, session, resumeSession)}>Resume</Link>,
-    workout && user && sessionStarted && <Link onClick={() => handleCompleteSession(user, session, completeSession)}>Complete</Link>,
-    workout && user && sessionStarted && (currentSet.offset < workout.exercises.length - 1) && <Link onClick={() => handleStartSet(user, workout, session, workout.exercises[currentSet.offset + 1], currentSet.offset + 1, startSet, startSession)}>Next</Link>,
-    // {workout && user && (user.uid == workout.createdBy || user.admin) && <Link style="warning" onClick={() => handleDeleteWorkout(params.id, deleteWorkout, router)}>Delete</Link>},
+    <BackLink key="0" />,
+    // {workout && <Link key="0" onClick={() => setshowDetails(!showDetails)}>{showDetails ? "Hide details" : "Show details"}</Link>},
+    workout && user && !session && <Link key="1" onClick={() => handleStartSession(user, workout, startSession)}>Start</Link>,
+    workout && user && sessionStarted && !sessionPaused && <Link key="2" onClick={() => handleStopSession(user, session, stopSession)}>Pause</Link>,
+    workout && user && session?.status == "stopped" && <Link key="3" onClick={() => handleResumeSession(user, session, resumeSession)}>Resume</Link>,
+    workout && user && sessionStarted && <Link key="4" onClick={() => handleCompleteSession(user, session, completeSession)}>Complete</Link>,
+    workout && user && sessionStarted && (currentSet.offset < workout.exercises.length - 1) && <Link key="5" onClick={() => handleStartSet(user, workout, session, workout.exercises[currentSet.offset + 1], currentSet.offset + 1, startSet, startSession)}>Next</Link>,
+    // {workout && user && (user.uid == workout.createdBy || user.admin) && <Link key="6" style="warning" onClick={() => handleDeleteWorkout(params.id, deleteWorkout, router)}>Delete</Link>},
   ];
 
   if (!workout) {

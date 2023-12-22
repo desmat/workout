@@ -8,15 +8,7 @@ import { validateUserSession } from '@/services/users';
 export async function GET(request: Request) {
   console.log('>> app.api.workouts.GET');
   
-  const { user } = await validateUserSession(request);
-  if (!user) {
-    return NextResponse.json(
-      { success: false, message: 'authentication failed' },
-      { status: 401 }
-    );
-  }
-
-  const workouts = await getWorkouts(user);
+  const workouts = await getWorkouts();
   return NextResponse.json({ workouts });
 }
 

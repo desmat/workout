@@ -4,9 +4,10 @@ import { User } from 'firebase/auth';
 import moment from 'moment';
 import * as openai from "@/services/openai";
 import { Exercise } from "@/types/Exercise";
+import Store from "@/types/Store";
 import { uuid } from '@/utils/misc';
 
-let store: any;
+let store: Store;
 import(`@/services/stores/${process.env.STORE_TYPE}`).then((importedStore) => {
   store = importedStore;
 });
@@ -57,15 +58,15 @@ function parseGeneratedExercise(response: any): Exercise {
   return res as Exercise;
 }
 
-export async function getExercises(user: User, query?: any): Promise<Exercise[]> {
-  const exercises = await store.getExercises(user.uid, query);
+export async function getExercises(query?: any): Promise<Exercise[]> {
+  const exercises = await store.getExercises(query);
   return new Promise((resolve, reject) => resolve(exercises.filter(Boolean)));
 }
 
-export async function getExercise(user: User, id: string): Promise<Exercise> {
+export async function getExercise(id: string): Promise<Exercise | undefined> {
   console.log(`>> services.exercise.getExercise`, { id });
 
-  const exercise = await store.getExercise(user.uid, id);
+  const exercise = await store.getExercise(id);
   console.log(`>> services.exercise.getExercise`, { id, exercise });
   return new Promise((resolve, reject) => resolve(exercise));
 }
@@ -101,14 +102,14 @@ export async function generateExercise(user: User, exercise: Exercise): Promise<
   return store.saveExercise(user.uid, exercise);
 }
 
-export async function deleteExercise(user: any, id: string): Promise<void> {
+export async function deleteExercise(user: any, id: string): Promise<Exercise> {
   console.log(">> services.exercise.deleteExercise", { id, user });
 
   if (!id) {
     throw `Cannot delete exercise with null id`;
   }
 
-  const exercise = await getExercise(user, id);
+  const exercise = await getExercise(id);
   if (!exercise) {
     throw `Exercise not found: ${id}`;
   }
@@ -120,12 +121,12 @@ export async function deleteExercise(user: any, id: string): Promise<void> {
   return store.deleteExercise(user.uid, id);
 }
 
-export async function saveExercise(user: any, exercise: Exercise): Promise<void> {
+export async function saveExercise(user: any, exercise: Exercise): Promise<Exercise> {
   console.log(">> services.exercise.deleteExercise", { exercise, user });
 
   if (!(exercise.createdBy == user.uid || user.customClaims?.admin)) {
     throw `Unauthorized`;
   }
 
-  return store.savedExercise(user.uid, exercise);
+  return store.saveExercise(user.uid, exercise);
 }

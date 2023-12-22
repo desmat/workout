@@ -7,15 +7,7 @@ import { validateUserSession } from '@/services/users';
 export async function GET(request: Request) {
   console.log('>> app.api.workouts.[id].session.GET');
 
-  const { user } = await validateUserSession(request);
-  if (!user) {
-    return NextResponse.json(
-      { success: false, message: 'authentication failed' },
-      { status: 401 }
-    );
-  }
-
-  const sessions = await getSessions(user)
+  const sessions = await getSessions()
   return NextResponse.json({ sessions });
 }
 
@@ -31,7 +23,7 @@ export async function POST(request: Request) {
   }
 
   const data: any = await request.json();
-  console.log('>> app.api.workouts.[id].session.POST', { data });
+  // console.log('>> app.api.workouts.[id].session.POST', { data });
   const session = await createSession(user, data);
   return NextResponse.json({ session });
 }

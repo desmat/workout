@@ -7,7 +7,7 @@ export let app: FirebaseApp;
 export let auth: Auth;
 
 export async function init(callbacks?: any) {
-  console.log("*** services.auth.init firebaseConfig:", firebaseConfig);
+  // console.log("*** services.auth.init firebaseConfig:", firebaseConfig);
 
   const authStateChanged = callbacks?.onAuthStateChanged || function(user: User) {
     if (user) {

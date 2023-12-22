@@ -4,10 +4,11 @@ import { User } from 'firebase/auth';
 import moment from 'moment';
 import { Exercise } from "@/types/Exercise";
 import { Workout, WorkoutSession, WorkoutSet } from '@/types/Workout';
+import Store from '@/types/Store';
 import { uuid } from '@/utils/misc';
 import { createExercise, getExercises, generateExercise } from './exercise';
 
-let store: any;
+let store: Store;
 import(`@/services/stores/${process.env.STORE_TYPE}`).then((importedStore) => {
   store = importedStore;
 });
@@ -47,14 +48,14 @@ function summarizeWorkoutSet(set: WorkoutSet): WorkoutSet {
   }
 }
 
-export async function getWorkouts(user: User): Promise<Workout[]> {
+export async function getWorkouts(): Promise<Workout[]> {
   const workouts = await store.getWorkouts();
   const exerciseIds = Array.from(
     new Set(
       workouts
         .map((workout: Workout) => workout.exercises && workout.exercises.map((exercise: Exercise) => exercise.id))
         .flat()))
-  const allExercises = new Map((await getExercises(user, { ids: exerciseIds })).map((exercise: Exercise) => [exercise.id, exercise]));
+  const allExercises = new Map((await getExercises({ ids: exerciseIds })).map((exercise: Exercise) => [exercise.id, exercise]));
 
   // console.log(`>> services.workout.getWorkouts`, { exerciseIds, allExercises });
 
@@ -83,7 +84,7 @@ export async function getWorkouts(user: User): Promise<Workout[]> {
 
 }
 
-export async function getWorkout(id: string): Promise<Workout> {
+export async function getWorkout(id: string): Promise<Workout | undefined> {
   console.log(`>> services.workout.getWorkout`, { id });
 
   const workout = await store.getWorkout(id);
@@ -112,7 +113,7 @@ export async function createWorkout(user: User, name: string, exerciseNames: str
 
   // bring in existing exercises, or create new
   const allExerciseNames = new Map((
-    await getExercises(user)).map((exercise: Exercise) => [exercise.name.toLowerCase(), exercise]));
+    await getExercises()).map((exercise: Exercise) => [exercise.name.toLowerCase(), exercise]));
   // note: requested exercise names might repeat
   const exerciseNamesToCreate = Array.from(
     new Set(
@@ -141,7 +142,7 @@ export async function createWorkout(user: User, name: string, exerciseNames: str
 
   console.log(`>> services.workout.createWorkout`, { createdExercises, exercises });
 
-  return store.addWorkout(summarizeWorkout({ ...workout, exercises, status: "created" }))
+  return store.addWorkout(user.uid, summarizeWorkout({ ...workout, exercises, status: "created" }))
 }
 
 export async function deleteWorkout(user: any, id: string): Promise<void> {
@@ -160,7 +161,7 @@ export async function deleteWorkout(user: any, id: string): Promise<void> {
     throw `Unauthorized`;
   }
 
-  store.deleteWorkout(id);
+  store.deleteWorkout(user.uid, id);
   return new Promise((resolve, reject) => resolve());
 }
 
@@ -181,14 +182,14 @@ export async function deleteWorkout(user: any, id: string): Promise<void> {
 
 
 
-export async function getSessions(user: User): Promise<WorkoutSession[]> {
+export async function getSessions(): Promise<WorkoutSession[]> {
   const sessions = await store.getWorkoutSessions();
   const exerciseIds = Array.from(
     new Set(
       sessions
         .map((session: WorkoutSession) => session.workout?.exercises && session.workout.exercises.map((exercise: Exercise) => exercise.id))
         .flat()))
-  const allExercises = new Map((await getExercises(user, { ids: exerciseIds })).map((exercise: Exercise) => [exercise.id, exercise]));
+  const allExercises = new Map((await getExercises({ ids: exerciseIds })).map((exercise: Exercise) => [exercise.id, exercise]));
 
   console.log(`>> services.workout.getSessions`, { exerciseIds, allExercises });
 
@@ -215,7 +216,7 @@ export async function getSessions(user: User): Promise<WorkoutSession[]> {
   return sessions;
 }
 
-export async function getSession(id: string): Promise<WorkoutSession> {
+export async function getSession(id: string): Promise<WorkoutSession | undefined> {
   console.log(`>> services.workout.getSession`, { id });
 
   const session = await store.getWorkoutSession(id);
@@ -247,27 +248,31 @@ export async function createSession(user: User, data: any): Promise<WorkoutSessi
 
   console.log(`>> services.workout.createSession`, { session });
 
-  const createdSession = await store.addWorkoutSession(summarizeWorkoutSession(session));
+  const createdSession = await store.addWorkoutSession(user.uid, summarizeWorkoutSession(session));
 
   console.log(`>> services.workout.createSession`, { createdSession });
 
   return createdSession;
 }
 
-export async function saveSession(user: User, session: WorkoutSession): Promise<WorkoutSession> {
+export async function saveSession(user: User, session: WorkoutSession): Promise<WorkoutSession | undefined> {
   console.log(`>> services.workout.saveSession`, { session });
+
+  if (!session.id) {
+    throw `Error saving workout session: null id`;
+  }
 
   const existingSession = await store.getWorkoutSession(session.id);
   console.log(`>> services.workout.saveSession`, { session, existingSession });
 
   // TODO check something here?
 
-  const savedSession = await store.saveWorkoutSession(summarizeWorkoutSession(session));
+  const savedSession = await store.saveWorkoutSession(user.uid, summarizeWorkoutSession(session));
 
   return savedSession;
 }
 
-export async function deleteSession(user: any, id: string): Promise<void> {
+export async function deleteSession(user: any, id: string): Promise<WorkoutSession> {
   console.log(">> services.workout.deleteSession", { id, user });
 
   if (!id) {
@@ -283,6 +288,5 @@ export async function deleteSession(user: any, id: string): Promise<void> {
     throw `Unauthorized`;
   }
 
-  store.deleteSession(id);
-  return new Promise((resolve, reject) => resolve());
+  return store.deleteWorkoutSession(user.uid, id);
 }

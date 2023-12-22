@@ -11,7 +11,7 @@ export default function Link({
   title?: string,
   target?: string,
 }) {
-  // console.log('>> components.NavLink.render()', { isActive });
+  // console.log('>> components.Link.render()', { isActive });
 
   const styleSet = new Set(style && style.split(/\s+/));
   const computedClassName = "  cursor-pointer"

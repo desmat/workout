@@ -32,16 +32,7 @@ export async function generateExercise(name: string): Promise<any> {
   // return {
   //   name,
   //   prompt,
-  //   response: {
-  //     name: "Foo",
-  //     category: "Bar training",
-  //     sets:[3,5],
-  //     reps:[10,15],
-  //     duration: [ 1000 * 60, 1000 * 60 * 2 ],
-  //     description: sampleExercises[0].description,
-  //     instructions: sampleExercises[0].instructions,
-  //     variations: sampleExercises[0].variations
-  //   }
+  //   response: {"name":"Rowing","category":"Cardiovascular training","description":"Rowing is an intensive full-body workout that enhances your cardiovascular fitness, strengthens the muscles, and improves flexibility. It involves using a rowing machine or 'ergometer.'","instructions":["Set your feet on the footplates ensuring they're secure.","Reach forward to grab the handles with an overhand grip.","Keep your back straight and unlock your knees until your shins are vertical.","Drive off using your legs and lean back slightly, pulling the handles towards your chest.","Return to the starting position in reverse sequence: arms, hips, then knees.","Repeat for the desired number of reps."],"duration":[600000,1800000],"sets":[1,3],"reps":[10,20],"variations":[{"name":"Fast Rowing","level":"Intermediate","description":"Fast Rowing is a more challenging variation that focuses on increasing speed while maintaining form.","instructions":["Setup as if for regular rowing.","Increase your rowing speed while ensuring high-quality pulls.","Maintain the faster pace for the duration of the set."],"duration":[600000,2400000],"sets":[1,2]},{"name":"Interval Rowing","level":"Advanced","description":"Interval Rowing involves alternating periods of intense rowing with periods of moderate rowing or rest for recovery.","instructions":["Setup as if for regular rowing.","Begin with a five-minute warm-up at moderate intensity.","Row at high intensity for two minutes, followed by two minutes of moderate intensity or rest.","Repeat the high and low intensity periods for the entire duration of the set."],"duration":[1200000,2400000],"sets":[1,2]}]}
   // };
 
   const completion = await openai.chat.completions.create({
@@ -63,8 +54,8 @@ The variations should have the following keys: name, level, description, instruc
   try {
     // console.log(">> services.openai.generateExercise RESULTS FROM API", completion);
     response = JSON.parse(completion.choices[0].message.content || "{}");
-    // console.log(">> services.openai.generateExercise RESULTS FROM API", { response });
-    // console.log(">> services.openai.generateExercise RESULTS FROM API (as json)", JSON.stringify(response));
+    console.log(">> services.openai.generateExercise RESULTS FROM API", { response });
+    console.log(">> services.openai.generateExercise RESULTS FROM API (as json)", JSON.stringify(response));
     return { name, prompt, response };
   } catch (error) {
     console.error("Error reading results", { error, response, completion });

@@ -9,6 +9,7 @@ import Link from "@/app/_components/Link"
 import useWorkouts from "@/app/_hooks/workouts";
 import useUser from "@/app/_hooks/user";
 import Loading from "./loading";
+import { Exercise } from '@/types/Exercise';
 import { Workout, WorkoutSession } from '@/types/Workout';
 import { ExerciseEntry } from '@/app/_components/Exercise';
 import { byName } from '@/utils/sort';
@@ -23,9 +24,17 @@ function WorkoutDetails({ id, prompt, exercises, showDetails, user }: any) {
           {
             exercises
               // .sort(byName)
-              .map((exercise: any, offset: number) => (
+              .map((exercise: Exercise, offset: number) => (
                 <div className="ml-2 flex" key={offset}>
-                  <ExerciseEntry exercise={exercise} user={user} />
+                  <ExerciseEntry
+                    exercise={{
+                      id: exercise.id,
+                      name: exercise.name,
+                      status: exercise.status,
+                      directions: exercise.directions,
+                    }}
+                    user={user}
+                  />
                 </div>
               ))
           }

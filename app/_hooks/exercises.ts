@@ -119,10 +119,12 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
     console.log(">> hooks.exercise.generateExercise", { exercise });
 
     // optimistic
-    exercise.status = "generating";
-    exercise.description = undefined;
-    exercise.instructions = undefined;
-    exercise.variations = undefined;
+    exercise = {
+      id: exercise.id,
+      name: exercise.name,
+      createdBy: exercise.createdBy,
+      status: "generating",
+    }
     const exercises = get().exercises.filter((e: Exercise) => e.id != exercise.id);
     set({ exercises: [...exercises, exercise] });
 

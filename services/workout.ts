@@ -13,21 +13,29 @@ import(`@/services/stores/${process.env.STORE_TYPE}`).then((importedStore) => {
   store = importedStore;
 });
 
-function summarizeExercise(exercise: Exercise): Exercise {
+export function summarizeExercise(exercise: Exercise, include?: any): Exercise {
   console.log(`>> services.workout.summarizeExercise`, { exercise });
+  const included: any = {};
+  if (include?.description) included.description = exercise.description;
+  if (include?.directions) included.directions = exercise.directions;
+  if (include?.status) included.status = exercise.status;
+
   return {
     id: exercise.id,
     name: exercise.name,
-    description: exercise.description,
-    status: exercise.status,
+    ...included,
   };
 }
 
-function summarizeWorkout(workout: Workout): Workout {
+export function summarizeWorkout(workout: Workout, include?: any): Workout {
   console.log(`>> services.workout.summarizeWorkout`, { workout });
+
   return {
     ...workout,
-    exercises: workout.exercises ? workout.exercises.map(summarizeExercise) : [],
+    exercises: workout.exercises ?
+      workout.exercises
+        .map((e: Exercise) => summarizeExercise(e, include?.exercises))
+      : [],
   }
 }
 
@@ -91,11 +99,11 @@ export async function getWorkout(id: string): Promise<Workout | undefined> {
   console.log(`>> services.workout.getWorkout`, { id, workout });
 
   // link up exercise details
-  if (workout?.exercises) {
-    const exerciseIds = workout.exercises.map((exercise: Exercise) => exercise.id);
-    const exercises = new Map((await getExercises({ ids: exerciseIds })).map((e: Exercise) => [e.id, e]));
-    workout.exercises = workout.exercises.map((e: Exercise) => exercises.get(e.id) || e);
-  }
+  // if (workout?.exercises) {
+  //   const exerciseIds = workout.exercises.map((exercise: Exercise) => exercise.id);
+  //   const exercises = new Map((await getExercises({ ids: exerciseIds })).map((e: Exercise) => [e.id, e]));
+  //   workout.exercises = workout.exercises.map((e: Exercise) => exercises.get(e.id) || e);
+  // }
 
   // console.log(`>> services.workout.getWorkout`, { exerciseIds, exercises, workout });
 
@@ -135,16 +143,46 @@ export async function createWorkout(user: User, name: string, exerciseNames: str
         })
     )).map((exercise: Exercise) => [exercise.name.toLocaleLowerCase(), exercise]));
 
+  const pickFromRange = (range: any, level?: "beginner" | "intermediate" | "advanced") => {
+    return Array.isArray(range) && range.length > 1
+      ? level == "beginner"
+        ? range[0]
+        : level == "advanced"
+          ? range[1]
+          : Math.floor((Number(range[0]) + Number(range[1])) / 2)
+      : range;
+  }
+
   const exercises = exerciseNames
     .map((exerciseName: string) => {
       const name = exerciseName.toLowerCase();
-      return allExerciseNames.get(name) || createdExercises.get(name);
+      const exercise = allExerciseNames.get(name) || createdExercises.get(name)
+
+      if (exercise?.directions) {
+        exercise.directions = {
+          duration: pickFromRange(exercise.directions.duration),
+          sets: pickFromRange(exercise.directions.sets),
+          reps: pickFromRange(exercise.directions.reps),
+        }
+      }
+
+      return exercise;
     })
     .filter(Boolean) as Exercise[];
 
   console.log(`>> services.workout.createWorkout`, { createdExercises, exercises });
 
-  return store.addWorkout(user.uid, summarizeWorkout({ ...workout, exercises, status: "created" }))
+
+
+  return store.addWorkout(user.uid, summarizeWorkout(
+    { ...workout, exercises, status: "created" },
+    {
+      exercises: {
+        status: true,
+        description: true,
+        directions: true,
+      }
+    }))
 }
 
 export async function deleteWorkout(user: any, id: string): Promise<void> {

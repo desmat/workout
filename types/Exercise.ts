@@ -18,8 +18,12 @@ export type Exercise = {
   instructions?: string[],
   level?: string,
   category?: string,
+  directions?: ExerciseDirections;
+  variations?: Exercise[],
+};
+
+export type ExerciseDirections = {
   duration?: number | number[],
   sets?: number | number[],
   reps?: number | number[],
-  variations?: Exercise[],
-};
+}

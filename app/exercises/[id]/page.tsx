@@ -6,16 +6,18 @@ import { useEffect, useState } from "react";
 import BackLink from '@/app/_components/BackLink';
 import Link from "@/app/_components/Link"
 import Page from "@/app/_components/Page";
+import { formatDirections } from '@/app/_components/Exercise';
 import useExercises from "@/app/_hooks/exercises";
 import useUser from "@/app/_hooks/user";
 import { Exercise } from "@/types/Exercise";
 import Loading from "./loading";
 import { formatNumber, formatRange, formatTime } from '@/utils/format';
 
-function ExerciseVariation({ name, description, instructions, level, showDetails }: any) {
+function ExerciseVariation({ name, description, instructions, level, directions, showDetails }: any) {
   const [showDetail, setshowDetail] = useState(false);
+  const formattedDirections = directions && formatDirections(directions);
 
-  // console.log('>> app.exercises[id].page.render()', { name, shortIngredients, ingredients });
+  // console.log('>> app.exercises[id].page.ExerciseVariation', { name, directions });
 
   useEffect(() => {
     if (showDetails) {
@@ -51,6 +53,9 @@ function ExerciseVariation({ name, description, instructions, level, showDetails
         <ul className="list-disc ml-6 mt-1">
           {instructions && instructions.map((step: string, i: number) => <li key={i}>{step}</li>)
           }
+          {formattedDirections && 
+          <li key="directions">Directions: {formattedDirections}</li>
+          }
         </ul>
 
       }
@@ -59,10 +64,10 @@ function ExerciseVariation({ name, description, instructions, level, showDetails
   );
 }
 
-function Exercise({ id, instructions, category, duration, sets, reps, variations, showDetails }: any) {
-  const formattedDuration = duration && formatRange(duration, formatTime);
-  const formattedSets = sets && formatRange(sets, formatNumber, "set");
-  const formattedReps = reps && formatRange(reps, formatNumber, "rep");
+function Exercise({ id, instructions, category, directions, variations, showDetails }: any) {
+  const formattedDuration = directions?.duration && formatRange(directions.duration, formatTime);
+  const formattedSets = directions?.sets && formatRange(directions.sets, formatNumber, "set");
+  const formattedReps = directions?.reps && formatRange(directions.reps, formatNumber, "rep");
 
   return (
     <p className="text-left pb-4 flex flex-col gap-4">

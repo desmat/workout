@@ -1,7 +1,8 @@
 import Link from "@/app/_components/Link"
+import { ExerciseDirections } from "@/types/Exercise";
 import { formatNumber, formatTime, formatRange } from "@/utils/format";
 
-function formatDurationAndRange(duration: string | number | any[], sets: string | number | any[], reps: string | number | any[]) {
+export function formatDirections({ duration, sets, reps }: ExerciseDirections) {
   const formattedDuration = duration && formatRange(duration, formatTime);
   const formattedSets = sets && `${formattedDuration ? " over " : ""}${formatRange(sets, formatNumber, "set")}`
   const formattedReps = reps && `${formattedSets ? " of " : ""}${formatRange(reps, formatNumber, "rep")}`
@@ -11,8 +12,8 @@ function formatDurationAndRange(duration: string | number | any[], sets: string 
 
 export function ExerciseEntry({ exercise, user }: any) {
   const isReady = ["created"].includes(exercise?.status);
-  const directions = formatDurationAndRange(exercise.duration, exercise.sets, exercise.reps);
-  const summary = directions || exercise.description;
+  const directions = exercise?.directions && formatDirections(exercise?.directions);
+  const summary = directions; // || exercise.description;
   console.log('>> app.exercises.page.ExerciseEntry.render()', { exercise, user, summary });
 
   return (

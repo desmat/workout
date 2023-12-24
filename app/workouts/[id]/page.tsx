@@ -77,7 +77,7 @@ export default function Component({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     load(params.id);
-    // loadExercises(); // prefetch
+    loadExercises(); // prefetch
   }, [params.id]);
 
   useEffect(() => {

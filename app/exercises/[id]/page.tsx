@@ -141,13 +141,13 @@ export default function Component({ params }: { params: { id: string } }) {
   const [user] = useUser((state: any) => [state.user]);
   const exercise = exercises.filter((exercise: any) => exercise.id == params.id)[0];
 
-  console.log('>> app.exercises[id].page.render()', { id: params.id, exercise });
+  console.log('>> app.exercises[id].page.render()', { id: params.id, exercise, loaded, loadedId: loaded && loaded.includes(params.id) });
 
   useEffect(() => {
     load(params.id);
   }, [params.id]);
 
-  if (!loaded) {
+  if (!loaded || !loaded.includes(params.id)) {
     return <Loading />
   }
 

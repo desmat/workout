@@ -3,7 +3,7 @@ export default async function Loading() {
 
   return (
     <main className="flex flex-col">
-      <h1 className="text-center">Exercises</h1>
+      <h1 className="text-center">Exercises XXX</h1>
       <p className='italic text-center animate-pulse'>Loading...</p>
     </main>
   )

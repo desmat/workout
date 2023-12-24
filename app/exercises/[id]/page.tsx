@@ -60,9 +60,9 @@ function ExerciseVariation({ name, description, instructions, level, showDetails
 }
 
 function Exercise({ id, instructions, category, duration, sets, reps, variations, showDetails }: any) {
-  const formattedDuration = formatRange(duration, formatTime);
-  const formattedSets = formatRange(sets, formatNumber, undefined, " sets");
-  const formattedReps = formatRange(reps, formatNumber, undefined, " reps");
+  const formattedDuration = duration && formatRange(duration, formatTime);
+  const formattedSets = sets && formatRange(sets, formatNumber, "set");
+  const formattedReps = reps && formatRange(reps, formatNumber, "rep");
 
   return (
     <p className="text-left pb-4 flex flex-col gap-4">

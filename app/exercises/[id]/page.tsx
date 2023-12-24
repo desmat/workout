@@ -7,10 +7,10 @@ import BackLink from '@/app/_components/BackLink';
 import Link from "@/app/_components/Link"
 import Page from "@/app/_components/Page";
 import { formatDirections } from '@/app/_components/Exercise';
+import Loading from "@/app/_components/loading/Page";
 import useExercises from "@/app/_hooks/exercises";
 import useUser from "@/app/_hooks/user";
 import { Exercise } from "@/types/Exercise";
-import Loading from "./loading";
 import { formatNumber, formatRange, formatTime } from '@/utils/format';
 
 function ExerciseVariation({ name, description, instructions, level, directions, showDetails }: any) {
@@ -148,7 +148,7 @@ export default function Component({ params }: { params: { id: string } }) {
   }, [params.id]);
 
   if (!loaded || !loaded.includes(params.id)) {
-    return <Loading />
+    return <Loading title="Exercise"/>
   }
 
   const links = [

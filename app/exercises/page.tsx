@@ -7,10 +7,10 @@ import FilterButton from '@/app/_components/FilterButton';
 import { ExerciseEntry } from '@/app/_components/Exercise';
 import Link from "@/app/_components/Link"
 import Page from "@/app/_components/Page";
+import Loading from "@/app/_components/loading/Page";
 import useExercises from '@/app/_hooks/exercises';
 import useUser from '@/app/_hooks/user';
 import { Exercise, SuggestedExerciseTypes } from "@/types/Exercise"
-import Loading from "./loading";
 import { byName } from '@/utils/sort';
 // import { sortByName } from '@/utils/arrays';
 

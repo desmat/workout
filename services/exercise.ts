@@ -49,10 +49,29 @@ function parseGeneratedExercise(response: any): Exercise {
     return exercise;
   }
 
-  res = fixInstructions(res);
+  const parseCategoryRegex = /(.+)(?:\s+training|\s+exercise|\s+workout)+/i;
+  const parseCategory = (category: string) => {
+    const match = category && category.match(parseCategoryRegex)
+    if (match && match.length > 0) {
+      return match[1];
+    }
+
+    return category;
+  }
+
+  const fixCategory = (exercise: any) => {
+    console.log(">> services.exercise.parseGeneratedExercise.fixCategory", { exercise });
+    if (exercise?.category) {
+      exercise.category = parseCategory(exercise.category);
+    }
+
+    return exercise;
+  }
+
+  res = fixCategory(fixInstructions(res));
 
   if (res.variations) {
-    res.variations = res.variations.map(fixInstructions);
+    res.variations = res.variations.map(fixInstructions).map(fixCategory);
   }
 
   return res as Exercise;
@@ -101,6 +120,10 @@ export async function generateExercise(user: User, exercise: Exercise): Promise<
     description: generatedExercise.description,
     instructions: generatedExercise.instructions,
     variations: generatedExercise.variations,
+    category: generatedExercise.category,
+    duration: generatedExercise.duration,
+    sets: generatedExercise.sets,
+    reps: generatedExercise.reps,
     status: "created",
     updatedAt: moment().valueOf()
   };

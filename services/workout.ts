@@ -91,9 +91,11 @@ export async function getWorkout(id: string): Promise<Workout | undefined> {
   console.log(`>> services.workout.getWorkout`, { id, workout });
 
   // link up exercise details
-  // const exerciseIds = workout.exercises.map((exercise: Exercise) => exercise.id);
-  // const exercises = new Map((await getExercises({ ids: exerciseIds })).map((e: Exercise) => [e.id, e]));
-  // workout.exercises = workout.exercises.map((e: Exercise) => exercises.get(e.id) || e);
+  if (workout?.exercises) {
+    const exerciseIds = workout.exercises.map((exercise: Exercise) => exercise.id);
+    const exercises = new Map((await getExercises({ ids: exerciseIds })).map((e: Exercise) => [e.id, e]));
+    workout.exercises = workout.exercises.map((e: Exercise) => exercises.get(e.id) || e);
+  }
 
   // console.log(`>> services.workout.getWorkout`, { exerciseIds, exercises, workout });
 

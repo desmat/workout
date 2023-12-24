@@ -17,5 +17,9 @@ export type Exercise = {
   description?: string,
   instructions?: string[],
   level?: string,
+  category?: string,
+  duration?: number | number[],
+  sets?: number | number[],
+  reps?: number | number[],
   variations?: Exercise[],
 };

@@ -10,6 +10,7 @@ import useExercises from "@/app/_hooks/exercises";
 import useUser from "@/app/_hooks/user";
 import { Exercise } from "@/types/Exercise";
 import Loading from "./loading";
+import { formatNumber, formatRange, formatTime } from '@/utils/format';
 
 function ExerciseVariation({ name, description, instructions, level, showDetails }: any) {
   const [showDetail, setshowDetail] = useState(false);
@@ -58,15 +59,34 @@ function ExerciseVariation({ name, description, instructions, level, showDetails
   );
 }
 
-function Exercise({ id, instructions, variations, showDetails }: any) {
+function Exercise({ id, instructions, category, duration, sets, reps, variations, showDetails }: any) {
+  const formattedDuration = formatRange(duration, formatTime);
+  const formattedSets = formatRange(sets, formatNumber, undefined, " sets");
+  const formattedReps = formatRange(reps, formatNumber, undefined, " reps");
+
   return (
     <p className="text-left pb-4 flex flex-col gap-4">
       {instructions && instructions.length > 0 &&
         <div className="flex flex-col _gap-2">
-          {/* <div className="text-dark-1 font-bold">Instructions</div> */}
           <h2>Instructions</h2>
           <ul className="list-disc ml-6">
             {instructions && instructions.map((step: string, i: number) => <li key={i}>{step}</li>)
+            }
+          </ul>
+        </div>
+      }
+      {(formattedDuration || formattedSets || formattedReps) &&
+        <div className="flex flex-col _gap-2">
+          <h2>Directions</h2>
+          <ul className="list-disc ml-6">
+            {formattedDuration &&
+              <li key="0">{formattedDuration}</li>
+            }
+            {formattedSets &&
+              <li key="0">{formattedSets}</li>
+            }
+            {formattedReps &&
+              <li key="0">{formattedReps}</li>
             }
           </ul>
         </div>
@@ -143,12 +163,8 @@ export default function Component({ params }: { params: { id: string } }) {
 
   return (
     <Page
-      title={exercise.name}
-      subtitle={exercise.description && exercise.status != "generating" &&
-        <p className='italic text-center'>
-          {exercise.description}
-        </p>
-      }
+      title={`${exercise.name}${exercise.category ? ` (${exercise.category})` : ""}`}
+      subtitle={exercise.description && exercise.status != "generating" && exercise.description}
       links={links}
     >
       {exercise &&

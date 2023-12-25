@@ -6,13 +6,14 @@ import * as openai from "@/services/openai";
 import { Exercise } from "@/types/Exercise";
 import Store from "@/types/Store";
 import { uuid } from '@/utils/misc';
+import { summarizeExercise } from './workout';
 
 let store: Store;
 import(`@/services/stores/${process.env.STORE_TYPE}`).then((importedStore) => {
   store = importedStore;
 });
 
-function parseGeneratedExercise(response: any): Exercise {
+function parseGeneratedExercise(response: any): any {
   console.log(`>> services.exercise.parseGeneratedExercise`, { response });
 
   let res = response.response?.exercise || response.response || response?.exercise || response;
@@ -49,13 +50,47 @@ function parseGeneratedExercise(response: any): Exercise {
     return exercise;
   }
 
-  res = fixInstructions(res);
+  const parseCategoryRegex = /(.+)(?:\s+training|\s+exercise|\s+workout)+/i;
+  const parseCategory = (category: string) => {
+    const match = category && category.match(parseCategoryRegex)
+    if (match && match.length > 0) {
+      return match[1];
+    }
 
-  if (res.variations) {
-    res.variations = res.variations.map(fixInstructions);
+    return category;
   }
 
-  return res as Exercise;
+  const fixCategory = (exercise: any) => {
+    console.log(">> services.exercise.parseGeneratedExercise.fixCategory", { exercise });
+    if (exercise?.category) {
+      exercise.category = parseCategory(exercise.category);
+    }
+
+    return exercise;
+  }
+
+  res = fixCategory(fixInstructions(res));
+
+  if (res.variations) {
+    res.variations = res.variations.map(fixInstructions).map(fixCategory);
+  }
+
+  const directions = (res.duration || res.sets || res.reps) && {
+    duration: res.duration,
+    sets: res.sets,
+    reps: res.reps,
+  };
+  const variations = res.variations && res.variations.map((e: Exercise) => parseGeneratedExercise(e));
+  const exercise = {    
+    name: res.name,
+    description: res.description,
+    instructions: res.instructions,
+    category: res.category,
+    directions,
+    variations,
+  };
+
+  return exercise as Exercise;
 }
 
 export async function getExercises(query?: any): Promise<Exercise[]> {
@@ -88,19 +123,21 @@ export async function createExercise(user: User, name: string): Promise<Exercise
 export async function generateExercise(user: User, exercise: Exercise): Promise<Exercise> {
   console.log(">> services.exercise.generateExercise", { exercise, user });
 
-  exercise.status = "generating";
-  exercise.instructions = undefined;
-  exercise.variations = undefined
+  exercise = {
+    ...summarizeExercise(exercise),
+    status: "generating",
+    updatedAt: moment().valueOf(),
+  };
+  store.saveExercise(user.uid, exercise);
 
-  let res = await openai.generateExercise(exercise.name);
-  let generatedExercise = parseGeneratedExercise(res);
+  const res = await openai.generateExercise(exercise.name);
+  const generatedExercise = parseGeneratedExercise(res);
   console.log(">> services.exercise.createExercise (fixed instructions)", { generatedExercise });
 
   exercise = {
     ...exercise,
-    description: generatedExercise.description,
-    instructions: generatedExercise.instructions,
-    variations: generatedExercise.variations,
+    ...generatedExercise,
+    name: exercise.name,
     status: "created",
     updatedAt: moment().valueOf()
   };

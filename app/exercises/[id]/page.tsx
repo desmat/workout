@@ -6,15 +6,19 @@ import { useEffect, useState } from "react";
 import BackLink from '@/app/_components/BackLink';
 import Link from "@/app/_components/Link"
 import Page from "@/app/_components/Page";
+import { formatDirections } from '@/app/_components/Exercise';
+// import Loading from "@/app/_components/loading/Page";
 import useExercises from "@/app/_hooks/exercises";
 import useUser from "@/app/_hooks/user";
 import { Exercise } from "@/types/Exercise";
-import Loading from "./loading";
+import { formatNumber, formatRange, formatTime } from '@/utils/format';
+// import Loading from './loading';
 
-function ExerciseVariation({ name, description, instructions, level, showDetails }: any) {
+function ExerciseVariation({ name, description, instructions, level, directions, showDetails }: any) {
   const [showDetail, setshowDetail] = useState(false);
+  const formattedDirections = directions && formatDirections(directions);
 
-  // console.log('>> app.exercises[id].page.render()', { name, shortIngredients, ingredients });
+  // console.log('>> app.exercises[id].page.ExerciseVariation', { name, directions });
 
   useEffect(() => {
     if (showDetails) {
@@ -50,6 +54,9 @@ function ExerciseVariation({ name, description, instructions, level, showDetails
         <ul className="list-disc ml-6 mt-1">
           {instructions && instructions.map((step: string, i: number) => <li key={i}>{step}</li>)
           }
+          {formattedDirections &&
+            <li key="directions">Directions: {formattedDirections}</li>
+          }
         </ul>
 
       }
@@ -58,15 +65,34 @@ function ExerciseVariation({ name, description, instructions, level, showDetails
   );
 }
 
-function Exercise({ id, instructions, variations, showDetails }: any) {
+function Exercise({ id, instructions, category, directions, variations, showDetails }: any) {
+  const formattedDuration = directions?.duration && formatRange(directions.duration, formatTime);
+  const formattedSets = directions?.sets && formatRange(directions.sets, formatNumber, "set");
+  const formattedReps = directions?.reps && formatRange(directions.reps, formatNumber, "rep");
+
   return (
     <p className="text-left pb-4 flex flex-col gap-4">
       {instructions && instructions.length > 0 &&
         <div className="flex flex-col _gap-2">
-          {/* <div className="text-dark-1 font-bold">Instructions</div> */}
           <h2>Instructions</h2>
           <ul className="list-disc ml-6">
             {instructions && instructions.map((step: string, i: number) => <li key={i}>{step}</li>)
+            }
+          </ul>
+        </div>
+      }
+      {(formattedDuration || formattedSets || formattedReps) &&
+        <div className="flex flex-col _gap-2">
+          <h2>Directions</h2>
+          <ul className="list-disc ml-6">
+            {formattedDuration &&
+              <li key="0">{formattedDuration}</li>
+            }
+            {formattedSets &&
+              <li key="0">{formattedSets}</li>
+            }
+            {formattedReps &&
+              <li key="0">{formattedReps}</li>
             }
           </ul>
         </div>
@@ -116,15 +142,11 @@ export default function Component({ params }: { params: { id: string } }) {
   const [user] = useUser((state: any) => [state.user]);
   const exercise = exercises.filter((exercise: any) => exercise.id == params.id)[0];
 
-  console.log('>> app.exercises[id].page.render()', { id: params.id, exercise });
+  console.log('>> app.exercises[id].page.render()', { id: params.id, exercise, loaded, loadedId: loaded && loaded.includes(params.id) });
 
   useEffect(() => {
     load(params.id);
   }, [params.id]);
-
-  if (!loaded) {
-    return <Loading />
-  }
 
   const links = [
     <BackLink key="0" />,
@@ -132,23 +154,29 @@ export default function Component({ params }: { params: { id: string } }) {
     exercise && user && (user.uid == exercise.createdBy || user.admin) && <Link key="2" style="warning" onClick={() => handleDeleteExercise(params.id, deleteExercise, router)}>Delete</Link>,
   ];
 
+  if (!loaded || !loaded.includes(params.id)) {
+    return (
+      <Page
+        bottomLinks={[<BackLink key="0" />]}
+        loading={true}
+      />
+    )
+  }
+
   if (!exercise) {
     return (
       <Page
-        title={<>Exercise {params.id} not found</>}
-        links={links}
+        title="Exercise not found"
+        subtitle={params.id}
+        links={[<BackLink key="0" />]}
       />
     )
   }
 
   return (
     <Page
-      title={exercise.name}
-      subtitle={exercise.description && exercise.status != "generating" &&
-        <p className='italic text-center'>
-          {exercise.description}
-        </p>
-      }
+      title={`${exercise.name}${exercise.category ? ` (${exercise.category})` : ""}`}
+      subtitle={exercise.description && exercise.status != "generating" && exercise.description}
       links={links}
     >
       {exercise &&

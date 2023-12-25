@@ -6,9 +6,10 @@ import { useEffect, useState } from "react";
 import BackLink from '@/app/_components/BackLink';
 import Page from "@/app/_components/Page";
 import Link from "@/app/_components/Link"
+import useExercises from '@/app/_hooks/exercises';
 import useWorkouts from "@/app/_hooks/workouts";
 import useUser from "@/app/_hooks/user";
-import Loading from "./loading";
+import { Exercise } from '@/types/Exercise';
 import { Workout, WorkoutSession } from '@/types/Workout';
 import { ExerciseEntry } from '@/app/_components/Exercise';
 import { byName } from '@/utils/sort';
@@ -23,9 +24,17 @@ function WorkoutDetails({ id, prompt, exercises, showDetails, user }: any) {
           {
             exercises
               // .sort(byName)
-              .map((exercise: any, offset: number) => (
+              .map((exercise: Exercise, offset: number) => (
                 <div className="ml-2 flex" key={offset}>
-                  <ExerciseEntry exercise={exercise} user={user} />
+                  <ExerciseEntry
+                    exercise={{
+                      id: exercise.id,
+                      name: exercise.name,
+                      status: exercise.status,
+                      directions: exercise.directions,
+                    }}
+                    user={user}
+                  />
                 </div>
               ))
           }
@@ -57,6 +66,7 @@ export default function Component({ params }: { params: { id: string } }) {
   const router = useRouter();
   const [showDetails, setshowDetails] = useState(false);
   const [workouts, loaded, load, deleteWorkout, startSession, sessions, sessionsLoaded, loadSessions] = useWorkouts((state: any) => [state.workouts, state.loaded, state.load, state.deleteWorkout, state.startSession, state.sessions, state.sessionsLoaded, state.loadSessions]);
+  const [exercisesLoaded, loadExercises] = useExercises((state: any) => [state.loaded, state.load]);
   const [user] = useUser((state: any) => [state.user]);
   const workout = workouts.filter((workout: any) => workout.id == params.id)[0];
   const filteredSessions = workout && sessions && sessions.filter((session: WorkoutSession) => session?.workout?.id == workout.id && session.status != "completed");
@@ -66,6 +76,7 @@ export default function Component({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     load(params.id);
+    loadExercises(); // prefetch
   }, [params.id]);
 
   useEffect(() => {
@@ -73,7 +84,12 @@ export default function Component({ params }: { params: { id: string } }) {
   }, [workout?.id]);
 
   if (!loaded) {
-    return <Loading />
+    return (
+      <Page
+        bottomLinks={[<BackLink key="0" />]}
+        loading={true}
+      />
+    )
   }
 
   const links = [

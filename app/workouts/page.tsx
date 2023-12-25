@@ -12,7 +12,6 @@ import useUser from '@/app/_hooks/user';
 import { Workout } from "@/types/Workout"
 import { Exercise, SuggestedExerciseTypes } from '@/types/Exercise';
 import { byName } from '@/utils/sort';
-import Loading from "./loading";
 
 function WorkoutEntry({ workout, user }: any) {
   const isReady = ["created"].includes(workout.status);
@@ -91,6 +90,16 @@ export default function Component() {
     load();
   }, []);
 
+  const title = "Workouts"
+
+  const subtitle = (
+    <>
+      Let ChatGPT create workouts for you!
+      <br />
+      Simply provide a list of exercise names and our trained AI will fill in the rest!
+    </>
+  )
+  
   const links = [
     <div key="0" title={user ? "" : "Login to create new workout"}>
       <Link className={user ? "" : "cursor-not-allowed"} onClick={() => /* user && */ handleCreateWorkout(createWorkout, router, user)}>
@@ -101,18 +110,21 @@ export default function Component() {
   ];
 
   if (!loaded) {
-    return <Loading />
+    return (
+      <Page
+        title={title}
+        subtitle={subtitle}
+        // links={[<BackLink key="0" />]}
+        loading={true}
+      />
+    )
   }
 
   return (
     <>
       <Page
-        title="Workouts"
-        subtitle={<>
-          Let ChatGPT create workouts for you!
-          <br />
-          Simply provide a list of exercise names and our trained AI will fill in the rest!
-        </>}
+        title={title}
+        subtitle={subtitle}
         links={links}
       >
         <FilterButton href="/workouts" userId={user?.uid} isFiltered={!!uidFilter} />

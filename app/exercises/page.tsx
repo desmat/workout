@@ -10,7 +10,6 @@ import Page from "@/app/_components/Page";
 import useExercises from '@/app/_hooks/exercises';
 import useUser from '@/app/_hooks/user';
 import { Exercise, SuggestedExerciseTypes } from "@/types/Exercise"
-import Loading from "./loading";
 import { byName } from '@/utils/sort';
 // import { sortByName } from '@/utils/arrays';
 
@@ -46,6 +45,10 @@ export default function Component() {
     load();
   }, []);
 
+  const title = "Exercises";
+
+  const subtitle = "Let ChatGPT create exercises for you!";
+
   const links = [
     <div key="0" title={user ? "" : "Login to create new exercise"}>
       <Link
@@ -59,14 +62,21 @@ export default function Component() {
   ];
 
   if (!loaded) {
-    return <Loading />
+    return (
+      <Page
+        title={title}
+        subtitle={subtitle}
+        loading={true}
+      />
+    )
   }
 
   return (
     <Page
-      title="Exercises"
-      subtitle="Let ChatGPT create exercises for you!"
+      title={title}
+      subtitle={subtitle}
       links={links}
+      loading={!loaded}
     >
       <FilterButton href="/exercises" userId={user?.uid} isFiltered={!!uidFilter} />
 
@@ -93,6 +103,5 @@ export default function Component() {
         <p className='italic text-center'>No exercises yet :(</p>
       }
     </Page>
-
   )
 }

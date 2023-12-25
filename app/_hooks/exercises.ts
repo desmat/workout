@@ -9,7 +9,7 @@ import useAlert from "./alert";
 const useExercises: any = create(devtools((set: any, get: any) => ({
   exercises: [],
   deletedExercises: [], // to smooth out visual glitches when deleting
-  loaded: false,
+  loaded: undefined,
 
   load: async (id?: string) => {
     console.log(">> hooks.exercise.load", { id });
@@ -26,7 +26,10 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
         // console.log(">> hooks.exercise.get: RETURNED FROM FETCH, returning!");
         const exercise = data.exercise;
         const exercises = get().exercises.filter((exercise: Exercise) => exercise.id != id);
-        set({ exercises: [...exercises, exercise], loaded: true });
+        set({ 
+          exercises: [...exercises, exercise], 
+          loaded: [...(get().loaded || []), exercise.id]
+        });
       });
     } else {
       fetch('/api/exercises').then(async (res) => {
@@ -37,9 +40,10 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
 
         const data = await res.json();
         const deleted = get().deletedExercises.map((exercise: Exercise) => exercise.id);
+        const exercises = data.exercises.filter((exercise: Exercise) => !deleted.includes(exercise.id));
         set({
-          exercises: data.exercises.filter((exercise: Exercise) => !deleted.includes(exercise.id)),
-          loaded: true
+          exercises,
+          loaded: [...(get().loaded || []), ...exercises.map((e: Exercise) => e.id)],
         });
       });
     }
@@ -119,10 +123,12 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
     console.log(">> hooks.exercise.generateExercise", { exercise });
 
     // optimistic
-    exercise.status = "generating";
-    exercise.description = undefined;
-    exercise.instructions = undefined;
-    exercise.variations = undefined;
+    exercise = {
+      id: exercise.id,
+      name: exercise.name,
+      createdBy: exercise.createdBy,
+      status: "generating",
+    }
     const exercises = get().exercises.filter((e: Exercise) => e.id != exercise.id);
     set({ exercises: [...exercises, exercise] });
 

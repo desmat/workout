@@ -14,8 +14,7 @@ export function formatDirections({ duration, sets, reps }: ExerciseDirections) {
 
 export function ExerciseEntry({ exercise, user }: any) {
   const isReady = ["created"].includes(exercise?.status);
-  const directions = exercise?.directions && formatDirections(exercise?.directions);
-  const summary = directions; // || exercise.description;
+  const summary = exercise?.description || exercise?.directions && formatDirections(exercise?.directions);
   console.log('>> app.exercises.page.ExerciseEntry.render()', { exercise, user, summary });
 
   return (

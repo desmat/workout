@@ -11,7 +11,7 @@ import { Menu, Transition } from '@headlessui/react'
 import { EllipsisVerticalIcon } from '@heroicons/react/20/solid'
 import useUser from '@/app/_hooks/user';
 import useWorkouts from "@/app/_hooks/workouts";
-import { handleCreateWorkout } from "@/app/workouts/page";
+import { handleCreateWorkout } from "@/app/_utils/handlers";
 import classNames from '@/utils/classNames'
 
 function menuItems({ pathname, user, router, createWorkout }: { pathname: string, user: User | undefined, router: any | undefined, createWorkout: any | undefined }) {

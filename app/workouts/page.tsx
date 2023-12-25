@@ -12,7 +12,6 @@ import useUser from '@/app/_hooks/user';
 import { Workout } from "@/types/Workout"
 import { Exercise, SuggestedExerciseTypes } from '@/types/Exercise';
 import { byName } from '@/utils/sort';
-import Loading from "./loading";
 
 function WorkoutEntry({ workout, user }: any) {
   const isReady = ["created"].includes(workout.status);
@@ -111,7 +110,14 @@ export default function Component() {
   ];
 
   if (!loaded) {
-    return <Loading />
+    return (
+      <Page
+        title={title}
+        subtitle={subtitle}
+        // links={[<BackLink key="0" />]}
+        loading={true}
+      />
+    )
   }
 
   return (

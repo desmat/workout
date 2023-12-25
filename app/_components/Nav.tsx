@@ -10,9 +10,11 @@ import { LuDumbbell } from "react-icons/lu";
 import { Menu, Transition } from '@headlessui/react'
 import { EllipsisVerticalIcon } from '@heroicons/react/20/solid'
 import useUser from '@/app/_hooks/user';
+import useWorkouts from "@/app/_hooks/workouts";
+import { handleCreateWorkout } from "@/app/workouts/page";
 import classNames from '@/utils/classNames'
 
-function menuItems({ pathname, user, router }: { pathname: string, user: User | undefined, router: any | undefined }) {
+function menuItems({ pathname, user, router, createWorkout }: { pathname: string, user: User | undefined, router: any | undefined, createWorkout: any | undefined }) {
   return [
     {
       name: "Exercises",
@@ -29,20 +31,7 @@ function menuItems({ pathname, user, router }: { pathname: string, user: User | 
       icon: <BsFillPlusCircleFill className="my-auto" />,
       title: user ? "Create a new workout" : "Login to create workouts",
       className: user ? "" : "cursor-not-allowed",
-      onClick: async function () {
-        if (user) {
-          const content = window.prompt("Somethingsomething", "something");
-          if (content) {
-            console.log("Something!", { content });
-            // const userName = getUsername(user);
-            // const post = await addPost(content, userName, user?.uid);
-            // router.push("/posts");
-            // return post as boolean;
-          }
-
-          return false;
-        }
-      }
+      onClick: () => user && handleCreateWorkout(createWorkout, router, user)
     },
   ].map((menuItem: any) => {
     menuItem.isActive = isActive(pathname, menuItem.href);
@@ -57,6 +46,7 @@ function isActive(pathname: string, href: string): boolean {
 export default function Nav() {
   const pathname = usePathname();
   const [user] = useUser((state: any) => [state.user]);
+  const [createWorkout] = useWorkouts((state: any) => [state.createWorkout]);
   const router = useRouter();
 
   return (
@@ -67,7 +57,7 @@ export default function Nav() {
         </NavLink>
       </div>
       <div className="flex flex-grow flex-row lg:flex-col space-x-4 lg:space-x-0 pl-2 pr-0 py-2 lg:py-0 lg:px-2 -mx-2 -my-0 lg:mx-0 lg:-my-2 _bg-yellow-100">
-        {menuItems({ pathname, user, router }).map((menuItem: any) => (
+        {menuItems({ pathname, user, router, createWorkout }).map((menuItem: any) => (
           <div key={menuItem.name}>
             <NavLink
               className={`_bg-pink-300 hidden md:flex ${menuItem.className}`}
@@ -82,7 +72,7 @@ export default function Nav() {
           </div>
         ))}
         <div className="md:hidden mt-1">
-          <NavPopup menuItems={menuItems({ pathname, user, router })} />
+          <NavPopup menuItems={menuItems({ pathname, user, router, createWorkout })} />
         </div>
       </div>
       <div className="flex flex-col p-2 -mr-1 lg:mr-0 lg:-mb-1">

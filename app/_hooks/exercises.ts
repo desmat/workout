@@ -5,8 +5,6 @@ import { devtools } from 'zustand/middleware'
 import { Exercise } from '@/types/Exercise';
 import { uuid } from '@/utils/misc';
 import useAlert from "./alert";
-import delay from '@/utils/delay';
-// import delay from '@/utils/delay';
 
 const useExercises: any = create(devtools((set: any, get: any) => ({
   exercises: [],
@@ -15,7 +13,7 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
 
   load: async (id?: string) => {
     console.log(">> hooks.exercise.load", { id });
-await delay(2000); // TODO REMOVE
+
     if (id) {
       fetch(`/api/exercises/${id}`).then(async (res) => {
         if (res.status != 200) {

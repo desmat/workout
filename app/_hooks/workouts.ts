@@ -7,6 +7,7 @@ import { Exercise } from '@/types/Exercise';
 import { uuid } from '@/utils/misc';
 import { byCreatedAtDesc } from '@/utils/sort';
 import useAlert from "./alert";
+import delay from '@/utils/delay';
 
 const stopSet = (session: WorkoutSession, status = "stopped") => {
   const sets = session.sets && session.sets.filter((set: WorkoutSet) => set.status == "started");
@@ -71,6 +72,7 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
 
   load: async (id?: string) => {
     console.log(">> hooks.workout.load", { id });
+await delay(2000); // TODO REMOVE
 
     // rest api (optimistic: all or just the one)
     if (id) {

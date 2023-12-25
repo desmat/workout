@@ -7,11 +7,11 @@ import FilterButton from '@/app/_components/FilterButton';
 import { ExerciseEntry } from '@/app/_components/Exercise';
 import Link from "@/app/_components/Link"
 import Page from "@/app/_components/Page";
-import Loading from "@/app/_components/loading/Page";
 import useExercises from '@/app/_hooks/exercises';
 import useUser from '@/app/_hooks/user';
 import { Exercise, SuggestedExerciseTypes } from "@/types/Exercise"
 import { byName } from '@/utils/sort';
+import Loading from './loading';
 // import { sortByName } from '@/utils/arrays';
 
 async function handleCreateExercise(createExercise: any, generateExercise: any, router: any, user: User | undefined) {
@@ -62,9 +62,9 @@ export default function Component() {
     // <Link>View Leaderboard</Link>,
   ];
 
-  // if (!loaded) {
-  //   return <Loading />
-  // }
+  if (!loaded) {
+    return <Loading />
+  }
 
   return (
     <Page

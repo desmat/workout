@@ -43,7 +43,7 @@ export default function Component({ params }: { params: { uid?: string } }) {
     return (
       <Page
         title="Profile"
-        subtitle="Loading..."
+        loading={true}
       />
     );
   }

@@ -4,7 +4,6 @@ import moment from 'moment';
 import { User } from 'firebase/auth';
 import { useEffect, useState } from "react";
 import BackLink from '@/app/_components/BackLink';
-import Clock from '@/app/_components/Clock';
 import Link from "@/app/_components/Link"
 import Page from "@/app/_components/Page";
 import useWorkouts from "@/app/_hooks/workouts";
@@ -12,6 +11,8 @@ import useUser from "@/app/_hooks/user";
 import { Workout, WorkoutSession, WorkoutSet } from '@/types/Workout';
 import { Exercise } from '@/types/Exercise';
 import { byCreatedAtDesc, byName } from '@/utils/sort';
+import Clock from '@/app/_components/Clock';
+import { useRouter } from 'next/navigation'
 
 function ExerciseEntry({ id, name, /* description,*/ showDetails }: any) {
   const [showDetail, setshowDetail] = useState(false);
@@ -127,6 +128,15 @@ async function handleCompleteSession(user: User, session: WorkoutSession, fn: an
   // }
 }
 
+async function handleDeleteSession(user: User, session: WorkoutSession, fn: any, router: any) {
+  console.log('>> app.workout[id].session.handleDeleteSession()', { user, session });
+
+  const deletedSession = fn(user, session?.id);
+  // if (session) {
+  //   router.push(`/workouts/${workout.id}/session`);
+  // }
+}
+
 async function handleStartSet(user: User, workout: Workout, session: WorkoutSession, exercise: Exercise, offset: number, startSetFn: any, startSessionFn: any) {
   console.log('>> app.workout[id].session.handleStartSet()', { user, workout, session, exercise, offset });
 
@@ -142,8 +152,8 @@ async function handleStartSet(user: User, workout: Workout, session: WorkoutSess
   // }
 }
 
-export default function Component({ params }: { params: { id: string } }) {
-  // console.log('>> app.workout[id].Page.render()', { id: params.id });
+export default function Component({ params }: { params: { id: string, sessionId?: string } }) {
+  console.log('>> app.workout[id].session[sessionId].Page.render()', { id: params.id, sessionId: params.sessionId });
   const [
     workouts,
     loaded,
@@ -157,6 +167,7 @@ export default function Component({ params }: { params: { id: string } }) {
     completeSession,
     stopSession,
     resumeSession,
+    deleteSession,
   ] = useWorkouts((state: any) => [
     state.workouts,
     state.loaded,
@@ -170,13 +181,21 @@ export default function Component({ params }: { params: { id: string } }) {
     state.completeSession,
     state.stopSession,
     state.resumeSession,
+    state.deleteSession,
   ]);
+  const router = useRouter();
   const [user] = useUser((state: any) => [state.user]);
   const workout = workouts && workouts.filter((workout: any) => workout.id == params.id)[0];
   const filteredSessions = sessions && workout && sessions.filter((session: WorkoutSession) => session?.workout?.id == workout.id);
-  const session = filteredSessions && filteredSessions[filteredSessions.length - 1];
+  const session = params.sessionId
+    ? sessions.filter((session: WorkoutSession) => session.id == params.sessionId)[0]
+    : filteredSessions && filteredSessions[filteredSessions.length - 1];
   const sessionStarted = ["stopped", "started"].includes(session?.status);
   const sessionPaused = ["stopped"].includes(session?.status);
+  const sessionCompleted = session?.status == "completed";
+  const sessionTotal = sessionCompleted && session.sets
+    .map((set: WorkoutSet) => set.duration || 0)
+    .reduce((t: number, v: number) => t + v);
   const currentSet = session && sessionStarted && session.sets && session.sets.sort(byCreatedAtDesc)[0];
   const [previousSet, setPreviousSet] = useState<WorkoutSet | undefined>(undefined);
   const [currentSetDuration, setCurrentSetDuration] = useState(0);
@@ -244,7 +263,7 @@ export default function Component({ params }: { params: { id: string } }) {
     workout && user && session?.status == "stopped" && <Link key="3" onClick={() => handleResumeSession(user, session, resumeSession)}>Resume</Link>,
     workout && user && sessionStarted && <Link key="4" onClick={() => handleCompleteSession(user, session, completeSession)}>Complete</Link>,
     workout && user && sessionStarted && (currentSet.offset < workout.exercises.length - 1) && <Link key="5" onClick={() => handleStartSet(user, workout, session, workout.exercises[currentSet.offset + 1], currentSet.offset + 1, startSet, startSession)}>Next</Link>,
-    // {workout && user && (user.uid == workout.createdBy || user.admin) && <Link key="6" style="warning" onClick={() => handleDeleteWorkout(params.id, deleteWorkout, router)}>Delete</Link>},
+    workout && user && (user.uid == workout.createdBy || user.admin) && <Link key="6" style="warning" onClick={() => handleDeleteSession(user, session, deleteSession, router)}>Delete</Link>,
   ];
 
   if (!workout) {
@@ -290,7 +309,7 @@ export default function Component({ params }: { params: { id: string } }) {
                 : null;
           }}
         >
-          <Clock ms={sessionPaused && currentSet && currentSet.duration || currentSetDuration || 0} />
+          <Clock ms={sessionCompleted && sessionTotal || sessionPaused && currentSet && currentSet.duration || currentSetDuration || 0} />
         </span>
       </p>
       {workout && workout.exercises && workout.exercises.length > 0 &&

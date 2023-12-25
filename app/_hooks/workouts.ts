@@ -66,6 +66,7 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
   workouts: [],
   deletedWorkouts: [], // to smooth out visual glitches when deleting
   sessions: [],
+  deletedSessions: [],
   loaded: false,
   sessionsLoaded: {},
 
@@ -340,6 +341,35 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
     fetchSession("PUT", get, set, session);
 
     return session;
+  },
+
+  deleteSession: async (user: any, id: string) => {
+    console.log(">> hooks.workout.deleteSession id:", id);
+
+    if (!id) {
+      throw `Cannot delete workout session with null id`;
+    }
+
+    const { sessions, deletedSessions } = get();
+    const session = sessions.filter((session: WorkoutSession) => session.id = id)[0];
+
+    // optimistic
+    set({
+      session: sessions.filter((session: WorkoutSession) => session.id != id),
+      deletedSessions: [...deletedSessions, session],
+    });
+
+    fetch(`/api/workouts/${session.workout.id}/sessions/${id}`, {
+      method: "DELETE",
+    }).then(async (res) => {
+      if (res.status != 200) {
+        useAlert.getState().error(`Error deleting workout session ${id}: ${res.status} (${res.statusText})`);
+        set({ sessions, deletedSessions });
+        return;
+      }
+
+      set({ deletedSessions: deletedSessions.filter((session: WorkoutSession) => session.id == id) });
+    });
   },
 
   startSet: async (user: User, workoutId: string, sessionId: string, exercise: Exercise, offset: number) => {

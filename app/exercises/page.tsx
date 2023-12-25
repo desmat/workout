@@ -11,7 +11,6 @@ import useExercises from '@/app/_hooks/exercises';
 import useUser from '@/app/_hooks/user';
 import { Exercise, SuggestedExerciseTypes } from "@/types/Exercise"
 import { byName } from '@/utils/sort';
-import Loading from './loading';
 // import { sortByName } from '@/utils/arrays';
 
 async function handleCreateExercise(createExercise: any, generateExercise: any, router: any, user: User | undefined) {
@@ -32,10 +31,6 @@ async function handleCreateExercise(createExercise: any, generateExercise: any, 
   return false;
 }
 
-export const title = "Exercises";
-
-export const subtitle = "Let ChatGPT create exercises for you!";
-
 export default function Component() {
   const router = useRouter();
   const [user] = useUser((state: any) => [state.user]);
@@ -50,6 +45,10 @@ export default function Component() {
     load();
   }, []);
 
+  const title = "Exercises";
+
+  const subtitle = "Let ChatGPT create exercises for you!";
+
   const links = [
     <div key="0" title={user ? "" : "Login to create new exercise"}>
       <Link
@@ -63,7 +62,13 @@ export default function Component() {
   ];
 
   if (!loaded) {
-    return <Loading />
+    return (
+      <Page
+        title={title}
+        subtitle={subtitle}
+        loading={true}
+      />
+    )
   }
 
   return (

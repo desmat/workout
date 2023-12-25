@@ -21,7 +21,7 @@ export default function Page({
   return (
     <main className={`relative flex flex-col items-left lg:max-w-4xl lg:mx-auto _px-4 min-h-[calc(100vh-2.5rem)] lg:min-h-[calc(100vh+0rem)]${className ? " " + className : ""}`}>
       {loading &&
-        <div className='absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 italic text-dark-0 opacity-10 animate-pulse'>Loading...</div>
+        <div className='absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 italic text-dark-2 opacity-5 animate-pulse'>Loading...</div>
       }
       {/* {!loading &&
         <> */}

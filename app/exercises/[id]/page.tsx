@@ -12,7 +12,7 @@ import useExercises from "@/app/_hooks/exercises";
 import useUser from "@/app/_hooks/user";
 import { Exercise } from "@/types/Exercise";
 import { formatNumber, formatRange, formatTime } from '@/utils/format';
-import Loading from './loading';
+// import Loading from './loading';
 
 function ExerciseVariation({ name, description, instructions, level, directions, showDetails }: any) {
   const [showDetail, setshowDetail] = useState(false);
@@ -54,8 +54,8 @@ function ExerciseVariation({ name, description, instructions, level, directions,
         <ul className="list-disc ml-6 mt-1">
           {instructions && instructions.map((step: string, i: number) => <li key={i}>{step}</li>)
           }
-          {formattedDirections && 
-          <li key="directions">Directions: {formattedDirections}</li>
+          {formattedDirections &&
+            <li key="directions">Directions: {formattedDirections}</li>
           }
         </ul>
 
@@ -156,7 +156,10 @@ export default function Component({ params }: { params: { id: string } }) {
 
   if (!loaded || !loaded.includes(params.id)) {
     return (
-      <Loading />
+      <Page
+        bottomLinks={[<BackLink key="0" />]}
+        loading={true}
+      />
     )
   }
 

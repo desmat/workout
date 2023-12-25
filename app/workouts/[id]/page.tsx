@@ -9,7 +9,7 @@ import Link from "@/app/_components/Link"
 import useExercises from '@/app/_hooks/exercises';
 import useWorkouts from "@/app/_hooks/workouts";
 import useUser from "@/app/_hooks/user";
-import Loading from "./loading";
+// import Loading from "./loading";
 import { Exercise } from '@/types/Exercise';
 import { Workout, WorkoutSession } from '@/types/Workout';
 import { ExerciseEntry } from '@/app/_components/Exercise';
@@ -85,7 +85,12 @@ export default function Component({ params }: { params: { id: string } }) {
   }, [workout?.id]);
 
   if (!loaded) {
-    return <Loading />
+    return (
+      <Page
+        bottomLinks={[<BackLink key="0" />]}
+        loading={true}
+      />
+    )
   }
 
   const links = [

@@ -1,10 +1,13 @@
-export default async function Loading() {
-  console.log('>> app.feed.loading.render()');
+import Page from "@/app/_components/Page";
+import { title, subtitle } from "./page";
 
+export default async function Loading() {
   return (
-    <main className="flex flex-col">
-      <h1 className="text-center">Workouts</h1>
-      <p className='italic text-center animate-pulse'>Loading...</p>
-    </main>
+    <Page
+      title={title}
+      subtitle={subtitle}
+      // links={[<BackLink key="0" />]}
+      loading={true}
+    />
   )
 }

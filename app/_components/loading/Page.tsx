@@ -1,3 +1,5 @@
+'use client'
+
 export default async function Loading({ title }: { title?: string }) {
   console.log('>> app.feed.loading.render()');
 

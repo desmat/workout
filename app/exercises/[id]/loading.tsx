@@ -6,6 +6,5 @@ export default async function Loading() {
     <Page
       bottomLinks={[<BackLink key="0" />]}
       loading={true}
-    />
-  )
+    />)
 }

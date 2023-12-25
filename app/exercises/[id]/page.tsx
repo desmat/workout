@@ -7,11 +7,12 @@ import BackLink from '@/app/_components/BackLink';
 import Link from "@/app/_components/Link"
 import Page from "@/app/_components/Page";
 import { formatDirections } from '@/app/_components/Exercise';
-import Loading from "@/app/_components/loading/Page";
+// import Loading from "@/app/_components/loading/Page";
 import useExercises from "@/app/_hooks/exercises";
 import useUser from "@/app/_hooks/user";
 import { Exercise } from "@/types/Exercise";
 import { formatNumber, formatRange, formatTime } from '@/utils/format';
+import Loading from './loading';
 
 function ExerciseVariation({ name, description, instructions, level, directions, showDetails }: any) {
   const [showDetail, setshowDetail] = useState(false);
@@ -147,21 +148,24 @@ export default function Component({ params }: { params: { id: string } }) {
     load(params.id);
   }, [params.id]);
 
-  if (!loaded || !loaded.includes(params.id)) {
-    return <Loading title="Exercise"/>
-  }
-
   const links = [
     <BackLink key="0" />,
     exercise && user && (user.uid == exercise.createdBy || user.admin) && <Link key="1" onClick={() => handleRegenerate(user, exercise, generateExercise)}>Regenerate</Link>,
     exercise && user && (user.uid == exercise.createdBy || user.admin) && <Link key="2" style="warning" onClick={() => handleDeleteExercise(params.id, deleteExercise, router)}>Delete</Link>,
   ];
 
+  if (!loaded || !loaded.includes(params.id)) {
+    return (
+      <Loading />
+    )
+  }
+
   if (!exercise) {
     return (
       <Page
-        title={<>Exercise {params.id} not found</>}
-        links={links}
+        title="Exercise not found"
+        subtitle={params.id}
+        links={[<BackLink key="0" />]}
       />
     )
   }

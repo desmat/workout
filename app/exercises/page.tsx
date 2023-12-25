@@ -32,6 +32,10 @@ async function handleCreateExercise(createExercise: any, generateExercise: any, 
   return false;
 }
 
+export const title = "Exercises";
+
+export const subtitle = "Let ChatGPT create exercises for you!";
+
 export default function Component() {
   const router = useRouter();
   const [user] = useUser((state: any) => [state.user]);
@@ -58,15 +62,16 @@ export default function Component() {
     // <Link>View Leaderboard</Link>,
   ];
 
-  if (!loaded) {
-    return <Loading />
-  }
+  // if (!loaded) {
+  //   return <Loading />
+  // }
 
   return (
     <Page
-      title="Exercises"
-      subtitle="Let ChatGPT create exercises for you!"
+      title={title}
+      subtitle={subtitle}
       links={links}
+      loading={!loaded}
     >
       <FilterButton href="/exercises" userId={user?.uid} isFiltered={!!uidFilter} />
 
@@ -93,6 +98,5 @@ export default function Component() {
         <p className='italic text-center'>No exercises yet :(</p>
       }
     </Page>
-
   )
 }

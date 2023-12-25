@@ -77,6 +77,16 @@ async function handleCreateWorkout(createWorkout: any, router: any, user: User |
   return false;
 }
 
+export const title = "Workouts"
+
+export const subtitle = (
+  <>
+    Let ChatGPT create workouts for you!
+    <br />
+    Simply provide a list of exercise names and our trained AI will fill in the rest!
+  </>
+)
+
 export default function Component() {
   const router = useRouter();
   const [user] = useUser((state: any) => [state.user]);
@@ -107,12 +117,8 @@ export default function Component() {
   return (
     <>
       <Page
-        title="Workouts"
-        subtitle={<>
-          Let ChatGPT create workouts for you!
-          <br />
-          Simply provide a list of exercise names and our trained AI will fill in the rest!
-        </>}
+        title={title}
+        subtitle={subtitle}
         links={links}
       >
         <FilterButton href="/workouts" userId={user?.uid} isFiltered={!!uidFilter} />

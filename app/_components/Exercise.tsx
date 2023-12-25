@@ -1,3 +1,5 @@
+'use client'
+
 import Link from "@/app/_components/Link"
 import { ExerciseDirections } from "@/types/Exercise";
 import { formatNumber, formatTime, formatRange } from "@/utils/format";

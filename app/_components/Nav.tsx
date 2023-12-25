@@ -5,9 +5,8 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { Fragment } from 'react'
 import { BsFillPlusCircleFill } from "react-icons/bs"
-import { BsLightningFill } from "react-icons/bs"
-import { BsClipboardFill } from "react-icons/bs"
-import { FaRegUserCircle, FaUserCircle } from 'react-icons/fa';
+import { FaRegUserCircle, FaUserCircle, FaRunning } from 'react-icons/fa';
+import { LuDumbbell } from "react-icons/lu";
 import { Menu, Transition } from '@headlessui/react'
 import { EllipsisVerticalIcon } from '@heroicons/react/20/solid'
 import useUser from '@/app/_hooks/user';
@@ -18,12 +17,12 @@ function menuItems({ pathname, user, router }: { pathname: string, user: User | 
     {
       name: "Exercises",
       href: "/exercises",
-      icon: <BsLightningFill className="my-auto text-right" />
+      icon: <LuDumbbell className="my-auto text-right" />
     },
     {
       name: "Workouts",
       href: "/workouts",
-      icon: <BsClipboardFill className="my-auto" />
+      icon: <FaRunning className="my-auto" />
     },
     {
       name: "Create",

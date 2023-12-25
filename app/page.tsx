@@ -8,6 +8,7 @@ import useUser from "@/app/_hooks/user";
 
 export default function Component() {
   const [user, userLoaded] = useUser((state: any) => [state.user, state.loaded]);
+  const isSignedUp = userLoaded && user && !user.isAnonymous;
   console.log('>> app.page.render()');
 
   const links = [
@@ -25,20 +26,20 @@ export default function Component() {
   return (
     <Page
       title="AI-powered app for workouts"
+      subtitle="Let AI generate for you the perfect workouts!"
       bottomLinks={links}
     >
-      <div className="lg:self-center flex flex-col gap-4">
-        <p>Let AI generate for you the perfect workouts!</p>
-        <div className="flex flex-col gap-0">
-          <p>&#8226;&nbsp;<Link href="/exercises" style="parent" className="group">Create <Link style="child">exercises</Link> and review AI-generated instructions and variations</Link></p>
-          <p>&#8226;&nbsp;<Link href="/workouts" style="plain" className="group">Prepare and track your own <Link style="child">workouts</Link></Link></p>
-          <p>&#8226;&nbsp;<Link href="/profile" style="plain" className="group"><Link style="child">Sign-in</Link> to keep track of your progress</Link></p>
-        </div>
-        {userLoaded && !user &&
-          <p className="text-center"><Link href="/profile">Signup now!</Link></p>
+      <div className="self-center flex flex-col gap-1 my-2">
+        <p>&#8226;&nbsp;<Link href="/exercises" style="parent" className="group">Create <Link style="child" className="font-semibold">exercises</Link> and review AI-generated instructions and variations</Link></p>
+        <p>&#8226;&nbsp;<Link href="/workouts" style="plain" className="group">Prepare and track your own <Link style="child" className="font-semibold">workouts</Link></Link></p>
+        <p>&#8226;&nbsp;<Link href="/profile" style="plain" className="group"><Link style="child" className="font-semibold">Sign-in</Link> to keep track of your progress</Link></p>
+      </div>
+      <div className="my-6 text-center">
+        {!isSignedUp &&
+          <Link href="/profile" className="font-semibold">Signup now!</Link>
         }
-        {!(userLoaded && !user) &&
-          <p className="text-center">More to come soon!</p>
+        {isSignedUp &&
+          <>More to come soon!</>
         }
       </div>
     </Page>

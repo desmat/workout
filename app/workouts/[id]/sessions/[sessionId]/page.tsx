@@ -147,7 +147,6 @@ export default function Component({ params }: { params: { id: string, sessionId?
   if (!sessionsLoaded || !sessionsLoaded.includes(params.sessionId)) {
     return (
       <Page
-        title="LOADING"
         bottomLinks={[<BackLink key="0" />]}
         loading={true}
       />

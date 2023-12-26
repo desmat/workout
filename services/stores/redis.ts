@@ -18,14 +18,16 @@ const jsonGetByIds = (ids: string[]) => {
     Some useful commands
 
     keys *
+    scan 0 match thing:*
+    del thing1 thing2 etc
     json.get things $
     json.get things '$[?((@.deletedAt > 0) == false)]'
     json.get things '$[?((@.deletedAt > 0) == true)]'
     json.get things '$[?(@.postedBy=="Mathieu Desjarlais")]'
     json.get things '$[?(@.content ~= "(?i)lorem")]'
     json.get things '$[?(@.id ~= "(ID1)|(ID2)")]
-    scan 0 match thing:*
-    del thing1 thing2 etc
+    json.set thing:UUID '$.foos[5].bar' '{"car": 42}'
+    json.set thing:UUID '$.foos[1].bar.car' '42'
 */
 
 

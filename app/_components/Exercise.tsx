@@ -15,7 +15,7 @@ export function formatDirections({ duration, sets, reps }: ExerciseDirections) {
 export function ExerciseEntry({ exercise, user }: any) {
   const isReady = ["created"].includes(exercise?.status);
   const summary = exercise?.description || exercise?.directions && formatDirections(exercise?.directions);
-  console.log('>> app.exercises.page.ExerciseEntry.render()', { exercise, user, summary });
+  // console.log('>> app.exercises.page.ExerciseEntry.render()', { exercise, user, summary });
 
   return (
     <Link style="parent" href={`/exercises/${exercise.id}`}>

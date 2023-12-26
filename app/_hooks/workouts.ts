@@ -34,7 +34,8 @@ const fetchSession = (putOrPost: "PUT" | "POST", get: any, set: any, newSession:
 
   // optimistic
   set({
-    sessions: [...sessions, newSession]
+    sessions: [...sessions, newSession],
+    sessionsLoaded: [...get().sessionsLoaded || [], newSession.id],
   });
 
   fetch(url, {
@@ -52,7 +53,7 @@ const fetchSession = (putOrPost: "PUT" | "POST", get: any, set: any, newSession:
 
     const data = await res.json();
     const savedSession = data.session;
-    // remove previous session
+    // remove previous session and replace with saved session
     const filteredSessions = sessions.filter((session: WorkoutSession) => session.id != sessionId);
     set({ sessions: [...filteredSessions, savedSession] });
 
@@ -66,9 +67,9 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
   workouts: [],
   deletedWorkouts: [], // to smooth out visual glitches when deleting
   sessions: [],
-  deletedSessions: [],
-  loaded: false,
-  sessionsLoaded: {},
+  deletedSessions: [], // to smooth out visual glitches when deleting
+  loaded: undefined,
+  sessionsLoaded: undefined,
 
   load: async (id?: string) => {
     console.log(">> hooks.workout.load", { id });
@@ -78,7 +79,7 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
       fetch(`/api/workouts/${id}`).then(async (res) => {
         if (res.status != 200) {
           useAlert.getState().error(`Error fetching workout ${id}: ${res.status} (${res.statusText})`);
-          set({ loaded: true });
+          set({ loaded: [...get().loaded || []] });
           return;
         }
 
@@ -86,7 +87,10 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
         // console.log(">> hooks.workout.get: RETURNED FROM FETCH, returning!");
         const workout = data.workout;
         const workouts = get().workouts.filter((workout: Workout) => workout.id != id);
-        set({ workouts: [...workouts, workout], loaded: true });
+        set({ 
+          workouts: [...workouts, workout], 
+          loaded: [...get().loaded || [], id] 
+        });
       });
     } else {
       fetch('/api/workouts').then(async (res) => {
@@ -97,9 +101,10 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
 
         const data = await res.json();
         const deleted = get().deletedWorkouts.map((workout: Workout) => workout.id);
+        const workouts = data.workouts.filter((workout: Workout) => !deleted.includes(workout.id));
         set({
           workouts: data.workouts.filter((workout: Workout) => !deleted.includes(workout.id)),
-          loaded: true
+          loaded: [...get().loaded || [], ...workouts.map((workout: Workout) => workout.id)],
         });
       });
     }
@@ -112,20 +117,21 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
       throw `Unable to load sessions with no workoutId`;
     }
 
-    // rest api (optimistic: all or just the one)
     if (sessionId) {
       fetch(`/api/workouts/${workoutId}/sessions/${sessionId}`).then(async (res) => {
         if (res.status != 200) {
           useAlert.getState().error(`Error fetching workout session ${sessionId}: ${res.status} (${res.statusText})`);
-          set({ loaded: true });
+          set({ sessionsLoaded: [...get().sessionsLoaded || [], sessionId] });
           return;
         }
 
         const data = await res.json();
-        // console.log(">> hooks.workout.get: RETURNED FROM FETCH, returning!");
-        const sessions = data.sessions;
-        const session = get().sessions.filter((session: WorkoutSession) => session.id != sessionId);
-        set({ sessions: [...sessions, session], sessionsLoaded: true });
+        const session = data.session;
+        const sessions = get().sessions.filter((session: WorkoutSession) => session.id != sessionId);
+        set({ 
+          sessions: [...sessions, session], 
+          sessionsLoaded: [...get().sessionsLoaded || [], session.id],
+        });
       });
     } else {
       fetch(`/api/workouts/${workoutId}/sessions`).then(async (res) => {
@@ -135,8 +141,12 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
         }
 
         const data = await res.json();
-        const sessions = data.sessions;
-        set({ sessions, sessionsLoaded: true });
+        const deleted = get().deletedSessions.map((session: WorkoutSession) => session.id);
+        const sessions = data.sessions.filter((session: WorkoutSession) => !deleted.includes(session.id));
+        set({ 
+          sessions,
+          sessionsLoaded: [...get().sessionsLoaded || [], ...sessions.map((s: WorkoutSession) => s.id)],
+        });
       });
     }
   },
@@ -155,7 +165,10 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
       name,
       optimistic: true,
     }
-    set({ workouts: [...get().workouts, workout] });
+    set({ 
+      workouts: [...get().workouts, workout],
+      loaded: [...get().workouts || [], workout.id],
+    });
 
     // check if some of the exercises haven't been created yet: if so change status since we'll be generating those
 
@@ -254,7 +267,7 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
 
     fetchSession("POST", get, set, session, (newSession: WorkoutSession) => {
       console.log(">> hooks.workout.startSession fetch callback", { newSession });
-      const firstExercise = newSession.workout?.exercises && newSession.workout?.exercises[0]
+      const firstExercise = newSession.workout?.exercises && newSession.workout?.exercises[0];
       get().startSet(user, id, newSession.id, firstExercise, 0);
     });
 
@@ -355,7 +368,7 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
 
     // optimistic
     set({
-      session: sessions.filter((session: WorkoutSession) => session.id != id),
+      sessions: sessions.filter((session: WorkoutSession) => session.id != id),
       deletedSessions: [...deletedSessions, session],
     });
 

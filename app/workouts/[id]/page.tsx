@@ -17,21 +17,24 @@ import Clock from '@/app/_components/Clock';
 import moment from 'moment';
 
 function SessionSummary({ session, workout }: any) {
-  console.log('>> app.workouts[id].SessionSummary.render()', { session });
+  // console.log('>> app.workouts[id].SessionSummary.render()', { session });
 
   const isInProgress = session.status != "completed";
+  const isPaused = session.status == "stopped";
   const d = moment(session.createdAt).fromNow();
   const t = session.sets && session.sets
     .map((set: WorkoutSet) => {
-      if (isInProgress) {
-        return (set.duration || 0) + (moment().valueOf() - (set.startedAt || 0))
+      if (isPaused) {
+        return (set.duration || 0);
+      } else if (isInProgress) {
+        return (set.duration || 0) + (moment().valueOf() - (set.startedAt || 0));
       }
-      return set.duration || 0
+      return set.duration || 0;
     })
     .reduce((t: number, v: number) => t + v, 0)
 
   return (
-    <Link href={`/workouts/${workout?.id}/session/${session.id}`} style="_parent secondary" className="flex flex-row _bg-pink-300">
+    <Link href={`/workouts/${workout?.id}/sessions/${session.id}`} style="_parent secondary" className="flex flex-row _bg-pink-300">
       <div className="flex flex-row _bg-yellow-100 _text-dark-0 _font-semibold mr-2">
         {isInProgress &&
           <>(In progress) </>
@@ -106,7 +109,7 @@ async function handleStartSession(user: User, workout: Workout, startFn: any, ro
 
   const session = await startFn(user, workout.id);
   if (session) {
-    router.push(`/workouts/${workout.id}/session`);
+    router.push(`/workouts/${workout.id}/sessions/${session.id}`);
   }
 }
 
@@ -146,7 +149,7 @@ export default function Component({ params }: { params: { id: string } }) {
     <BackLink key="0" />,
     // workout && <Link onClick={() => setshowDetails(!showDetails)}>{showDetails ? "Hide details" : "Show details"}</Link>},
     workout && user && !session && <Link key="1" onClick={() => handleStartSession(user, workout, startSession, router)}>Start</Link>,
-    workout && user && session && <Link key="2" href={`/workouts/${workout.id}/session`}>Resume</Link>,
+    workout && user && session && <Link key="2" href={`/workouts/${workout.id}/sessions/${session.id}`}>Resume</Link>,
     workout && user && (user.uid == workout.createdBy || user.admin) && <Link key="3" style="warning" onClick={() => handleDeleteWorkout(params.id, deleteWorkout, router)}>Delete</Link>,
   ];
 

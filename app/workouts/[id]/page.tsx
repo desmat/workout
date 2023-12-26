@@ -34,7 +34,7 @@ function SessionSummary({ session, workout }: any) {
     .reduce((t: number, v: number) => t + v, 0)
 
   return (
-    <Link href={`/workouts/${workout?.id}/sessions/${session.id}`} style="_parent secondary" className="flex flex-row _bg-pink-300">
+    <Link href={`/workouts/${workout?.id}/sessions/${session.id}`} style="parent _secondary" className="flex flex-row _bg-pink-300 _-mr-8 relative">
       <div className="flex flex-row _bg-yellow-100 _text-dark-0 _font-semibold mr-2">
         {isInProgress &&
           <>(In progress) </>
@@ -44,7 +44,9 @@ function SessionSummary({ session, workout }: any) {
       <div className="flex flex-row _bg-yellow-100">
         <Clock ms={t} />
       </div>
-      {/* <Link style="child light" className="flex flex-row ml-2">View</Link> */}
+      <span className="relative px-4">
+        <Link style="child light" className="absolute right-0 -mr-3">View</Link>
+      </span>
     </Link>
   )
 }
@@ -53,31 +55,34 @@ function WorkoutDetails({ id, prompt, exercises, sessions, showDetails, user }: 
   console.log('>> app.workouts[id].WorkoutDetails.render()', { id, exercises, sessions });
 
   return (
-    <p className="text-left pb-2">
+    <p className="flex flex-col items-center gap-4">
       {exercises && exercises.length > 0 &&
-        <div className="flex flex-col gap-1">
-          {
-            exercises
-              // .sort(byName)
-              .map((exercise: Exercise, offset: number) => (
-                <div className="ml-2 flex" key={offset}>
-                  <ExerciseEntry
-                    exercise={{
-                      id: exercise.id,
-                      name: exercise.name,
-                      status: exercise.status,
-                      directions: exercise.directions,
-                    }}
-                    user={user}
-                  />
-                </div>
-              ))
-          }
+        <div className="flex flex-col items-center gap-1">
+          <div className="text-dark-0 opacity-40">Program</div>
+          <div className="flex flex-col gap-1">
+            {
+              exercises
+                // .sort(byName)
+                .map((exercise: Exercise, offset: number) => (
+                  <div key={offset}>
+                    <ExerciseEntry
+                      exercise={{
+                        id: exercise.id,
+                        name: exercise.name,
+                        status: exercise.status,
+                        directions: exercise.directions,
+                      }}
+                      user={user}
+                    />
+                  </div>
+                ))
+            }
+          </div>
         </div>
       }
       {sessions && sessions.length > 0 &&
-        <div className="flex flex-col items-center gap-1 mt-4">
-          <div className="text-dark-1 opacity-60">Previous sessions</div>
+        <div className="flex flex-col items-center gap-1">
+          <div className="text-dark-0 opacity-40">Sessions</div>
           <div className="flex flex-col items-end gap-0">
             {sessions
               .sort(byCreatedAtDesc)

@@ -25,33 +25,35 @@ export default function Page({
       }
       {/* {!loading &&
         <> */}
-          {title &&
-            <h1 className="flex justify-center text-center capitalize">{title}</h1>
-          }
-          {subtitle &&
-            <p className='italic text-center mb-2'>{subtitle}</p>
-          }
-          {(topLinks || links) &&
-            <div className={`mt-2 mb-4`}>
-              <PageLinks loading={loading}>
-                {topLinks || links}
-              </PageLinks>
-            </div>
-          }
-          {/* {loading &&
+      {title &&
+        <h1 className="flex justify-center text-center capitalize">{title}</h1>
+      }
+      {subtitle &&
+        <p className='italic text-center mb-2'>{subtitle}</p>
+      }
+      {(topLinks || links) &&
+        <div className={`mt-2 mb-4`}>
+          <PageLinks loading={loading}>
+            {topLinks || links}
+          </PageLinks>
+        </div>
+      }
+      {/* {loading &&
         <p className='italic text-center opacity-20 animate-pulse'>Loading...</p>
       } */}
-          {!loading &&
-            <>
-              {children}
-            </>
-          }
-          {(bottomLinks || links) &&
-            <div className={`flex flex-grow items-end justify-center h-full mt-2`}>
-              <PageLinks loading={loading}>
-                {bottomLinks || links}
-              </PageLinks>
-            </div>
+      {!loading &&
+        <div className="px-2 flex flex-col align-center self-center w-fit">
+          {/* <> */}
+          {children}
+          {/* </> */}
+        </div>
+      }
+      {(bottomLinks || links) &&
+        <div className={`flex flex-grow items-end justify-center h-full mt-4`}>
+          <PageLinks loading={loading}>
+            {bottomLinks || links}
+          </PageLinks>
+        </div>
         //   }
         // </>
       }

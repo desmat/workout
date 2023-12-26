@@ -32,8 +32,13 @@ function WorkoutEntry({ workout, user }: any) {
         <span className="capitalize font-semibold">{workout.name}</span>
         {isReady &&
           <>
-            <span><span className="capitalize">{` (${summary}`}</span>{summaryMore})</span>
-            <Link style="child light" className="ml-2 absolute">View</Link>
+            <span>
+              <span className="capitalize">{` (${summary}`}</span>
+              {summaryMore})
+            </span>
+            <span className="relative px-4">
+              <Link style="child light" className="absolute right-0 -mr-3">View</Link>
+            </span>
           </>
         }
         {!isReady &&
@@ -69,7 +74,7 @@ export default function Component() {
       Simply provide a list of exercise names and our trained AI will fill in the rest!
     </>
   )
-  
+
   const links = [
     <div key="0" title={user ? "" : "Login to create new workout"}>
       <Link className={user ? "" : "cursor-not-allowed"} onClick={() => user && handleCreateWorkout(createWorkout, router, user)}>
@@ -106,9 +111,9 @@ export default function Component() {
                 .sort(byName)
                 .map((workout: any) => {
                   return (
-                    <span key={workout.id}>
+                    <div key={workout.id}>
                       <WorkoutEntry workout={workout} user={user} />
-                    </span>
+                    </div>
                   )
                 })
             }

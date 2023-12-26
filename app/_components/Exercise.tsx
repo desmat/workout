@@ -27,7 +27,9 @@ export function ExerciseEntry({ exercise, user }: any) {
         {isReady &&
           <>
             {summary ? `: ${summary}` : ""}
-            <Link style="child light" className="ml-2 absolute">View</Link>
+            <span className="relative px-4 _ml-2">
+              <Link style="child light" className="absolute right-0 -mr-3">View</Link>
+            </span>
           </>
         }
         {!isReady &&

@@ -148,8 +148,8 @@ export default function Component({ params }: { params: { id: string } }) {
 
   const links = [
     <BackLink key="0" />,
-    exercise && user && (user.uid == exercise.createdBy || user.admin) && <Link key="1" onClick={() => handleRegenerate(user, exercise, generateExercise)}>Regenerate</Link>,
     exercise && user && (user.uid == exercise.createdBy || user.admin) && <Link key="2" style="warning" onClick={() => handleDeleteExercise(params.id, deleteExercise, router)}>Delete</Link>,
+    exercise && user && (user.uid == exercise.createdBy || user.admin) && <Link key="1" onClick={() => handleRegenerate(user, exercise, generateExercise)}>Regenerate</Link>,
   ];
 
   if (!loaded || !loaded.includes(params.id)) {

@@ -133,7 +133,7 @@ export default function Component({ params }: { params: { id: string } }) {
   console.log('>> app.workouts[id].page.render()', { id: params.id, workout });
 
   useEffect(() => {
-    load(params.id);
+    load({ id: params.id });
     loadExercises(); // prefetch
   }, [params.id]);
 
@@ -152,16 +152,17 @@ export default function Component({ params }: { params: { id: string } }) {
 
   const links = [
     <BackLink key="0" />,
+    workout && user && (user.uid == workout.createdBy || user.admin) && <Link key="3" style="warning" onClick={() => handleDeleteWorkout(params.id, deleteWorkout, router)}>Delete</Link>,
     // workout && <Link onClick={() => setshowDetails(!showDetails)}>{showDetails ? "Hide details" : "Show details"}</Link>},
     workout && user && !session && <Link key="1" onClick={() => handleStartSession(user, workout, startSession, router)}>Start</Link>,
     workout && user && session && <Link key="2" href={`/workouts/${workout.id}/sessions/${session.id}`}>Resume</Link>,
-    workout && user && (user.uid == workout.createdBy || user.admin) && <Link key="3" style="warning" onClick={() => handleDeleteWorkout(params.id, deleteWorkout, router)}>Delete</Link>,
   ];
 
   if (!workout) {
     return (
       <Page
-        title={<>Workout {params.id} not found</>}
+        title="Workout not found"
+        subtitle={params.id}
         links={links}
       />
     )

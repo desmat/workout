@@ -71,7 +71,8 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
   loaded: undefined,
   sessionsLoaded: undefined,
 
-  load: async (id?: string) => {
+  load: async (query?: any) => {
+    const id = query?.id
     console.log(">> hooks.workout.load", { id });
 
     // rest api (optimistic: all or just the one)
@@ -93,7 +94,8 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
         });
       });
     } else {
-      fetch('/api/workouts').then(async (res) => {
+      let [q, v] = query && Object.entries(query)[0] || [];
+      fetch(`/api/workouts${q ? `?${q}=${v}` : ""}`).then(async (res) => {
         if (res.status != 200) {
           useAlert.getState().error(`Error fetching workouts: ${res.status} (${res.statusText})`);
           return;

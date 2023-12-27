@@ -4,14 +4,29 @@ import { User } from 'firebase/auth';
 import moment from 'moment';
 import * as openai from "@/services/openai";
 import { Exercise } from "@/types/Exercise";
-import Store from "@/types/Store";
+import { Store } from "@/types/Store";
 import { uuid } from '@/utils/misc';
-import { summarizeExercise } from './workout';
 
 let store: Store;
-import(`@/services/stores/${process.env.STORE_TYPE}`).then((importedStore) => {
-  store = importedStore;
-});
+import(`@/services/stores/${process.env.STORE_TYPE}`)
+  .then((s: any) => {
+    console.log(">> services.exercise.parseGeneratedExercise", { s })
+    store = new s.create();
+  });
+
+export function summarizeExercise(exercise: Exercise, include?: any): Exercise {
+  console.log(`>> services.workout.summarizeExercise`, { exercise });
+  const included: any = {};
+  if (include?.description) included.description = exercise.description;
+  if (include?.directions) included.directions = exercise.directions;
+  if (include?.status) included.status = exercise.status;
+
+  return {
+    id: exercise.id,
+    name: exercise.name,
+    ...included,
+  };
+}
 
 function parseGeneratedExercise(response: any): any {
   console.log(`>> services.exercise.parseGeneratedExercise`, { response });
@@ -81,7 +96,7 @@ function parseGeneratedExercise(response: any): any {
     reps: res.reps,
   };
   const variations = res.variations && res.variations.map((e: Exercise) => parseGeneratedExercise(e));
-  const exercise = {    
+  const exercise = {
     name: res.name,
     description: res.description,
     instructions: res.instructions,
@@ -94,14 +109,14 @@ function parseGeneratedExercise(response: any): any {
 }
 
 export async function getExercises(query?: any): Promise<Exercise[]> {
-  const exercises = await store.getExercises(query);
+  const exercises = await store.exercises.find(query);
   return new Promise((resolve, reject) => resolve(exercises.filter(Boolean)));
 }
 
 export async function getExercise(id: string): Promise<Exercise | undefined> {
   console.log(`>> services.exercise.getExercise`, { id });
 
-  const exercise = await store.getExercise(id);
+  const exercise = await store.exercises.get(id);
   console.log(`>> services.exercise.getExercise`, { id, exercise });
   return new Promise((resolve, reject) => resolve(exercise));
 }
@@ -117,7 +132,7 @@ export async function createExercise(user: User, name: string): Promise<Exercise
     name,
   } as Exercise;
 
-  return store.addExercise(user.uid, exercise);
+  return store.exercises.create(user.uid, exercise);
 }
 
 export async function generateExercise(user: User, exercise: Exercise): Promise<Exercise> {
@@ -126,9 +141,12 @@ export async function generateExercise(user: User, exercise: Exercise): Promise<
   exercise = {
     ...summarizeExercise(exercise),
     status: "generating",
+    createdAt: exercise.createdAt,
+    createdBy: exercise.createdBy,
     updatedAt: moment().valueOf(),
+    updatedBy: user.uid,
   };
-  store.saveExercise(user.uid, exercise);
+  store.exercises.update(user.uid, exercise);
 
   const res = await openai.generateExercise(exercise.name);
   const generatedExercise = parseGeneratedExercise(res);
@@ -139,10 +157,11 @@ export async function generateExercise(user: User, exercise: Exercise): Promise<
     ...generatedExercise,
     name: exercise.name,
     status: "created",
-    updatedAt: moment().valueOf()
+    updatedAt: moment().valueOf(),
+    updatedBy: user.uid,
   };
 
-  return store.saveExercise(user.uid, exercise);
+  return store.exercises.update(user.uid, exercise);
 }
 
 export async function deleteExercise(user: any, id: string): Promise<Exercise> {
@@ -161,7 +180,7 @@ export async function deleteExercise(user: any, id: string): Promise<Exercise> {
     throw `Unauthorized`;
   }
 
-  return store.deleteExercise(user.uid, id);
+  return store.exercises.delete(user.uid, id);
 }
 
 export async function saveExercise(user: any, exercise: Exercise): Promise<Exercise> {
@@ -171,5 +190,5 @@ export async function saveExercise(user: any, exercise: Exercise): Promise<Exerc
     throw `Unauthorized`;
   }
 
-  return store.saveExercise(user.uid, exercise);
+  return store.exercises.update(user.uid, exercise);
 }

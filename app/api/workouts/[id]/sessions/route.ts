@@ -7,7 +7,15 @@ import { validateUserSession } from '@/services/users';
 export async function GET(request: Request) {
   console.log('>> app.api.workouts.[id].session.GET');
 
-  const sessions = await getSessions()
+  const { user } = await validateUserSession(request);
+  if (!user) {
+    return NextResponse.json(
+      { success: false, message: 'authentication failed' },
+      { status: 401 }
+    );
+  }
+  
+  const sessions = await getSessions({ createdBy: user.uid })
   return NextResponse.json({ sessions });
 }
 

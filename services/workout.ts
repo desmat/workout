@@ -4,30 +4,18 @@ import { User } from 'firebase/auth';
 import moment from 'moment';
 import { Exercise } from "@/types/Exercise";
 import { Workout, WorkoutSession, WorkoutSet } from '@/types/Workout';
-import Store from '@/types/Store';
+import { Store } from '@/types/Store';
 import { uuid } from '@/utils/misc';
-import { createExercise, getExercises, generateExercise } from './exercise';
+import { createExercise, getExercises, generateExercise, summarizeExercise } from './exercise';
 
 let store: Store;
-import(`@/services/stores/${process.env.STORE_TYPE}`).then((importedStore) => {
-  store = importedStore;
-});
+import(`@/services/stores/${process.env.STORE_TYPE}`)
+  .then((s: any) => {
+    console.log(">> services.exercise.parseGeneratedExercise", { s })
+    store = new s.create();
+  });
 
-export function summarizeExercise(exercise: Exercise, include?: any): Exercise {
-  console.log(`>> services.workout.summarizeExercise`, { exercise });
-  const included: any = {};
-  if (include?.description) included.description = exercise.description;
-  if (include?.directions) included.directions = exercise.directions;
-  if (include?.status) included.status = exercise.status;
-
-  return {
-    id: exercise.id,
-    name: exercise.name,
-    ...included,
-  };
-}
-
-export function summarizeWorkout(workout: Workout, include?: any): Workout {
+function summarizeWorkout(workout: Workout, include?: any): Workout {
   console.log(`>> services.workout.summarizeWorkout`, { workout });
 
   return {
@@ -56,14 +44,16 @@ function summarizeWorkoutSet(set: WorkoutSet): WorkoutSet {
   }
 }
 
-export async function getWorkouts(): Promise<Workout[]> {
-  const workouts = await store.getWorkouts();
-  const exerciseIds = Array.from(
-    new Set(
-      workouts
-        .map((workout: Workout) => workout.exercises && workout.exercises.map((exercise: Exercise) => exercise.id))
-        .flat()))
-  const allExercises = new Map((await getExercises({ ids: exerciseIds })).map((exercise: Exercise) => [exercise.id, exercise]));
+export async function getWorkouts(query?: any): Promise<Workout[]> {
+  console.log(`>> services.workout.getWorkouts`, { query });
+  const workouts = await store.workouts.find(query);
+
+  // const exerciseIds = Array.from(
+  //   new Set(
+  //     workouts
+  //       .map((workout: Workout) => workout.exercises && workout.exercises.map((exercise: Exercise) => exercise.id))
+  //       .flat()))
+  // const allExercises = new Map((await getExercises({ ids: exerciseIds })).map((exercise: Exercise) => [exercise.id, exercise]));
 
   // console.log(`>> services.workout.getWorkouts`, { exerciseIds, allExercises });
 
@@ -95,17 +85,8 @@ export async function getWorkouts(): Promise<Workout[]> {
 export async function getWorkout(id: string): Promise<Workout | undefined> {
   console.log(`>> services.workout.getWorkout`, { id });
 
-  const workout = await store.getWorkout(id);
+  const workout = await store.workouts.get(id);
   console.log(`>> services.workout.getWorkout`, { id, workout });
-
-  // link up exercise details
-  // if (workout?.exercises) {
-  //   const exerciseIds = workout.exercises.map((exercise: Exercise) => exercise.id);
-  //   const exercises = new Map((await getExercises({ ids: exerciseIds })).map((e: Exercise) => [e.id, e]));
-  //   workout.exercises = workout.exercises.map((e: Exercise) => exercises.get(e.id) || e);
-  // }
-
-  // console.log(`>> services.workout.getWorkout`, { exerciseIds, exercises, workout });
 
   return workout;
 }
@@ -130,7 +111,7 @@ export async function createWorkout(user: User, name: string, exerciseNames: str
       exerciseNames
         .map((name: string) => name.toLowerCase())
         .filter((name: string) => !allExerciseNames.has(name))));
-  console.log(`>> services.workout.createWorkout`, { allExerciseNames, exerciseNamesToCreate });
+  // console.log(`>> services.workout.createWorkout`, { allExerciseNames, exerciseNamesToCreate });
 
   const createdExercises = new Map((
     await Promise.all(
@@ -170,11 +151,9 @@ export async function createWorkout(user: User, name: string, exerciseNames: str
     })
     .filter(Boolean) as Exercise[];
 
-  console.log(`>> services.workout.createWorkout`, { createdExercises, exercises });
+  // console.log(`>> services.workout.createWorkout`, { createdExercises, exercises });
 
-
-
-  return store.addWorkout(user.uid, summarizeWorkout(
+  return store.workouts.create(user.uid, summarizeWorkout(
     { ...workout, exercises, status: "created" },
     {
       exercises: {
@@ -201,74 +180,31 @@ export async function deleteWorkout(user: any, id: string): Promise<void> {
     throw `Unauthorized`;
   }
 
-  store.deleteWorkout(user.uid, id);
+  store.workouts.delete(user.uid, id);
   return new Promise((resolve, reject) => resolve());
 }
 
+export async function getSessions(query?: any): Promise<WorkoutSession[]> {
+  console.log(`>> services.workout.getSessions`, { query });
 
+  const sessions = await store.workoutSessions.find(query);
+  // const exerciseIds = Array.from(
+  //   new Set(
+  //     sessions
+  //       .map((session: WorkoutSession) => session.workout?.exercises && session.workout.exercises.map((exercise: Exercise) => exercise.id))
+  //       .flat()))
+  // const allExercises = new Map((await getExercises({ ids: exerciseIds })).map((exercise: Exercise) => [exercise.id, exercise]));
 
+  // console.log(`>> services.workout.getSessions`, { exerciseIds, allExercises });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-export async function getSessions(): Promise<WorkoutSession[]> {
-  const sessions = await store.getWorkoutSessions();
-  const exerciseIds = Array.from(
-    new Set(
-      sessions
-        .map((session: WorkoutSession) => session.workout?.exercises && session.workout.exercises.map((exercise: Exercise) => exercise.id))
-        .flat()))
-  const allExercises = new Map((await getExercises({ ids: exerciseIds })).map((exercise: Exercise) => [exercise.id, exercise]));
-
-  console.log(`>> services.workout.getSessions`, { exerciseIds, allExercises });
-
-  // const sessionDetails = Promise.all(
-  //   sessions.map(async (session: WorkoutSession) => {
-  //     if (session.id) return await getSession(session.id);
-  //   })
-  // );
-
-  // link up exercises
-  // const sessionDetails = sessions.map((session: WorkoutSession) => {
-  //   let exercises = session.workout?.exercises;
-  //   if (session.workout?.exercises) {
-  //     exercises = session.workout?.exercises.map((exercise: Exercise) => {
-  //       const e = allExercises.get(exercise.id)
-  //       return e || exercise;
-  //     })
-  //   }
-
-  //   return { ...session, exercises }
-  // });
-
-  // return sessionDetails;
   return sessions;
 }
 
 export async function getSession(id: string): Promise<WorkoutSession | undefined> {
   console.log(`>> services.workout.getSession`, { id });
 
-  const session = await store.getWorkoutSession(id);
+  const session = await store.workoutSessions.get(id);
   console.log(`>> services.workout.getSession`, { id, session });
-
-  // const exercises = session.exercises && session.exercises.length > 0
-  //   ? await Promise.all(session.exercises.map((exercise: Exercise) => getExercise(exercise.id as string)))
-  //   : [];
-  // const exerciseIds = session.exercises.map((exercise: Exercise) => exercise.id);
-  // const exercises = await getExercises({ ids: exerciseIds });
-
-  // TODO load up workout and exercise if we stored just ids
 
   return session;
 }
@@ -288,7 +224,7 @@ export async function createSession(user: User, data: any): Promise<WorkoutSessi
 
   console.log(`>> services.workout.createSession`, { session });
 
-  const createdSession = await store.addWorkoutSession(user.uid, summarizeWorkoutSession(session));
+  const createdSession = await store.workoutSessions.create(user.uid, summarizeWorkoutSession(session));
 
   console.log(`>> services.workout.createSession`, { createdSession });
 
@@ -302,12 +238,12 @@ export async function saveSession(user: User, session: WorkoutSession): Promise<
     throw `Error saving workout session: null id`;
   }
 
-  const existingSession = await store.getWorkoutSession(session.id);
+  const existingSession = await store.workoutSessions.get(session.id);
   console.log(`>> services.workout.saveSession`, { session, existingSession });
 
   // TODO check something here?
 
-  const savedSession = await store.saveWorkoutSession(user.uid, summarizeWorkoutSession(session));
+  const savedSession = await store.workoutSessions.update(user.uid, summarizeWorkoutSession(session));
 
   return savedSession;
 }
@@ -328,5 +264,5 @@ export async function deleteSession(user: any, id: string): Promise<WorkoutSessi
     throw `Unauthorized`;
   }
 
-  return store.deleteWorkoutSession(user.uid, id);
+  return store.workoutSessions.delete(user.uid, id);
 }

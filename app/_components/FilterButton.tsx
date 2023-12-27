@@ -1,11 +1,12 @@
 import { BsFilterCircle, BsFilterCircleFill } from "react-icons/bs"
 import Link from "./Link"
 
-export default function FilterButton({ href, userId, isFiltered }: any) {
+export default function FilterButton({ onClick, href, userId, isFiltered }: any) {
   return (
     <div className="z-10">
       {isFiltered &&
         <Link
+          onClick={onClick}
           href={href}
           className="fixed bottom-3 right-3 h-fit"
           title={`Show all`}
@@ -15,6 +16,7 @@ export default function FilterButton({ href, userId, isFiltered }: any) {
       }
       {!isFiltered &&
         <Link
+          onClick={onClick}
           href={`${href}?uid=${userId}`}
           className="fixed bottom-3 right-3 h-fit"
           title={`Show created by me`}>

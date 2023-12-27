@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { useEffect } from "react";
-import useUser from "@/app/_hooks/user";
-import useWorkouts from "@/app/_hooks/workouts";
 import Page from "@/app/_components/Page"
+import useUser from "@/app/_hooks/user";
+import useExercises from "@/app/_hooks/exercises";
+import useWorkouts from "@/app/_hooks/workouts";
 import * as users from "@/services/users";
+import { Exercise } from "@/types/Exercise";
 import { Workout } from "@/types/Workout";
 
 function doSigninWithGoogle(e: any, signinFn: any) {
@@ -29,13 +31,16 @@ function doLogout(e: any, logoutFn: any) {
 export default function Component({ params }: { params: { uid?: string } }) {
   // console.log('>> app.profile.page.render()', params.uid);
   const [user, userLoaded, loadUser, signin, logout] = useUser((state: any) => [state.user, state.loaded, state.load, state.signin, state.logout]);
+  const [exercises, exercisesLoaded, loadExercises] = useExercises((state: any) => [state.exercises, state.loaded, state.load]);
   const [workouts, workoutsLoaded, loadWorkouts] = useWorkouts((state: any) => [state.workouts, state.loaded, state.load]);
-  const myWorkouts = workoutsLoaded && workouts.filter((workout: Workout) => workout.createdBy == user?.uid);
+  const myWorkouts = workoutsLoaded && workouts && workouts.filter((workout: Workout) => workout.createdBy == user?.uid);
+  const myExercises = exercisesLoaded && exercises && exercises.filter((exercise: Exercise) => exercise.createdBy == user?.uid);
   console.log('>> app.profile.page.render()', { uid: params.uid, user, userLoaded });
 
   useEffect(() => {
     // console.log("** app.profile.page.useEffect", { uid: params.uid, user });
     if (!userLoaded) loadUser();
+    if (!exercisesLoaded) loadExercises();
     if (!workoutsLoaded) loadWorkouts();
   }, [params.uid]);
 
@@ -114,9 +119,14 @@ export default function Component({ params }: { params: { uid?: string } }) {
       }
       {!params.uid &&
         <div className="flex flex-col lg:flex-row lg:space-x-4 items-center justify-center mt-4">
-          {user && myWorkouts.length > 0 &&
+          {user && myWorkouts?.length > 0 &&
             <div className="text-dark-2">
               <Link href={`/workouts?uid=${user.uid}`}>Workouts ({myWorkouts.length})</Link>
+            </div>
+          }
+          {user && myExercises?.length > 0 &&
+            <div className="text-dark-2">
+              <Link href={`/exercises?uid=${user.uid}`}>Exercises ({myExercises.length})</Link>
             </div>
           }
           {user && user.isAnonymous &&

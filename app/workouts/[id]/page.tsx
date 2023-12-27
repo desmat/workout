@@ -133,7 +133,7 @@ export default function Component({ params }: { params: { id: string } }) {
   console.log('>> app.workouts[id].page.render()', { id: params.id, workout });
 
   useEffect(() => {
-    load(params.id);
+    load({ id: params.id });
     loadExercises(); // prefetch
   }, [params.id]);
 
@@ -161,7 +161,8 @@ export default function Component({ params }: { params: { id: string } }) {
   if (!workout) {
     return (
       <Page
-        title={<>Workout {params.id} not found</>}
+        title="Workout not found"
+        subtitle={params.id}
         links={links}
       />
     )

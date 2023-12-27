@@ -141,7 +141,10 @@ export async function generateExercise(user: User, exercise: Exercise): Promise<
   exercise = {
     ...summarizeExercise(exercise),
     status: "generating",
+    createdAt: exercise.createdAt,
+    createdBy: exercise.createdBy,
     updatedAt: moment().valueOf(),
+    updatedBy: user.uid,
   };
   store.exercises.update(user.uid, exercise);
 
@@ -154,7 +157,8 @@ export async function generateExercise(user: User, exercise: Exercise): Promise<
     ...generatedExercise,
     name: exercise.name,
     status: "created",
-    updatedAt: moment().valueOf()
+    updatedAt: moment().valueOf(),
+    updatedBy: user.uid,
   };
 
   return store.exercises.update(user.uid, exercise);

@@ -11,14 +11,15 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
   deletedExercises: [], // to smooth out visual glitches when deleting
   loaded: undefined,
 
-  load: async (id?: string) => {
+  load: async (query?: any) => {
+    const id = query?.id;
     console.log(">> hooks.exercise.load", { id });
 
     if (id) {
       fetch(`/api/exercises/${id}`).then(async (res) => {
         if (res.status != 200) {
           useAlert.getState().error(`Error fetching exercise ${id}: ${res.status} (${res.statusText})`);
-          set({ loaded: true });
+          loaded: [...(get().loaded || []), id]
           return;
         }
 
@@ -28,11 +29,12 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
         const exercises = get().exercises.filter((exercise: Exercise) => exercise.id != id);
         set({ 
           exercises: [...exercises, exercise], 
-          loaded: [...(get().loaded || []), exercise.id]
+          loaded: [...(get().loaded || []), id]
         });
       });
     } else {
-      fetch('/api/exercises').then(async (res) => {
+      let [q, v] = query && Object.entries(query)[0] || [];
+      fetch(`/api/exercises${q ? `?${q}=${v}` : ""}`).then(async (res) => {
         if (res.status != 200) {
           useAlert.getState().error(`Error fetching exercises: ${res.status} (${res.statusText})`);
           return;

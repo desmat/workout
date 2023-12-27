@@ -57,13 +57,17 @@ export default function Component() {
   const [workouts, loaded, load, createWorkout] = useWorkouts((state: any) => [state.workouts, state.loaded, state.load, state.createWorkout]);
   const params = useSearchParams();
   const uidFilter = params.get("uid");
-  const filteredWorkouts = uidFilter ? workouts.filter((workout: Workout) => workout.createdBy == uidFilter) : workouts;
+  const filteredWorkouts = uidFilter && workouts ? workouts.filter((workout: Workout) => workout.createdBy == uidFilter) : workouts;
 
   console.log('>> app.trivia.page.render()', { loaded, workouts });
 
   useEffect(() => {
-    load();
-  }, []);
+    if (uidFilter) {
+      load({ createdBy: uidFilter });
+    } else {
+      load();
+    }
+  }, [uidFilter]);
 
   const title = "Workouts"
 

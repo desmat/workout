@@ -42,11 +42,10 @@ export function GenerateLink({
       style={style}
       title={title}
       target={target}
-      onClick={async () => {
+      onClick={() => {
         if (user) {
-          if (await handleGenerateWorkout(generateWorkout, router, user)) {
-            router.push("/workouts");
-          }
+          handleGenerateWorkout(generateWorkout, router, user)
+          router.push("/workouts");
         }
       }}
     >

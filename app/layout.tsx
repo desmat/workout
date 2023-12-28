@@ -6,6 +6,7 @@ import Alert from '@/app/_components/Alert';
 import Auth from '@/app/_components/Auth'
 import Nav from '@/app/_components/Nav'
 import User from '@/app/_components/User'
+import Prefetch from './_components/Prefetch';
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -33,6 +34,7 @@ export default function RootLayout({
       <User />
       <Analytics />
       <Alert />
+      <Prefetch />
     </html>
   )
 }

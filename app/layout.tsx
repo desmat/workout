@@ -25,7 +25,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <div className="flex flex-col lg:flex-row">
           <Nav />
-          <div className="_bg-blue-500 ml-0 mt-10 lg:ml-32 lg:mt-0 w-screen min-h-[calc(100vh-2.5rem)] lg:min-h-screen">
+          <div className="_bg-blue-500 ml-0 mt-10 lg:ml-32 lg:mt-0 w-screen min-h-[calc(100dvh-2.5rem)] lg:min-h-screen">
             {children}
           </div>
         </div>

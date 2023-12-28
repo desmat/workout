@@ -2,7 +2,7 @@
 
 import { User } from 'firebase/auth';
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import FilterButton from '@/app/_components/FilterButton';
 import { ExerciseEntry } from '@/app/_components/Exercise';
 import Link from "@/app/_components/Link"
@@ -36,14 +36,27 @@ export default function Component() {
   const [user] = useUser((state: any) => [state.user]);
   const [exercises, loaded, load, createExercise, generateExercise] = useExercises((state: any) => [state.exercises, state.loaded, state.load, state.createExercise, state.generateExercise]);
   const params = useSearchParams();
-  const uidFilter = params.get("uid");
-  const filteredExercises = uidFilter ? exercises.filter((exercise: Exercise) => exercise.createdBy == uidFilter) : exercises;
+  // const [filtered, setFiltered] = useState(true);
+  const uidFilter = params.get("uid") ;
+  const filteredExercises = uidFilter && exercises ? exercises.filter((exercise: Exercise) => exercise.createdBy == uidFilter) : exercises;
 
   console.log('>> app.trivia.page.render()', { loaded, exercises });
 
+  // useEffect(() => {
+  //   if (filtered) {
+  //     load({createdBy: user?.uid});
+  //   } else {
+  //     load();
+  //   }
+  // }, [user, filtered]);
+
   useEffect(() => {
-    load();
-  }, []);
+    if (uidFilter) {
+      load({createdBy: uidFilter});
+    } else {
+      load();
+    }
+  }, [uidFilter]);
 
   const title = "Exercises";
 
@@ -61,7 +74,7 @@ export default function Component() {
     // <Link>View Leaderboard</Link>,
   ];
 
-  if (!loaded) {
+  if (!loaded /* || filtered && !user */) {
     return (
       <Page
         title={title}
@@ -79,7 +92,8 @@ export default function Component() {
       loading={!loaded}
     >
       <FilterButton href="/exercises" userId={user?.uid} isFiltered={!!uidFilter} />
-
+      {/* <FilterButton isFiltered={filtered} onClick={() => setFiltered(!filtered)} /> */}
+      
       {/* <p className='italic text-center'>
           Try these: {SuggestedExerciseTypes.join(", ")}
         </p> */}

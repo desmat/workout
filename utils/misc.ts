@@ -15,3 +15,14 @@ export function hashCode(str: string): number {
   }
   return hash;
 }
+
+export function arrayToObject(array: any[]) {
+  return array.reduce((o, [k, v]) => Object.assign(o, { [k]: v }), {});
+}
+
+export function searchParamsToObject(searchParams: string) {
+  return arrayToObject(searchParams
+    .split(",")
+    .filter(Boolean)
+    .map((entry: string) => entry.split("=")))
+}

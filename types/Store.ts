@@ -1,25 +1,16 @@
-import { Exercise } from "./Exercise";
+import { Exercise } from "./Exercise"
 import { Workout, WorkoutSession } from "./Workout";
 
-export default interface Store {
-  // Exercises
-  getExercises(query?: any): Promise<Exercise[]>
-  getExercise(id: string): Promise<Exercise | undefined>
-  addExercise(userId: string, exercise: Exercise): Promise<Exercise>
-  saveExercise(userId: string, exercise: Exercise): Promise<Exercise>
-  deleteExercise(userId: string, id: string): Promise<Exercise>
+export interface GenericStore<T> {
+  get: (id: string) => Promise<T | undefined>,
+  find: (query?: any) => Promise<T[]>,
+  create: (userId: string, value: T) => Promise<T>,
+  update: (userId: string, value: T) => Promise<T>,
+  delete: (userId: string, id: string) => Promise<T>,
+}
 
-  // Workouts
-  getWorkouts(): Promise<Workout[]>
-  getWorkout(id: string): Promise<Workout | undefined>
-  addWorkout(userId: string, workout: Workout): Promise<Workout>
-  saveWorkout(userId: string, workout: Workout): Promise<Workout>
-  deleteWorkout(userId: string, id: string): Promise<Workout>
-
-  // Workout Sessions
-  getWorkoutSessions(): Promise<WorkoutSession[]>
-  getWorkoutSession(id: string): Promise<WorkoutSession | undefined>
-  addWorkoutSession(userId: string, session: WorkoutSession): Promise<WorkoutSession>
-  saveWorkoutSession(userId: string, session: WorkoutSession): Promise<WorkoutSession>
-  deleteWorkoutSession(userId: string, id: string): Promise<WorkoutSession>
+export type Store = {
+  exercises: GenericStore<Exercise>,
+  workouts: GenericStore<Workout>,
+  workoutSessions: GenericStore<WorkoutSession>;
 }

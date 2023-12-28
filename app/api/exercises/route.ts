@@ -1,14 +1,16 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { getExercises, createExercise } from '@/services/exercise';
 import { validateUserSession } from '@/services/users';
+import { searchParamsToObject } from '@/utils/misc';
 
 export const maxDuration = 300;
 // export const dynamic = 'force-dynamic';
 
-export async function GET(request: Request) {
-  console.log('>> app.api.exercises.GET');
-
-  const exercises = await getExercises();
+export async function GET(request: NextRequest, params?: any) {
+  const query = searchParamsToObject(request.nextUrl.searchParams.toString());
+  console.log('>> app.api.exercises.GET', { query, searchParams: request.nextUrl.searchParams.toString() });
+  
+  const exercises = await getExercises(query);
   return NextResponse.json({ exercises });
 }
 

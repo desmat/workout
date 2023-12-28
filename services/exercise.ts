@@ -93,6 +93,63 @@ function parseGeneratedExercise(response: any): any {
   return exercise as Exercise;
 }
 
+export async function getOrGenerateExercises(user: User, exerciseNames: string[]) {
+  console.log(`>> services.workout.getOrGenerateExercises`, { exerciseNames });
+
+  // bring in existing exercises, or create new
+  const allExerciseNames = new Map((
+    await getExercises()).map((exercise: Exercise) => [exercise.name.toLowerCase(), exercise]));
+  // note: requested exercise names might repeat
+  const exerciseNamesToCreate = Array.from(
+    new Set(
+      exerciseNames
+        .map((name: string) => name.toLowerCase())
+        .filter((name: string) => !allExerciseNames.has(name))));
+  console.log(`>> services.workout.createWorkout`, { allExerciseNames, exerciseNamesToCreate });
+
+  const createdExercises = new Map((
+    await Promise.all(
+      exerciseNamesToCreate
+        .filter(Boolean)
+        .map(async (name: string) => {
+          return createExercise(user, name).then((created: Exercise) => {
+            return generateExercise(user, created);
+          });
+        })
+    )).map((exercise: Exercise) => [exercise.name.toLocaleLowerCase(), exercise]));
+
+  const pickFromRange = (range: any, level?: "beginner" | "intermediate" | "advanced") => {
+    return Array.isArray(range) && range.length > 1
+      ? level == "beginner"
+        ? range[0]
+        : level == "advanced"
+          ? range[1]
+          : Math.floor((Number(range[0]) + Number(range[1])) / 2)
+      : range;
+  }
+
+  const exercises = exerciseNames
+    .map((exerciseName: string) => {
+      const name = exerciseName.toLowerCase();
+      const exercise = allExerciseNames.get(name) || createdExercises.get(name)
+
+      if (exercise?.directions) {
+        exercise.directions = {
+          duration: pickFromRange(exercise.directions.duration),
+          sets: pickFromRange(exercise.directions.sets),
+          reps: pickFromRange(exercise.directions.reps),
+        }
+      }
+
+      return exercise;
+    })
+    .filter(Boolean) as Exercise[];
+
+  console.log(`>> services.workout.getOrGenerateExercises`, { createdExercises, exercises });
+
+  return exercises;
+}
+
 export async function getExercises(query?: any): Promise<Exercise[]> {
   const exercises = await store.getExercises(query);
   return new Promise((resolve, reject) => resolve(exercises.filter(Boolean)));

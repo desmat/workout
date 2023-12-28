@@ -7,7 +7,7 @@ import { Exercise } from "@/types/Exercise";
 import { Workout, WorkoutSession, WorkoutSet } from '@/types/Workout';
 import Store from '@/types/Store';
 import { uuid } from '@/utils/misc';
-import { createExercise, getExercises, generateExercise } from './exercise';
+import { getExercises, getOrGenerateExercises } from './exercise';
 
 let store: Store;
 import(`@/services/stores/${process.env.STORE_TYPE}`).then((importedStore) => {
@@ -55,6 +55,33 @@ function summarizeWorkoutSet(set: WorkoutSet): WorkoutSet {
     ...set,
     exercise: summarizeExercise(set.exercise),
   }
+}
+
+function parseGeneratedWorkout(response: any): any {
+  console.log(`>> services.exercise.parseGeneratedWorkout`, { response });
+
+  let res = response.response?.workout || response.workout || response?.workout || response;
+  if (!res) {
+    console.error("No exercise items generated");
+    throw `No exercise items generated`
+  }
+
+  console.log(">> services.exercise.parseGeneratedWorkout", { res });
+
+  const exercises = res.response.map((r: any) => {
+    return {
+      name: r.exercise,
+      instructions: r.description,
+      directions: {
+        duration: r.time,
+        sets: r.sets,
+        reps: r.reps,
+      },
+      status: "created", // TODO
+    }
+  })
+
+  return { prompt: res.prompt, exercises };
 }
 
 export async function getWorkouts(): Promise<Workout[]> {
@@ -111,64 +138,6 @@ export async function getWorkout(id: string): Promise<Workout | undefined> {
   return workout;
 }
 
-
-async function getOrGenerateExercises(user: User, exerciseNames: string[]) {
-  console.log(`>> services.workout.getOrGenerateExercises`, { exerciseNames });
-
-  // bring in existing exercises, or create new
-  const allExerciseNames = new Map((
-    await getExercises()).map((exercise: Exercise) => [exercise.name.toLowerCase(), exercise]));
-  // note: requested exercise names might repeat
-  const exerciseNamesToCreate = Array.from(
-    new Set(
-      exerciseNames
-        .map((name: string) => name.toLowerCase())
-        .filter((name: string) => !allExerciseNames.has(name))));
-  console.log(`>> services.workout.createWorkout`, { allExerciseNames, exerciseNamesToCreate });
-
-  const createdExercises = new Map((
-    await Promise.all(
-      exerciseNamesToCreate
-        .filter(Boolean)
-        .map(async (name: string) => {
-          return createExercise(user, name).then((created: Exercise) => {
-            return generateExercise(user, created);
-          });
-        })
-    )).map((exercise: Exercise) => [exercise.name.toLocaleLowerCase(), exercise]));
-
-  const pickFromRange = (range: any, level?: "beginner" | "intermediate" | "advanced") => {
-    return Array.isArray(range) && range.length > 1
-      ? level == "beginner"
-        ? range[0]
-        : level == "advanced"
-          ? range[1]
-          : Math.floor((Number(range[0]) + Number(range[1])) / 2)
-      : range;
-  }
-
-  const exercises = exerciseNames
-    .map((exerciseName: string) => {
-      const name = exerciseName.toLowerCase();
-      const exercise = allExerciseNames.get(name) || createdExercises.get(name)
-
-      if (exercise?.directions) {
-        exercise.directions = {
-          duration: pickFromRange(exercise.directions.duration),
-          sets: pickFromRange(exercise.directions.sets),
-          reps: pickFromRange(exercise.directions.reps),
-        }
-      }
-
-      return exercise;
-    })
-    .filter(Boolean) as Exercise[];
-
-  console.log(`>> services.workout.getOrGenerateExercises`, { createdExercises, exercises });
-
-  return exercises;
-}
-
 export async function createWorkout(user: User, name: string, exerciseNames: string[]): Promise<Workout> {
   console.log(`>> services.workout.createWorkout`, { user, name, exerciseNames });
 
@@ -193,37 +162,6 @@ export async function createWorkout(user: User, name: string, exerciseNames: str
         directions: true,
       }
     }))
-}
-
-
-
-
-
-function parseGeneratedWorkout(response: any): any {
-  console.log(`>> services.exercise.parseGeneratedWorkout`, { response });
-
-  let res = response.response?.workout || response.workout || response?.workout || response;
-  if (!res) {
-    console.error("No exercise items generated");
-    throw `No exercise items generated`
-  }
-
-  console.log(">> services.exercise.parseGeneratedWorkout", { res });
-
-  const exercises = res.response.map((r: any) => {
-    return {
-      name: r.exercise,
-      instructions: r.description,
-      directions: {
-        duration: r.time,
-        sets: r.sets,
-        reps: r.reps,
-      },
-      status: "created", // TODO
-    }
-  })
-
-  return { prompt: res.prompt, exercises };
 }
 
 export async function generateWorkout(user: User, name: string, parameters: any[]): Promise<Workout> {
@@ -256,31 +194,14 @@ export async function generateWorkout(user: User, name: string, parameters: any[
 
   workout = {
     ...workout,
+    prompt: res.prompt,
     exercises,
-    // name: exercise.name,
     status: "created",
-    updatedAt: moment().valueOf()
+    updatedAt: moment().valueOf(),
   };
 
-
-
-
-  // TOOD
-  workout.status = "created";
-
-
-
-
-  return workout;
+  return store.addWorkout(user.uid, workout);
 }
-
-
-
-
-
-
-
-
 
 export async function deleteWorkout(user: any, id: string): Promise<void> {
   console.log(">> services.workout.deleteWorkout", { id, user });

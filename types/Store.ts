@@ -13,13 +13,13 @@ export default interface Store {
   getWorkouts(): Promise<Workout[]>
   getWorkout(id: string): Promise<Workout | undefined>
   addWorkout(userId: string, workout: Workout): Promise<Workout>
-  saveWorkout(userId: string, workout: Workout): Promise<Workout | undefined>
+  saveWorkout(userId: string, workout: Workout): Promise<Workout>
   deleteWorkout(userId: string, id: string): Promise<Workout>
 
   // Workout Sessions
   getWorkoutSessions(): Promise<WorkoutSession[]>
   getWorkoutSession(id: string): Promise<WorkoutSession | undefined>
   addWorkoutSession(userId: string, session: WorkoutSession): Promise<WorkoutSession>
-  saveWorkoutSession(userId: string, session: WorkoutSession): Promise<WorkoutSession | undefined>
+  saveWorkoutSession(userId: string, session: WorkoutSession): Promise<WorkoutSession>
   deleteWorkoutSession(userId: string, id: string): Promise<WorkoutSession>
 }

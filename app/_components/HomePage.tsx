@@ -2,20 +2,11 @@
 
 // client-side components for the home page - this will allow us to render server side
 
-import { User } from "firebase/auth";
-import { default as NextLink } from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Fragment } from 'react'
-import { BsFillPlusCircleFill } from "react-icons/bs"
-import { FaRegUserCircle, FaUserCircle, FaRunning } from 'react-icons/fa';
-import { FaWandMagicSparkles } from "react-icons/fa6";
-import { LuDumbbell } from "react-icons/lu";
-import { Menu, Transition } from '@headlessui/react'
-import { EllipsisVerticalIcon } from '@heroicons/react/20/solid'
+import useAlert from "@/app/_hooks/alert";
 import useUser from '@/app/_hooks/user';
 import useWorkouts from "@/app/_hooks/workouts";
-import { handleCreateWorkout, handleGenerateWorkout } from "@/app/_utils/handlers";
-import classNames from '@/utils/classNames'
+import { handleGenerateWorkout } from "@/app/_utils/handlers";
 import Link from "./Link";
 
 export function GenerateLink({
@@ -34,6 +25,7 @@ export function GenerateLink({
   const [user] = useUser((state: any) => [state.user]);
   const [createWorkout, generateWorkout] = useWorkouts((state: any) => [state.createWorkout, state.generateWorkout]);
   const router = useRouter();
+  const [info, success] = useAlert((state: any) => [state.info, state.success]);
 
   return (
     <Link
@@ -44,7 +36,7 @@ export function GenerateLink({
       target={target}
       onClick={() => {
         if (user) {
-          handleGenerateWorkout(generateWorkout, router, user)
+          handleGenerateWorkout(generateWorkout, router, user, info, success)
           router.push("/workouts");
         }
       }}

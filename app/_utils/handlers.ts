@@ -60,7 +60,7 @@ function prompts(questions: any[]): any[][] | undefined {
   return answers;
 }
 
-export async function handleGenerateWorkout(generateWorkout: any, router: any, user: User | undefined) {
+export async function handleGenerateWorkout(generateWorkout: any, router: any, user: User | undefined, info: any, success: any) {
   // console.log("*** handleCreateGame", { user, name: user.displayName?.split(/\s+/) });
   const userName = (user && !user.isAnonymous && user.displayName)
     ? `${user.displayName.split(/\s+/)[0]}'s`
@@ -83,8 +83,16 @@ export async function handleGenerateWorkout(generateWorkout: any, router: any, u
     const workoutName = `${userName} ${additionally ? capitalize(additionally) : "AI-Generated"} Workout`;
     const name = window.prompt("Name?", workoutName);
     if (name) {
+      if (info) {
+        info(`Generating workout '${name}'...`);
+      }
+
       const created = await generateWorkout(user, name, parameters);
       if (created) {
+        if (success) {
+          success(`Workout '${name}' generated!`);
+        }
+  
         router.push(`/workouts/${created.id}`);
         return true;
       }

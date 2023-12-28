@@ -38,7 +38,7 @@ export default function Component() {
             Prepare and track your own <Link useClient={true} style="child" className="font-semibold">workouts</Link>
           </Link>,
           <GenerateLink style="plain" className="group">
-            or let our AI <Link useClient={true} style="child" className="font-semibold">generate</Link> a tailor made one for you!
+            &nbsp;or let our AI <Link useClient={true} style="child" className="font-semibold">generate</Link> a tailor made one for you!
           </GenerateLink>
         </p>
         <p>&#8226;&nbsp;<Link useClient={true} href="/profile" style="plain" className="group">

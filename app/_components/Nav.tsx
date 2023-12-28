@@ -10,12 +10,12 @@ import { FaWandMagicSparkles } from "react-icons/fa6";
 import { LuDumbbell } from "react-icons/lu";
 import { Menu, Transition } from '@headlessui/react'
 import { EllipsisVerticalIcon } from '@heroicons/react/20/solid'
-import useUser from '@/app/_hooks/user';
-import useWorkouts from "@/app/_hooks/workouts";
+import useAlert from "@/app/_hooks/alert";
+import useUser from '@/app/_hooks/user';import useWorkouts from "@/app/_hooks/workouts";
 import { handleCreateWorkout, handleGenerateWorkout } from "@/app/_utils/handlers";
 import classNames from '@/utils/classNames'
 
-function menuItems({ pathname, user, router, createWorkout, generateWorkout }: { pathname: string, user: User | undefined, router: any | undefined, createWorkout: any | undefined, generateWorkout: any | undefined }) {
+function menuItems({ pathname, user, router, createWorkout, generateWorkout, info, success }: { pathname: string, user: User | undefined, router: any | undefined, createWorkout: any | undefined, generateWorkout: any | undefined, info: any, success: any }) {
   return [
     {
       name: "Exercises",
@@ -46,7 +46,7 @@ function menuItems({ pathname, user, router, createWorkout, generateWorkout }: {
       className: user ? "" : "cursor-not-allowed",
       onClick: () => {
         if (user) {
-          handleGenerateWorkout(generateWorkout, router, user);
+          handleGenerateWorkout(generateWorkout, router, user, info, success);
           router.push("/workouts");
         }
       }
@@ -66,6 +66,8 @@ export default function Nav() {
   const [user] = useUser((state: any) => [state.user]);
   const [createWorkout, generateWorkout] = useWorkouts((state: any) => [state.createWorkout, state.generateWorkout]);
   const router = useRouter();
+  const [info, success] = useAlert((state: any) => [state.info, state.success]);
+
 
   return (
     <div className="bg-dark-1 text-dark-3 fixed z-10 w-full h-10 lg:w-32 lg:h-screen flex flex-row lg:flex-col">
@@ -75,7 +77,7 @@ export default function Nav() {
         </NavLink>
       </div>
       <div className="flex flex-grow flex-row lg:flex-col space-x-4 lg:space-x-0 pl-2 pr-0 py-2 lg:py-0 lg:px-2 -mx-2 -my-0 lg:mx-0 lg:-my-2 _bg-yellow-100">
-        {menuItems({ pathname, user, router, createWorkout, generateWorkout }).map((menuItem: any) => (
+        {menuItems({ pathname, user, router, createWorkout, generateWorkout, info, success }).map((menuItem: any) => (
           <div key={menuItem.name}>
             <NavLink
               className={`_bg-pink-300 hidden md:flex ${menuItem.className}`}
@@ -90,7 +92,7 @@ export default function Nav() {
           </div>
         ))}
         <div className="md:hidden mt-1">
-          <NavPopup menuItems={menuItems({ pathname, user, router, createWorkout, generateWorkout })} />
+          <NavPopup menuItems={menuItems({ pathname, user, router, createWorkout, generateWorkout, info, success })} />
         </div>
       </div>
       <div className="flex flex-col p-2 -mr-1 lg:mr-0 lg:-mb-1">

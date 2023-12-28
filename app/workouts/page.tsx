@@ -5,8 +5,9 @@ import { useEffect } from "react";
 import FilterButton from '@/app/_components/FilterButton';
 import Link from "@/app/_components/Link"
 import Page from "@/app/_components/Page";
-import useWorkouts from '@/app/_hooks/workouts';
+import useAlert from '@/app/_hooks/alert';
 import useUser from '@/app/_hooks/user';
+import useWorkouts from '@/app/_hooks/workouts';
 import { handleCreateWorkout, handleGenerateWorkout } from '@/app/_utils/handlers';
 import { Workout } from "@/types/Workout"
 import { Exercise } from '@/types/Exercise';
@@ -55,6 +56,7 @@ export default function Component() {
   const router = useRouter();
   const [user] = useUser((state: any) => [state.user]);
   const [workouts, loaded, load, createWorkout, generateWorkout] = useWorkouts((state: any) => [state.workouts, state.loaded, state.load, state.createWorkout, state.generateWorkout]);
+  const [info, success] = useAlert((state: any) => [state.info, state.success]);
   const params = useSearchParams();
   const uidFilter = params.get("uid");
   const filteredWorkouts = uidFilter && workouts ? workouts.filter((workout: Workout) => workout.createdBy == uidFilter) : workouts;
@@ -91,7 +93,7 @@ export default function Component() {
     <div key="0" title={user ? "" : "Login to generate a workout"}>
       <Link
         className={user ? "" : "cursor-not-allowed"}
-        onClick={() => user && handleGenerateWorkout(generateWorkout, router, user)}
+        onClick={() => user && handleGenerateWorkout(generateWorkout, router, user, info, success)}
       >
         Generate
       </Link>

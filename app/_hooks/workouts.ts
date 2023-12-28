@@ -87,9 +87,9 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
         // console.log(">> hooks.workout.get: RETURNED FROM FETCH, returning!");
         const workout = data.workout;
         const workouts = get().workouts.filter((workout: Workout) => workout.id != id);
-        set({ 
-          workouts: [...workouts, workout], 
-          loaded: [...get().loaded || [], id] 
+        set({
+          workouts: [...workouts, workout],
+          loaded: [...get().loaded || [], id]
         });
       });
     } else {
@@ -128,8 +128,8 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
         const data = await res.json();
         const session = data.session;
         const sessions = get().sessions.filter((session: WorkoutSession) => session.id != sessionId);
-        set({ 
-          sessions: [...sessions, session], 
+        set({
+          sessions: [...sessions, session],
           sessionsLoaded: [...get().sessionsLoaded || [], session.id],
         });
       });
@@ -143,7 +143,7 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
         const data = await res.json();
         const deleted = get().deletedSessions.map((session: WorkoutSession) => session.id);
         const sessions = data.sessions.filter((session: WorkoutSession) => !deleted.includes(session.id));
-        set({ 
+        set({
           sessions,
           sessionsLoaded: [...get().sessionsLoaded || [], ...sessions.map((s: WorkoutSession) => s.id)],
         });
@@ -165,7 +165,7 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
       name,
       optimistic: true,
     }
-    set({ 
+    set({
       workouts: [...get().workouts, workout],
       loaded: [...get().workouts || [], workout.id],
     });
@@ -217,6 +217,47 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
         return resolve(workout);
       });
     });
+  },
+
+  generateWorkout: async (user: User, name: string, parameters: []) => {
+    console.log(">> hooks.workout.generateWorkout", { name, parameters });
+
+    // optimistic
+    const tempId = uuid();
+    const workout = {
+      id: tempId,
+      createdBy: user.uid,
+      createdAt: moment().valueOf(),
+      status: "generating",
+      name,
+      optimistic: true,
+    }
+    set({
+      workouts: [...get().workouts, workout],
+      loaded: [...get().workouts || [], workout.id],
+    });
+
+    return new Promise((resolve, reject) => {
+      fetch('/api/workouts/generate', {
+        method: "POST",
+        body: JSON.stringify({ name, parameters }),
+      }).then(async (res) => {
+        if (res.status != 200) {
+          useAlert.getState().error(`Error generating workout: ${res.status} (${res.statusText})`);
+          const workouts = get().workouts.filter((workout: Workout) => workout.id != tempId);
+          set({ workouts });
+          return reject(res.statusText);
+        }
+
+        const data = await res.json();
+        console.log(">> hooks.workout.generateWorkout", { data });
+        const workout = data.workout;
+        // remove optimistic
+        const workouts = get().workouts.filter((workout: Workout) => workout.id != tempId);
+        set({ workouts: [...workouts, workout] });
+        return resolve(workout);
+      });
+    })
   },
 
   deleteWorkout: async (id: string) => {

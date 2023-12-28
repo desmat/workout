@@ -42,7 +42,8 @@ export async function generateExercise(name: string): Promise<any> {
         role: 'system',
         content: `You are an assistant that, for the requested exercise, will generate a short description, a category (very short), detailed instructions (newline separated), recommended duration (in milliseconds, when appropriate), recommended range of sets (as number, when appropriate) and reps (as numbers, when appropriate), and also provide a few of variations indicating difficulty level.
 Provide the answer in JSON using the following keys: name, category, description, instructions, duration (an array with min and max number values, include only when appropriate),  sets (an array with min and max number values, when appropriate), reps (an array with min and max number values, when appropriate), and variations.
-The variations should have the following keys: name, level, description, instructions, duration (an array with min and max number values, include only when appropriate), sets (an array with min and max number values, include only when appropriate), reps (an array with min and max number values, include only when appropriate)`},
+The variations should have the following keys: name, level, description, instructions, duration (an array with min and max number values, include only when appropriate), sets (an array with min and max number values, include only when appropriate), reps (an array with min and max number values, include only when appropriate)`
+      },
       {
         role: 'user',
         content: prompt,
@@ -57,6 +58,106 @@ The variations should have the following keys: name, level, description, instruc
     console.log(">> services.openai.generateExercise RESULTS FROM API", { response });
     console.log(">> services.openai.generateExercise RESULTS FROM API (as json)", JSON.stringify(response));
     return { name, prompt, response };
+  } catch (error) {
+    console.error("Error reading results", { error, response, completion });
+  }
+}
+
+export async function generateWorkout(parameters: any[]): Promise<any> {
+  console.log(`>> services.openai.generateWorkout`, { parameters });
+  // const prompt = "age: 46; gender: male; difficulty: beginner; total length: about 45 minutes; maybe involving the following equiments or just the floor: rowing machine. " // parameters.map(([name, value]: any) => `${name}: ${value}`).join("; ");
+  const prompt = parameters.map(([name, value]) => `${name}: ${value}`).join("; ");
+
+  console.log(`>> services.openai.generateWorkout`, { prompt });
+
+  // // for testing
+
+  // await delay(3000);
+
+  // return {
+  //   prompt,
+  //   response: [
+  //     {
+  //       "exercise": "Dumbbell Goblet Squats",
+  //       "equipment": "Dumbbells",
+  //       "sets": 3,
+  //       "reps": 12,
+  //       "difficulty": "Intermediate",
+  //       "description": "Hold a dumbbell close to your chest and perform squats."
+  //     },
+  //     {
+  //       "exercise": "Push-Ups",
+  //       "equipment": "None",
+  //       "sets": 3,
+  //       "reps": 15,
+  //       "difficulty": "Intermediate",
+  //       "description": "Perform standard push-ups for chest and triceps."
+  //     },
+  //     {
+  //       "exercise": "Dumbbell Rows",
+  //       "equipment": "Dumbbells",
+  //       "sets": 3,
+  //       "reps": 12,
+  //       "difficulty": "Intermediate",
+  //       "description": "Bend forward and row dumbbells to work your back."
+  //     },
+  //     {
+  //       "exercise": "Treadmill Jogging",
+  //       "equipment": "Treadmill",
+  //       "sets": 1,
+  //       "time": 900000,  // 15 minutes in milliseconds
+  //       "difficulty": "Intermediate",
+  //       "description": "Moderate-paced jogging on the treadmill for cardio."
+  //     },
+  //     {
+  //       "exercise": "Rowing Machine",
+  //       "equipment": "Rowing Machine",
+  //       "sets": 1,
+  //       "time": 600000,  // 10 minutes in milliseconds
+  //       "difficulty": "Intermediate",
+  //       "description": "Row with proper form for a full-body workout."
+  //     },
+  //     {
+  //       "exercise": "Plank",
+  //       "equipment": "None",
+  //       "sets": 3,
+  //       "time": 30000,  // 30 seconds in milliseconds
+  //       "difficulty": "Intermediate",
+  //       "description": "Hold a plank position to strengthen your core."
+  //     },
+  //     {
+  //       "exercise": "Dumbbell Bicep Curls",
+  //       "equipment": "Dumbbells",
+  //       "sets": 3,
+  //       "reps": 12,
+  //       "difficulty": "Intermediate",
+  //       "description": "Perform bicep curls for arm strength."
+  //     }
+  //   ]
+  // };
+
+  const completion = await openai.chat.completions.create({
+    model,
+    messages: [
+      {
+        role: 'system',
+        content: `You are an assistant that, for the provided parameters, will provide a list of exercises. 
+Return only the list of exercise names, required equipment, suggested number of sets, suggested time or reps. and that's it. Answer in JSON format with the following keys: exercise, equipment, sets (as a number, if appropriate), reps (as a number, is appropriate), time (as a number of milliseconds, if appropriate), difficulty, description.`
+      },
+      {
+        role: 'user',
+        content: prompt,
+      }
+    ],
+  });
+
+  let response;
+  try {
+    // console.log(">> services.openai.generateExercise RESULTS FROM API", completion);
+    response = JSON.parse(completion.choices[0].message.content || "{}");
+    console.log(">> services.openai.generateExercise RESULTS FROM API", { response });
+    console.log(">> services.openai.generateExercise RESULTS FROM API (as json)", JSON.stringify(response));
+    return { prompt, response };
   } catch (error) {
     console.error("Error reading results", { error, response, completion });
   }

@@ -5,11 +5,12 @@ import { ExerciseDirections } from "@/types/Exercise";
 import { formatNumber, formatTime, formatRange } from "@/utils/format";
 
 export function formatDirections({ duration, sets, reps }: ExerciseDirections) {
-  const formattedDuration = duration && formatRange(duration, formatTime);
-  const formattedSets = sets && `${formattedDuration ? " over " : ""}${formatRange(sets, formatNumber, "set")}`
-  const formattedReps = reps && `${formattedSets ? " of " : ""}${formatRange(reps, formatNumber, "rep")}`
+  let formattedSets = sets && `${formatRange(sets, formatNumber, "set")}`;
+  if (formattedSets == "1 set") formattedSets = "";
+  const formattedReps = reps && `${formattedSets ? " of " : ""}${formatRange(reps, formatNumber, "rep")}`;
+  const formattedDuration = duration && `${formattedSets || formattedReps ? " of " : ""}${formatRange(duration, formatTime)}`;
 
-  return `${formattedDuration || ""}${formattedSets || ""}${formattedReps || ""}`
+  return `${formattedSets || ""}${formattedReps || ""}${formattedDuration || ""}`;
 }
 
 export function ExerciseEntry({ exercise, user }: any) {

@@ -2,6 +2,7 @@
 
 import { User } from 'firebase/auth';
 import moment from 'moment';
+import * as openai from "@/services/openai";
 import { Exercise } from "@/types/Exercise";
 import { Workout, WorkoutSession, WorkoutSet } from '@/types/Workout';
 import Store from '@/types/Store';
@@ -110,16 +111,9 @@ export async function getWorkout(id: string): Promise<Workout | undefined> {
   return workout;
 }
 
-export async function createWorkout(user: User, name: string, exerciseNames: string[]): Promise<Workout> {
-  console.log(`>> services.workout.createWorkout`, { user, name, exerciseNames });
 
-  const workout = {
-    id: uuid(),
-    createdBy: user.uid,
-    createdAt: moment().valueOf(),
-    status: "creating",
-    name,
-  } as Workout;
+async function getOrGenerateExercises(user: User, exerciseNames: string[]) {
+  console.log(`>> services.workout.getOrGenerateExercises`, { exerciseNames });
 
   // bring in existing exercises, or create new
   const allExerciseNames = new Map((
@@ -170,9 +164,25 @@ export async function createWorkout(user: User, name: string, exerciseNames: str
     })
     .filter(Boolean) as Exercise[];
 
-  console.log(`>> services.workout.createWorkout`, { createdExercises, exercises });
+  console.log(`>> services.workout.getOrGenerateExercises`, { createdExercises, exercises });
 
+  return exercises;
+}
 
+export async function createWorkout(user: User, name: string, exerciseNames: string[]): Promise<Workout> {
+  console.log(`>> services.workout.createWorkout`, { user, name, exerciseNames });
+
+  const workout = {
+    id: uuid(),
+    createdBy: user.uid,
+    createdAt: moment().valueOf(),
+    status: "creating",
+    name,
+  } as Workout;
+
+  const exercises = await getOrGenerateExercises(user, exerciseNames);
+
+  console.log(`>> services.workout.createWorkout`, { exercises });
 
   return store.addWorkout(user.uid, summarizeWorkout(
     { ...workout, exercises, status: "created" },
@@ -184,6 +194,93 @@ export async function createWorkout(user: User, name: string, exerciseNames: str
       }
     }))
 }
+
+
+
+
+
+function parseGeneratedWorkout(response: any): any {
+  console.log(`>> services.exercise.parseGeneratedWorkout`, { response });
+
+  let res = response.response?.workout || response.workout || response?.workout || response;
+  if (!res) {
+    console.error("No exercise items generated");
+    throw `No exercise items generated`
+  }
+
+  console.log(">> services.exercise.parseGeneratedWorkout", { res });
+
+  const exercises = res.response.map((r: any) => {
+    return {
+      name: r.exercise,
+      instructions: r.description,
+      directions: {
+        duration: r.time,
+        sets: r.sets,
+        reps: r.reps,
+      },
+      status: "created", // TODO
+    }
+  })
+
+  return { prompt: res.prompt, exercises };
+}
+
+export async function generateWorkout(user: User, name: string, parameters: any[]): Promise<Workout> {
+  console.log(`>> services.workout.generateWorkout`, { user, name, parameters });
+
+  let workout = {
+    id: uuid(),
+    createdBy: user.uid,
+    createdAt: moment().valueOf(),
+    status: "generating",
+    name,
+  } as Workout;
+
+  const res = await openai.generateWorkout(parameters);
+  const parsedWorkout = parseGeneratedWorkout(res);
+  console.log(">> services.workout.generateWorkout", { parsedWorkout });
+
+  const generatedExercises = await getOrGenerateExercises(user, parsedWorkout.exercises.map((exercise: Exercise) => exercise.name));
+  console.log(">> services.workout.generateWorkout", { generatedExercises });
+
+  const exercises = parsedWorkout.exercises.map((e1: Exercise) => {
+    const generatedExercise = generatedExercises.filter((e2: Exercise) => e1.name.toLowerCase() == e2.name.toLowerCase())[0];
+    return  {
+      ...generatedExercise,
+      ...e1,
+    }
+  });
+
+  console.log(">> services.workout.generateWorkout", { exercises });
+
+  workout = {
+    ...workout,
+    exercises,
+    // name: exercise.name,
+    status: "created",
+    updatedAt: moment().valueOf()
+  };
+
+
+
+
+  // TOOD
+  workout.status = "created";
+
+
+
+
+  return workout;
+}
+
+
+
+
+
+
+
+
 
 export async function deleteWorkout(user: any, id: string): Promise<void> {
   console.log(">> services.workout.deleteWorkout", { id, user });

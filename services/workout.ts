@@ -2,11 +2,12 @@
 
 import { User } from 'firebase/auth';
 import moment from 'moment';
+import * as openai from "@/services/openai";
 import { Exercise } from "@/types/Exercise";
 import { Workout, WorkoutSession, WorkoutSet } from '@/types/Workout';
 import { Store } from '@/types/Store';
 import { uuid } from '@/utils/misc';
-import { createExercise, getExercises, generateExercise, summarizeExercise } from './exercise';
+import { createExercise, getExercises, generateExercise, getOrGenerateExercises, summarizeExercise } from './exercise';
 
 let store: Store;
 import(`@/services/stores/${process.env.STORE_TYPE}`)
@@ -44,6 +45,33 @@ function summarizeWorkoutSet(set: WorkoutSet): WorkoutSet {
   }
 }
 
+function parseGeneratedWorkout(response: any): any {
+  console.log(`>> services.exercise.parseGeneratedWorkout`, { response });
+
+  let res = response.response?.workout || response.workout || response?.workout || response;
+  if (!res) {
+    console.error("No exercise items generated");
+    throw `No exercise items generated`
+  }
+
+  console.log(">> services.exercise.parseGeneratedWorkout", { res });
+
+  const exercises = res.response.map((r: any) => {
+    return {
+      name: r.exercise,
+      instructions: r.description,
+      directions: {
+        duration: r.time,
+        sets: r.sets,
+        reps: r.reps,
+      },
+      status: "created", // TODO
+    }
+  })
+
+  return { prompt: res.prompt, exercises };
+}
+
 export async function getWorkouts(query?: any): Promise<Workout[]> {
   console.log(`>> services.workout.getWorkouts`, { query });
   const workouts = await store.workouts.find(query);
@@ -79,7 +107,6 @@ export async function getWorkouts(query?: any): Promise<Workout[]> {
   // return workoutDetails;
 
   return workouts;
-
 }
 
 export async function getWorkout(id: string): Promise<Workout | undefined> {
@@ -102,56 +129,9 @@ export async function createWorkout(user: User, name: string, exerciseNames: str
     name,
   } as Workout;
 
-  // bring in existing exercises, or create new
-  const allExerciseNames = new Map((
-    await getExercises()).map((exercise: Exercise) => [exercise.name.toLowerCase(), exercise]));
-  // note: requested exercise names might repeat
-  const exerciseNamesToCreate = Array.from(
-    new Set(
-      exerciseNames
-        .map((name: string) => name.toLowerCase())
-        .filter((name: string) => !allExerciseNames.has(name))));
-  // console.log(`>> services.workout.createWorkout`, { allExerciseNames, exerciseNamesToCreate });
+  const exercises = await getOrGenerateExercises(user, exerciseNames);
 
-  const createdExercises = new Map((
-    await Promise.all(
-      exerciseNamesToCreate
-        .filter(Boolean)
-        .map(async (name: string) => {
-          return createExercise(user, name).then((created: Exercise) => {
-            return generateExercise(user, created);
-          });
-        })
-    )).map((exercise: Exercise) => [exercise.name.toLocaleLowerCase(), exercise]));
-
-  const pickFromRange = (range: any, level?: "beginner" | "intermediate" | "advanced") => {
-    return Array.isArray(range) && range.length > 1
-      ? level == "beginner"
-        ? range[0]
-        : level == "advanced"
-          ? range[1]
-          : Math.floor((Number(range[0]) + Number(range[1])) / 2)
-      : range;
-  }
-
-  const exercises = exerciseNames
-    .map((exerciseName: string) => {
-      const name = exerciseName.toLowerCase();
-      const exercise = allExerciseNames.get(name) || createdExercises.get(name)
-
-      if (exercise?.directions) {
-        exercise.directions = {
-          duration: pickFromRange(exercise.directions.duration),
-          sets: pickFromRange(exercise.directions.sets),
-          reps: pickFromRange(exercise.directions.reps),
-        }
-      }
-
-      return exercise;
-    })
-    .filter(Boolean) as Exercise[];
-
-  // console.log(`>> services.workout.createWorkout`, { createdExercises, exercises });
+  console.log(`>> services.workout.createWorkout`, { exercises });
 
   return store.workouts.create(user.uid, summarizeWorkout(
     { ...workout, exercises, status: "created" },
@@ -162,6 +142,45 @@ export async function createWorkout(user: User, name: string, exerciseNames: str
         directions: true,
       }
     }))
+}
+
+export async function generateWorkout(user: User, name: string, parameters: any[]): Promise<Workout> {
+  console.log(`>> services.workout.generateWorkout`, { user, name, parameters });
+
+  let workout = {
+    id: uuid(),
+    createdBy: user.uid,
+    createdAt: moment().valueOf(),
+    status: "generating",
+    name,
+  } as Workout;
+
+  const res = await openai.generateWorkout(parameters);
+  const parsedWorkout = parseGeneratedWorkout(res);
+  console.log(">> services.workout.generateWorkout", { parsedWorkout });
+
+  const generatedExercises = await getOrGenerateExercises(user, parsedWorkout.exercises.map((exercise: Exercise) => exercise.name));
+  console.log(">> services.workout.generateWorkout", { generatedExercises });
+
+  const exercises = parsedWorkout.exercises.map((e1: Exercise) => {
+    const generatedExercise = generatedExercises.filter((e2: Exercise) => e1.name.toLowerCase() == e2.name.toLowerCase())[0];
+    return  {
+      ...generatedExercise,
+      ...e1,
+    }
+  });
+
+  console.log(">> services.workout.generateWorkout", { exercises });
+
+  workout = {
+    ...workout,
+    prompt: res.prompt,
+    exercises,
+    status: "created",
+    updatedAt: moment().valueOf(),
+  };
+
+  return store.workouts.create(user.uid, workout);
 }
 
 export async function deleteWorkout(user: any, id: string): Promise<void> {

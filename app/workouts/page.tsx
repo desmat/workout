@@ -7,7 +7,7 @@ import Link from "@/app/_components/Link"
 import Page from "@/app/_components/Page";
 import useWorkouts from '@/app/_hooks/workouts';
 import useUser from '@/app/_hooks/user';
-import { handleCreateWorkout } from '@/app/_utils/handlers';
+import { handleCreateWorkout, handleGenerateWorkout } from '@/app/_utils/handlers';
 import { Workout } from "@/types/Workout"
 import { Exercise } from '@/types/Exercise';
 import { byName } from '@/utils/sort';
@@ -54,7 +54,7 @@ function WorkoutEntry({ workout, user }: any) {
 export default function Component() {
   const router = useRouter();
   const [user] = useUser((state: any) => [state.user]);
-  const [workouts, loaded, load, createWorkout] = useWorkouts((state: any) => [state.workouts, state.loaded, state.load, state.createWorkout]);
+  const [workouts, loaded, load, createWorkout, generateWorkout] = useWorkouts((state: any) => [state.workouts, state.loaded, state.load, state.createWorkout, state.generateWorkout]);
   const params = useSearchParams();
   const uidFilter = params.get("uid");
   const filteredWorkouts = uidFilter && workouts ? workouts.filter((workout: Workout) => workout.createdBy == uidFilter) : workouts;
@@ -81,10 +81,21 @@ export default function Component() {
 
   const links = [
     <div key="0" title={user ? "" : "Login to create new workout"}>
-      <Link className={user ? "" : "cursor-not-allowed"} onClick={() => user && handleCreateWorkout(createWorkout, router, user)}>
-        Create New Workout
+      <Link
+        className={user ? "" : "cursor-not-allowed"}
+        onClick={() => user && handleCreateWorkout(createWorkout, router, user)}
+      >
+        Create
       </Link>
     </div>,
+    <div key="0" title={user ? "" : "Login to generate a workout"}>
+      <Link
+        className={user ? "" : "cursor-not-allowed"}
+        onClick={() => user && handleGenerateWorkout(generateWorkout, router, user)}
+      >
+        Generate
+      </Link>
+    </div>
     // <Link key="1">View Leaderboard</Link>,
   ];
 

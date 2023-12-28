@@ -44,3 +44,10 @@ export function formatNumber(v: number | string, unit?: string, unitMany?: strin
 
   return `${n}${unitStr}`;
 }
+
+export function capitalize(s: string) {
+  return s && s
+    .split(/\s+/)
+    .map((s: string) => `${s.substring(0, 1).toUpperCase()}${s.substring(1)}`)
+    .join(" ");
+}

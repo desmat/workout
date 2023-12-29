@@ -59,12 +59,15 @@ export async function setCustomUserClaims(uid: string, obj: any) {
 }
 
 export async function authenticateUser(request: any) {
+  // console.log(">> services.users.authenticateUser", { request });
   const authorization = request.headers.get("Authorization");
-
+  // console.log(">> services.users.authenticateUser", { authorization });
+  
   let idToken;
   if (authorization?.startsWith("Bearer ")) {
     idToken = authorization.split("Bearer ")[1];
   }
+  // console.log(">> services.users.authenticateUser", { idToken });
 
   let tokens;
   if (idToken) {
@@ -72,8 +75,8 @@ export async function authenticateUser(request: any) {
       tokens = await verifyIdToken(idToken);
       // console.log("*** authenticateUser", { tokens, idToken });
       const user = await getUser(tokens.uid);
-      const refreshAndIdTokens = await getCustomIdAndRefreshTokens(idToken, firebaseConfig.apiKey || "");
-      // console.log("*** authenticateUser ***", { user, idToken });
+      const refreshAndIdTokens = await getCustomIdAndRefreshTokens(idToken, firebaseConfig.apiKey || "", undefined, firebaseConfig.authDomain);
+      // console.log("*** authenticateUser ***", { user, refreshAndIdTokens });
       return { user, refreshToken: refreshAndIdTokens.refreshToken };
     } catch (error: any) {
       // console.warn("*** authenticateUser ***", { code: error.code, message: error.message, error });
@@ -92,14 +95,14 @@ export async function validateUserSession(request: any): Promise<any> {
   if (refreshToken) {
     try {
       // const tokens = await verifyIdToken(authToken);
-      const handleredRefreshToken = await handleTokenRefresh(refreshToken, firebaseConfig.apiKey || "");
-      // console.log("*** validateUserSession", { refreshToken, handleredRefreshToken });
+      const handleredRefreshToken = await handleTokenRefresh(refreshToken, firebaseConfig.apiKey || "", firebaseConfig.authDomain || "");
+      console.log("*** validateUserSession", { refreshToken, handleredRefreshToken });
 
       const user = await getUser(handleredRefreshToken.decodedToken.uid);
       // console.log("*** validateUserSession ***", { user, refreshToken });
       return { user };
     } catch (error: any) {
-      console.warn("*** validateUserSession ***", { code: error.code, message: error.message, error });
+      // console.warn("*** validateUserSession ***", { code: error.code, message: error.message, error });
       // throw 'authentication failed';
       return { error };
     }

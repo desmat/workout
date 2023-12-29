@@ -155,12 +155,12 @@ export default function Component({ params }: { params: { id: string, sessionId?
 
   const links = [
     <BackLink key="0" />,
-    workout && user && (user.uid == workout.createdBy || user.admin) && <Link key="6" style="warning" onClick={() => handleDeleteSession(user, session, deleteSession, router)}>Delete</Link>,
+    workout && user && !sessionStarted && (user.uid == workout.createdBy || user.admin) && <Link key="6" style="warning" onClick={() => handleDeleteSession(user, session, deleteSession, router)}>Delete</Link>,
     // {workout && <Link key="0" onClick={() => setshowDetails(!showDetails)}>{showDetails ? "Hide details" : "Show details"}</Link>},
     workout && user && !session && <Link key="1" onClick={() => handleStartSession(user, workout, startSession)}>Start</Link>,
+    workout && user && sessionStarted && <Link key="4" onClick={() => handleCompleteSession(user, session, completeSession)}>Complete</Link>,
     workout && user && sessionStarted && !sessionPaused && <Link key="2" onClick={() => handleStopSession(user, session, stopSession)}>Pause</Link>,
     workout && user && session?.status == "stopped" && <Link key="3" onClick={() => handleResumeSession(user, session, resumeSession)}>Resume</Link>,
-    workout && user && sessionStarted && <Link key="4" onClick={() => handleCompleteSession(user, session, completeSession)}>Complete</Link>,
     workout && user && sessionStarted && (currentSet.offset < workout.exercises.length - 1) && <Link key="5" onClick={() => handleStartSet(user, workout, session, workout.exercises[currentSet.offset + 1], currentSet.offset + 1, startSet, startSession)}>Next</Link>,
   ];
 

@@ -1,6 +1,7 @@
+import { v4 as uuidv4 } from 'uuid';
 
 export function uuid(): string {
-  return crypto.randomUUID().substring(0, 8);
+  return uuidv4().substring(0, 8);
 }
 
 // from https://stackoverflow.com/questions/7616461/generate-a-hash-from-string-in-javascript

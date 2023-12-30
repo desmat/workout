@@ -64,17 +64,20 @@ function ExerciseVariation({ name, description, instructions, level, directions,
 }
 
 function Exercise({ id, instructions, category, directions, variations, showDetails }: any) {
+  console.log('>> app.exercises[id].page.Exercise', { id });
   const formattedDuration = directions?.duration && formatRange(directions.duration, formatTime);
   const formattedSets = directions?.sets && formatRange(directions.sets, formatNumber, "set");
   const formattedReps = directions?.reps && formatRange(directions.reps, formatNumber, "rep");
+  console.log('>> app.exercises[id].page.Exercise', { formattedDuration, formattedSets, formattedReps });
 
   return (
-    <p className="text-left pb-4 flex flex-col gap-4">
+    <div className="text-left pb-4 flex flex-col gap-4">
       {instructions && instructions.length > 0 &&
         <div className="flex flex-col _gap-2">
           <h2>Instructions</h2>
           <ul className="list-disc ml-6">
-            {instructions && instructions.map((step: string, i: number) => <li key={i}>{step}</li>)
+            {instructions && instructions
+              .map((step: string, i: number) => <li key={i}>{step}</li>)
             }
           </ul>
         </div>
@@ -87,10 +90,10 @@ function Exercise({ id, instructions, category, directions, variations, showDeta
               <li key="0">{formattedDuration}</li>
             }
             {formattedSets &&
-              <li key="0">{formattedSets}</li>
+              <li key="1">{formattedSets}</li>
             }
             {formattedReps &&
-              <li key="0">{formattedReps}</li>
+              <li key="2">{formattedReps}</li>
             }
           </ul>
         </div>
@@ -113,7 +116,7 @@ function Exercise({ id, instructions, category, directions, variations, showDeta
           </div>
         </div>
       }
-    </p>
+    </div>
   );
 }
 

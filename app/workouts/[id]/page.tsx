@@ -58,7 +58,7 @@ function WorkoutDetails({ id, prompt, exercises, sessions, showDetails, user }: 
     <p className="flex flex-col items-center gap-4">
       {exercises && exercises.length > 0 &&
         <div className="flex flex-col items-center gap-1">
-          <div className="text-dark-0 opacity-40">Program</div>
+          <div className="text-dark-0 opacity-40">Exercises</div>
           <div className="flex flex-col gap-1">
             {
               exercises

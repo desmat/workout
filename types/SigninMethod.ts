@@ -1,1 +1,1 @@
-export type SigninMethod = "anonymous" | "google" | "login-email" | "signup-email";
+export type SigninMethod = "anonymous" | "google" | "github" | "login-email" | "signup-email";

@@ -17,6 +17,12 @@ function doSigninWithGoogle(e: any, signinFn: any) {
   signinFn("google");
 }
 
+function doSigninWithGithub(e: any, signinFn: any) {
+  console.log("** app.profile.page.doSigninWithGithub");
+  e.preventDefault();
+  signinFn("github");
+}
+
 function doSigningAnonymously(e: any, signinFn: any) {
   console.log("** app.profile.page.doSigningAnonymously");
   e.preventDefault();
@@ -47,14 +53,15 @@ export default function Component({ params }: { params: { uid?: string } }) {
   }, [params.uid]);
 
   const links = [
-    user && !user.isAnonymous && <Link href="/" style="warning" onClick={(e) => doLogout(e, logout)}>Logout</Link>,
-    user && myWorkouts?.length > 0 && <Link href={`/workouts?uid=${user.uid}`}>Workouts ({myWorkouts.length})</Link>,
-    user && myExercises?.length > 0 && <Link href={`/exercises?uid=${user.uid}`}>Exercises ({myExercises.length})</Link>,
-    (!user || user.isAnonymous) && <Link href="/auth?method=login-email">Login</Link>,
-    (!user || user.isAnonymous) && <Link href="/auth?method=signup-email">Signup</Link>,
-    (!user || user.isAnonymous) && <Link href="/" onClick={(e) => doSigninWithGoogle(e, signin)}>Signin (Google)</Link>,
+    user && !user.isAnonymous && <Link key="0" href="/" style="warning" onClick={(e) => doLogout(e, logout)}>Logout</Link>,
+    user && myWorkouts?.length > 0 && <Link key="1" href={`/workouts?uid=${user.uid}`}>Workouts ({myWorkouts.length})</Link>,
+    user && myExercises?.length > 0 && <Link key="2" href={`/exercises?uid=${user.uid}`}>Exercises ({myExercises.length})</Link>,
+    (!user || user.isAnonymous) && <Link key="3" href="/auth?method=login-email">Login</Link>,
+    (!user || user.isAnonymous) && <Link key="4" href="/auth?method=signup-email">Signup</Link>,
+    (!user || user.isAnonymous) && <Link key="5" href="/" onClick={(e) => doSigninWithGoogle(e, signin)}>Signin (Google)</Link>,
+    (!user || user.isAnonymous) && <Link key="6" href="/" onClick={(e) => doSigninWithGithub(e, signin)}>Signin (GitHub)</Link>,
     // TODO CRIPPLE
-    // user && user.isAnonymous && <Link href="/" onClick={(e) => doLogout(e, logout)}>Logout</Link>,
+    // user && user.isAnonymous && <Link key="" href="/" onClick={(e) => doLogout(e, logout)}>Logout</Link>,
   ];
 
   if (userLoading) {
@@ -135,6 +142,11 @@ export default function Component({ params }: { params: { uid?: string } }) {
           {user && user.isAnonymous &&
             <div className="text-dark-2">
               <Link href="/" onClick={(e) => doSigninWithGoogle(e, signin)}>Signin (Google)</Link>
+            </div>
+          }
+          {user && user.isAnonymous &&
+            <div className="text-dark-2">
+              <Link href="/" onClick={(e) => doSigninWithGithub(e, signin)}>Signin (GitHub)</Link>
             </div>
           }
           {user && !user.isAnonymous &&

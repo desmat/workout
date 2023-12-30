@@ -34,7 +34,7 @@ function menuItems({ pathname, user, router, createWorkout, generateWorkout, inf
       className: user ? "" : "cursor-not-allowed",
       onClick: () => {
         if (user) {
-          handleCreateWorkout(generateWorkout, router, user);
+          handleCreateWorkout(createWorkout, router, user);
           router.push("/workouts");
         }
       }
@@ -42,7 +42,7 @@ function menuItems({ pathname, user, router, createWorkout, generateWorkout, inf
     {
       name: "Generate",
       icon: <FaWandMagicSparkles className="my-auto" />,
-      title: user ? "Generate a new workout" : "Login to create workouts",
+      title: user ? "Generate a new workout" : "Login to generate workouts",
       className: user ? "" : "cursor-not-allowed",
       onClick: () => {
         if (user) {

@@ -48,6 +48,7 @@ const useUser: any = create(devtools((set: any, get: any) => ({
         if (!loaded && !loading) {
           set({ loaded: false, loading: true });
           console.log('>> hooks.User.useUser.onAuthStateChanged doSignInAnonymously', { loading, loaded });
+          
           doSignInAnonymously().then(async (auth: any) => {
             const user = auth.user;
             const authToken = await user.getIdToken();

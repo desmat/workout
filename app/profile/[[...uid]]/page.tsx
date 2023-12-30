@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from "react";
+import { BsGithub, BsGoogle } from "react-icons/bs";
 import { useCopyToClipboard } from 'usehooks-ts'
 import Link from "@/app/_components/Link";
 import Page from "@/app/_components/Page";
@@ -58,8 +59,16 @@ export default function Component({ params }: { params: { uid?: string } }) {
     user && myExercises?.length > 0 && <Link key="2" href={`/exercises?uid=${user.uid}`}>Exercises ({myExercises.length})</Link>,
     (!user || user.isAnonymous) && <Link key="3" href="/auth?method=login-email">Login</Link>,
     (!user || user.isAnonymous) && <Link key="4" href="/auth?method=signup-email">Signup</Link>,
-    (!user || user.isAnonymous) && <Link key="5" href="/" onClick={(e) => doSigninWithGoogle(e, signin)}>Signin (Google)</Link>,
-    (!user || user.isAnonymous) && <Link key="6" href="/" onClick={(e) => doSigninWithGithub(e, signin)}>Signin (GitHub)</Link>,
+    (!user || user.isAnonymous) &&
+    <Link key="5" className="flex flex-row gap-1 items-center" onClick={(e) => doSigninWithGoogle(e, signin)}>
+      <BsGoogle /> 
+        Signin
+    </Link>,
+    (!user || user.isAnonymous) &&
+    <Link key="6" className="flex flex-row gap-1 items-center" onClick={(e) => doSigninWithGithub(e, signin)}>
+      <BsGithub /> 
+      Signin
+    </Link>,
     // TODO CRIPPLE
     // user && user.isAnonymous && <Link key="" href="/" onClick={(e) => doLogout(e, logout)}>Logout</Link>,
   ];

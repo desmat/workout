@@ -36,29 +36,22 @@ export default function Component() {
   const [user] = useUser((state: any) => [state.user]);
   const [exercises, loaded, load, createExercise, generateExercise] = useExercises((state: any) => [state.exercises, state.loaded, state.load, state.createExercise, state.generateExercise]);
   const params = useSearchParams();
-  // const [filtered, setFiltered] = useState(true);
-  const uidFilter = params.get("uid") ;
+  const uidParam = params.get("uid");
+  const [isFiltered, setFiltered] = useState(typeof (uidParam) == "string" ? !!uidParam : false);
+  const uidFilter = isFiltered && user && user.uid
   const filteredExercises = uidFilter && exercises ? exercises.filter((exercise: Exercise) => exercise.createdBy == uidFilter) : exercises;
 
   console.log('>> app.trivia.page.render()', { loaded, exercises });
 
-  // useEffect(() => {
-  //   if (filtered) {
-  //     load({createdBy: user?.uid});
-  //   } else {
-  //     load();
-  //   }
-  // }, [user, filtered]);
-
   useEffect(() => {
     if (uidFilter) {
-      load({createdBy: uidFilter});
+      load({ createdBy: uidFilter });
     } else {
       load();
     }
   }, [uidFilter]);
 
-  const title = "Exercises";
+  const title = isFiltered ? "My Exercises" : "Exercises"
 
   const subtitle = "Let ChatGPT create exercises for you!";
 
@@ -71,6 +64,14 @@ export default function Component() {
         Create New Exercise
       </Link>
     </div>,
+    <Link onClick={() => setFiltered(!isFiltered)}>
+      {isFiltered &&
+        <>Show All</>
+      }
+      {!isFiltered &&
+        <>Filter</>
+      }
+    </Link>
     // <Link>View Leaderboard</Link>,
   ];
 
@@ -91,9 +92,9 @@ export default function Component() {
       links={links}
       loading={!loaded}
     >
-      <FilterButton href="/exercises" userId={user?.uid} isFiltered={!!uidFilter} />
+      {/* <FilterButton href="/exercises" userId={user?.uid} isFiltered={!!uidFilter} /> */}
       {/* <FilterButton isFiltered={filtered} onClick={() => setFiltered(!filtered)} /> */}
-      
+
       {/* <p className='italic text-center'>
           Try these: {SuggestedExerciseTypes.join(", ")}
         </p> */}
@@ -114,7 +115,18 @@ export default function Component() {
         </div>
       }
       {(!filteredExercises || filteredExercises.length == 0) &&
-        <p className='italic text-center'>No exercises yet :(</p>
+        <>
+          {isFiltered &&
+            <p className='italic text-center'>
+              <span className="opacity-50">No exercises created yet</span> <span className="not-italic opacity-100">😞</span>
+              <br />
+              <span className="opacity-50">You can create one, or show all with the links above.</span>
+            </p>
+          }
+          {!isFiltered &&
+            <p className='italic text-center opacity-50'>No workouts yet :(</p>
+          }
+        </>
       }
     </Page>
   )

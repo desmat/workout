@@ -206,7 +206,7 @@ export default function Component({ params }: { params: { id: string, sessionId?
     >
       <div className='flex flex-col text-center'>
         <span
-          className={`font-bold text-7xl transition-all
+          className={`font-bold text-6xl transition-all
             ${workout && user && session?.status == "stopped" ? "_bg-pink-200 opacity-30 hover:opacity-100 animate-pulse hover:animate-none opacity-" : ""}
             ${workout && user && sessionStarted && !sessionPaused ? "_bg-yellow-200 text-dark-1" : ""}
             ${session?.status != "completed" ? " text-dark-1 cursor-pointer" : ""}          
@@ -232,7 +232,7 @@ export default function Component({ params }: { params: { id: string, sessionId?
         </span>
 
         {workout && user && session?.status != "completed" &&
-          <div className="flex flex-row justify-center items-center gap-2 text-7xl _bg-pink-100">
+          <div className="flex flex-row justify-center items-center gap-2 text-5xl _bg-pink-100">
             {sessionStarted && currentSet?.offset > 0 &&
               <Link onClick={() => handlePrevious(user, workout, session, sessionStarted, currentSet, startSet, startSession)}>
                 <IoPlayBack className="hover:text-dark-1" />
@@ -243,16 +243,16 @@ export default function Component({ params }: { params: { id: string, sessionId?
             }
             {workout && user && sessionStarted && !sessionPaused &&
               <Link onClick={() => handleStopSession(user, session, stopSession)}>
-                <IoPause className="text-8xl text-dark-1" />
+                <IoPause className="text-6xl text-dark-1" />
               </Link>
             }
             {workout && user && sessionStarted && sessionPaused &&
               <Link onClick={() => handleResumeSession(user, session, resumeSession)}>
-                <IoPlay className="text-8xl hover:text-dark-1" />
+                <IoPlay className="text-6xl hover:text-dark-1" />
               </Link>
             }
             {!(workout && user && sessionStarted) &&
-              <IoPlay className="text-8xl text-dark-2" />
+              <IoPlay className="text-6xl text-dark-2" />
             }
             {sessionStarted && currentSet.offset < workout.exercises.length - 1 &&
               <Link onClick={() => handleNext(user, workout, session, sessionStarted, currentSet, startSet, startSession)} >
@@ -265,7 +265,7 @@ export default function Component({ params }: { params: { id: string, sessionId?
           </div>
         }
       </div>
-      
+
       {session && session.status != "completed" && workout && workout.exercises && workout.exercises.length > 0 &&
         <div className="pt-2">
           <div className="self-center flex flex-col gap-2 p-2 _-mr-8 _bg-pink-200">
@@ -280,11 +280,17 @@ export default function Component({ params }: { params: { id: string, sessionId?
                       className="_bg-yellow-200 mx-auto text-2xl"
                       onClick={() => handleStartSet(user, workout, session, exercise, i, startSet, startSession)}
                     >
-                      <span
-                        className={`_text-dark-1 capitalize ${i == currentSet?.offset && sessionStarted && !sessionPaused ? " text-dark-1 font-bold" : " font-semibold"}`}
+                      <div
+                        className={`_text-dark-1 flex flex-row _flex-nowrap max-w-[calc(100vw-2rem)] ${i == currentSet?.offset && sessionStarted && !sessionPaused ? " text-dark-1 font-bold" : " font-semibold"}`}
                       >
-                        {i == currentSet?.offset ? `>> ${exercise.name} <<` : exercise.name}
-                      </span>
+                        {i == currentSet?.offset &&
+                          <div>{">> "}</div>
+                        }
+                        <div className="truncate text-ellipsis capitalize px-1">{exercise.name}</div>
+                        {i == currentSet?.offset &&
+                          <div>{" <<"}</div>
+                        }
+                      </div>
                     </Link>
                   )
                 })

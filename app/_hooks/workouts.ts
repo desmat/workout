@@ -162,7 +162,6 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
       id: tempId,
       createdBy: user.uid,
       createdAt: moment().valueOf(),
-      // status: "generating",
       status: "creating",
       name,
       optimistic: true,

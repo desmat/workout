@@ -19,7 +19,7 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
       fetch(`/api/exercises/${id}`).then(async (res) => {
         if (res.status != 200) {
           useAlert.getState().error(`Error fetching exercise ${id}: ${res.status} (${res.statusText})`);
-          loaded: [...(get().loaded || []), id]
+          set({ loaded: [...(get().loaded || []), id] });
           return;
         }
 
@@ -60,11 +60,8 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
       id: tempId,
       createdBy: user.uid,
       createdAt: moment().valueOf(),
-      // status: "generating",
       status: "creating",
       name,
-      // prompt,
-      // items: [],
       optimistic: true,
     }
     set({ exercises: [...get().exercises, exercise] });
@@ -130,7 +127,7 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
       name: exercise.name,
       createdBy: exercise.createdBy,
       status: "generating",
-    }
+    };
     const exercises = get().exercises.filter((e: Exercise) => e.id != exercise.id);
     set({ exercises: [...exercises, exercise] });
 

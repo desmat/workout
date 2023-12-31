@@ -96,7 +96,7 @@ export async function validateUserSession(request: any): Promise<any> {
     try {
       // const tokens = await verifyIdToken(authToken);
       const handleredRefreshToken = await handleTokenRefresh(refreshToken, firebaseConfig.apiKey || "", firebaseConfig.authDomain || "");
-      console.log("*** validateUserSession", { refreshToken, handleredRefreshToken });
+      // console.log("*** validateUserSession", { refreshToken, handleredRefreshToken });
 
       const user = await getUser(handleredRefreshToken.decodedToken.uid);
       // console.log("*** validateUserSession ***", { user, refreshToken });

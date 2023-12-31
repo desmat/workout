@@ -69,7 +69,7 @@ export function PageLinks({
   loading?: boolean,
 }) {
   return (
-    <div className="_bg-yellow-100 relative flex flex-row gap-3 items-center justify-center font-semibold">
+    <div className="_bg-yellow-100 relative flex flex-row gap-3 items-center justify-center font-bold">
       {/* {loading &&
         <div className="_bg-pink-100 absolute left-0 top-0 w-full h-full z-10 cursor-not-allowed opacity-50" />
       } */}

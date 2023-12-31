@@ -4,6 +4,7 @@ import { User } from 'firebase/auth';
 import moment from 'moment';
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from "react";
+import { IoPause, IoPlay, IoPlayBack, IoPlayForward } from "react-icons/io5";
 import BackLink from '@/app/_components/BackLink';
 import Clock from '@/app/_components/Clock';
 import Link from "@/app/_components/Link"
@@ -12,7 +13,7 @@ import useWorkouts from "@/app/_hooks/workouts";
 import useUser from "@/app/_hooks/user";
 import { Workout, WorkoutSession, WorkoutSet } from '@/types/Workout';
 import { Exercise } from '@/types/Exercise';
-import { byCreatedAtDesc, byName } from '@/utils/sort';
+import { byCreatedAtDesc } from '@/utils/sort';
 
 async function handleStartSession(user: User, workout: Workout, fn: any) {
   console.log('>> app.workout[id].session.handleStartSession()', { user, workout });
@@ -52,7 +53,19 @@ async function handleStartSet(user: User, workout: Workout, session: WorkoutSess
     _session = await startSessionFn(user, workout.id);
   }
 
-  startSetFn(user, workout.id, _session.id, exercise, offset);
+  return startSetFn(user, workout.id, _session.id, exercise, offset);
+}
+
+async function handleNext(user: User, workout: Workout, session: WorkoutSession, sessionStarted: boolean, currentSet: WorkoutSet, startSet: any, startSession: any) {
+  if (workout && user && workout.exercises && sessionStarted && (currentSet.offset < workout.exercises.length - 1)) {
+    return handleStartSet(user, workout, session, workout.exercises[currentSet.offset + 1], currentSet.offset + 1, startSet, startSession);
+  }
+}
+
+async function handlePrevious(user: User, workout: Workout, session: WorkoutSession, sessionStarted: boolean, currentSet: WorkoutSet, startSet: any, startSession: any) {
+  if (workout && user && workout.exercises && sessionStarted && (currentSet.offset > 0)) {
+    return handleStartSet(user, workout, session, workout.exercises[currentSet.offset - 1], currentSet.offset - 1, startSet, startSession);
+  }
 }
 
 export default function Component({ params }: { params: { id: string, sessionId?: string } }) {
@@ -161,7 +174,7 @@ export default function Component({ params }: { params: { id: string, sessionId?
     workout && user && sessionStarted && <Link key="4" onClick={() => handleCompleteSession(user, session, completeSession)}>Complete</Link>,
     workout && user && sessionStarted && !sessionPaused && <Link key="2" onClick={() => handleStopSession(user, session, stopSession)}>Pause</Link>,
     workout && user && session?.status == "stopped" && <Link key="3" onClick={() => handleResumeSession(user, session, resumeSession)}>Resume</Link>,
-    workout && user && sessionStarted && (currentSet.offset < workout.exercises.length - 1) && <Link key="5" onClick={() => handleStartSet(user, workout, session, workout.exercises[currentSet.offset + 1], currentSet.offset + 1, startSet, startSession)}>Next</Link>,
+    // workout && user && sessionStarted && (currentSet.offset < workout.exercises.length - 1) && <Link key="5" onClick={() => handleStartSet(user, workout, session, workout.exercises[currentSet.offset + 1], currentSet.offset + 1, startSet, startSession)}>Next</Link>,
   ];
 
   if (!session && sessionsLoaded && !sessionsLoaded.includes(params.sessionId)) {
@@ -191,9 +204,13 @@ export default function Component({ params }: { params: { id: string, sessionId?
       title={`${workout?.name}${statusTitle ? ` (${statusTitle})` : ""}`}
       links={links}
     >
-      <p className='text-center'>
+      <div className='flex flex-col text-center'>
         <span
-          className={`font-bold text-6xl${session?.status != "completed" ? " text-dark-1" : ""} transition-all${["stopped", "started"].includes(session?.status) ? " cursor-pointer" : ""}${["stopped"].includes(session?.status) ? " animate-pulse opacity-50" : ""}`}
+          className={`font-bold text-6xl transition-all
+            ${workout && user && session?.status == "stopped" ? "_bg-pink-200 opacity-30 hover:opacity-100 animate-pulse hover:animate-none opacity-" : ""}
+            ${workout && user && sessionStarted && !sessionPaused ? "_bg-yellow-200 text-dark-1" : ""}
+            ${session?.status != "completed" ? " text-dark-1 cursor-pointer" : ""}          
+          `}
           title={
             session?.status == "stopped"
               ? "Resume"
@@ -213,7 +230,42 @@ export default function Component({ params }: { params: { id: string, sessionId?
         >
           <Clock ms={sessionCompleted && sessionTotal || sessionPaused && currentSet && currentSet.duration || currentSetDuration || 0} />
         </span>
-      </p>
+
+        {workout && user && session?.status != "completed" &&
+          <div className="flex flex-row justify-center items-center gap-2 text-5xl _bg-pink-100">
+            {sessionStarted && currentSet?.offset > 0 &&
+              <Link onClick={() => handlePrevious(user, workout, session, sessionStarted, currentSet, startSet, startSession)}>
+                <IoPlayBack className="hover:text-dark-1" />
+              </Link>
+            }
+            {!(sessionStarted && currentSet?.offset > 0) &&
+              <IoPlayBack className="text-dark-2" />
+            }
+            {workout && user && sessionStarted && !sessionPaused &&
+              <Link onClick={() => handleStopSession(user, session, stopSession)}>
+                <IoPause className="text-6xl text-dark-1" />
+              </Link>
+            }
+            {workout && user && sessionStarted && sessionPaused &&
+              <Link onClick={() => handleResumeSession(user, session, resumeSession)}>
+                <IoPlay className="text-6xl hover:text-dark-1" />
+              </Link>
+            }
+            {!(workout && user && sessionStarted) &&
+              <IoPlay className="text-6xl text-dark-2" />
+            }
+            {sessionStarted && currentSet.offset < workout.exercises.length - 1 &&
+              <Link onClick={() => handleNext(user, workout, session, sessionStarted, currentSet, startSet, startSession)} >
+                <IoPlayForward className="hover:text-dark-1" />
+              </Link>
+            }
+            {!(sessionStarted && currentSet.offset < workout.exercises.length - 1) &&
+              <IoPlayForward className="text-dark-2" />
+            }
+          </div>
+        }
+      </div>
+
       {session && session.status != "completed" && workout && workout.exercises && workout.exercises.length > 0 &&
         <div className="pt-2">
           <div className="self-center flex flex-col gap-2 p-2 _-mr-8 _bg-pink-200">
@@ -228,11 +280,17 @@ export default function Component({ params }: { params: { id: string, sessionId?
                       className="_bg-yellow-200 mx-auto text-2xl"
                       onClick={() => handleStartSet(user, workout, session, exercise, i, startSet, startSession)}
                     >
-                      <span
-                        className={`_text-dark-1 capitalize ${i == currentSet?.offset && sessionStarted && !sessionPaused ? " text-dark-1 font-bold" : " font-semibold"}`}
+                      <div
+                        className={`_text-dark-1 flex flex-row _flex-nowrap max-w-[calc(100vw-2rem)] ${i == currentSet?.offset && sessionStarted && !sessionPaused ? " text-dark-1 font-bold" : " font-semibold"}`}
                       >
-                        {i == currentSet?.offset ? `>> ${exercise.name} <<` : exercise.name}
-                      </span>
+                        {i == currentSet?.offset &&
+                          <div>{">> "}</div>
+                        }
+                        <div className="truncate text-ellipsis capitalize px-1">{exercise.name}</div>
+                        {i == currentSet?.offset &&
+                          <div>{" <<"}</div>
+                        }
+                      </div>
                     </Link>
                   )
                 })

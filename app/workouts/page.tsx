@@ -95,7 +95,7 @@ export default function Component() {
         Create
       </Link>
     </div>,
-    <div key="0" title={user ? "" : "Login to generate a workout"}>
+    <div key="1" title={user ? "" : "Login to generate a workout"}>
       <Link
         className={user ? "" : "cursor-not-allowed"}
         onClick={() => user && handleGenerateWorkout(generateWorkout, router, user, info, success)}
@@ -103,7 +103,7 @@ export default function Component() {
         Generate
       </Link>
     </div>,
-    <Link onClick={() => setFiltered(!isFiltered)}>
+    <Link key="2" onClick={() => setFiltered(!isFiltered)}>
       {isFiltered &&
         <>Show All</>
       }

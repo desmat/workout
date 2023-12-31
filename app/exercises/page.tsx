@@ -64,7 +64,7 @@ export default function Component() {
         Create New Exercise
       </Link>
     </div>,
-    <Link onClick={() => setFiltered(!isFiltered)}>
+    <Link key="1" onClick={() => setFiltered(!isFiltered)}>
       {isFiltered &&
         <>Show All</>
       }

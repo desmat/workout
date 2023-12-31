@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import FilterButton from '@/app/_components/FilterButton';
 import Link from "@/app/_components/Link"
 import Page from "@/app/_components/Page";
@@ -54,30 +54,35 @@ function WorkoutEntry({ workout, user }: any) {
 
 export default function Component() {
   const router = useRouter();
-  const [user] = useUser((state: any) => [state.user]);
-  const [workouts, loaded, load, createWorkout, generateWorkout] = useWorkouts((state: any) => [state.workouts, state.loaded, state.load, state.createWorkout, state.generateWorkout]);
+  const [user, userLoaded] = useUser((state: any) => [state.user, state.loaded]);
+  const [workouts, workoutsLoaded, load, createWorkout, generateWorkout] = useWorkouts((state: any) => [state.workouts, state.loaded, state.load, state.createWorkout, state.generateWorkout]);
+  const loaded = userLoaded && workoutsLoaded;
   const [info, success] = useAlert((state: any) => [state.info, state.success]);
   const params = useSearchParams();
-  const uidFilter = params.get("uid");
-  const filteredWorkouts = uidFilter && workouts ? workouts.filter((workout: Workout) => workout.createdBy == uidFilter) : workouts;
+  const uidParam = params.get("uid");
+  const [isFiltered, setFiltered] = useState(typeof (uidParam) == "string" ? !!uidParam : true);
+  const uidFilter = isFiltered && user && user.uid
+  const filteredWorkouts = loaded && uidFilter && workouts.filter((workout: Workout) => workout.createdBy == uidFilter) || workouts;
 
-  console.log('>> app.trivia.page.render()', { loaded, workouts });
+  console.log('>> app.trivia.page.render()', { isFiltered, uidFilter, loaded, workouts });
 
   useEffect(() => {
-    if (uidFilter) {
-      load({ createdBy: uidFilter });
-    } else {
-      load();
+    if (userLoaded) {
+      if (uidFilter) {
+        load({ createdBy: uidFilter });
+      } else {
+        load();
+      }
     }
-  }, [uidFilter]);
+  }, [uidFilter, userLoaded]);
 
-  const title = "Workouts"
+  const title = isFiltered ? "My Workouts" : "Workouts";
 
   const subtitle = (
     <>
-      Let ChatGPT create workouts for you!
+      Let us create your perfect workout!
       <br />
-      Simply provide a list of exercise names and our trained AI will fill in the rest!
+      Simply answer a few questions and our trained AI will do the rest!
     </>
   )
 
@@ -90,14 +95,22 @@ export default function Component() {
         Create
       </Link>
     </div>,
-    <div key="0" title={user ? "" : "Login to generate a workout"}>
+    <div key="1" title={user ? "" : "Login to generate a workout"}>
       <Link
         className={user ? "" : "cursor-not-allowed"}
         onClick={() => user && handleGenerateWorkout(generateWorkout, router, user, info, success)}
       >
         Generate
       </Link>
-    </div>
+    </div>,
+    <Link key="2" onClick={() => setFiltered(!isFiltered)}>
+      {isFiltered &&
+        <>Show All</>
+      }
+      {!isFiltered &&
+        <>Filter</>
+      }
+    </Link>
     // <Link key="1">View Leaderboard</Link>,
   ];
 
@@ -119,7 +132,7 @@ export default function Component() {
         subtitle={subtitle}
         links={links}
       >
-        <FilterButton href="/workouts" userId={user?.uid} isFiltered={!!uidFilter} />
+        {/* <FilterButton href="/workouts" onClick={() => setFiltered(!isFiltered)} userId={user?.uid} isFiltered={isFiltered} /> */}
 
         {filteredWorkouts && filteredWorkouts.length > 0 &&
           <div className="self-center flex flex-col gap-3">
@@ -137,7 +150,18 @@ export default function Component() {
           </div>
         }
         {(!filteredWorkouts || filteredWorkouts.length == 0) &&
-          <p className='italic text-center'>No workouts yet :(</p>
+          <>
+            {isFiltered &&
+              <p className='italic text-center'>
+                <span className="opacity-50">No workouts created yet</span> <span className="not-italic">😞</span>
+                <br />
+                <span className="opacity-50">You can create or generate one, or show all with the links above.</span>
+              </p>
+            }
+            {!isFiltered &&
+              <p className='italic text-center'>No workouts yet :(</p>
+            }
+          </>
         }
       </Page>
     </>

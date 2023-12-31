@@ -44,6 +44,10 @@ const useUser: any = create(devtools((set: any, get: any) => ({
         // set({ user: undefined, loaded: true });
         set({ user: undefined });
 
+        // // cripple to test not logged in scenarios
+        // set({ loaded: true, loading: false });
+        // return;
+
         // when not signed in or logged out sign in anonymously
         if (!loaded && !loading) {
           set({ loaded: false, loading: true });

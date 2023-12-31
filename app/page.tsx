@@ -29,7 +29,7 @@ export default function Component() {
         <p>
           &#8226;&nbsp;
           <Link useClient={true} href="/exercises" style="parent" className="group">
-            Create <Link useClient={true} style="child" className="font-semibold">exercises</Link> and review AI-generated instructions and variations
+            Create <Link useClient={true} style="child" className="font-semibold">exercises</Link> and review AI-generated instructions and variations.
           </Link>
         </p>
         <p>
@@ -42,7 +42,7 @@ export default function Component() {
           </GenerateLink>
         </p>
         <p>&#8226;&nbsp;<Link useClient={true} href="/profile" style="plain" className="group">
-          <Link useClient={true} style="child" className="font-semibold">Sign-in</Link> to keep track of your progress
+          <Link useClient={true} style="child" className="font-semibold">Sign-in</Link> with your email, Google or GitHub account to keep track of your progress.
         </Link>
         </p>
       </div>

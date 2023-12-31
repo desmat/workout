@@ -204,7 +204,7 @@ export default function Component({ params }: { params: { id: string, sessionId?
       title={`${workout?.name}${statusTitle ? ` (${statusTitle})` : ""}`}
       links={links}
     >
-      <div className='flex flex-col text-center'>
+      <div className='flex flex-col gap-3 text-center'>
         <span
           className={`font-bold text-6xl transition-all
             ${workout && user && session?.status == "stopped" ? "_bg-pink-200 opacity-30 hover:opacity-100 animate-pulse hover:animate-none opacity-" : ""}
@@ -268,7 +268,7 @@ export default function Component({ params }: { params: { id: string, sessionId?
 
       {session && session.status != "completed" && workout && workout.exercises && workout.exercises.length > 0 &&
         <div className="pt-2">
-          <div className="self-center flex flex-col gap-2 p-2 _-mr-8 _bg-pink-200">
+          <div className="self-center flex flex-col gap-1 p-2 _-mr-8 _bg-pink-200">
             {
               workout.exercises
                 // .sort(byName)
@@ -286,7 +286,9 @@ export default function Component({ params }: { params: { id: string, sessionId?
                         {i == currentSet?.offset &&
                           <div>{">> "}</div>
                         }
-                        <div className="truncate text-ellipsis capitalize px-1">{exercise.name}</div>
+                        <div className="truncate text-ellipsis capitalize px-1">
+                          {exercise.name}
+                        </div>
                         {i == currentSet?.offset &&
                           <div>{" <<"}</div>
                         }

@@ -59,12 +59,10 @@ export default function Component() {
   const loaded = userLoaded && workoutsLoaded;
   const [info, success] = useAlert((state: any) => [state.info, state.success]);
   const params = useSearchParams();
-  const uidParam = params.get("uid");
-  const [isFiltered, setFiltered] = useState(typeof (uidParam) == "string" ? !!uidParam : true);
-  const uidFilter = isFiltered && user && user.uid
+  const uidFilter = params.get("uid");
   const filteredWorkouts = loaded && uidFilter && workouts.filter((workout: Workout) => workout.createdBy == uidFilter) || workouts;
 
-  console.log('>> app.trivia.page.render()', { isFiltered, uidFilter, loaded, workouts });
+  console.log('>> app.trivia.page.render()', { uidFilter, loaded, workouts });
 
   useEffect(() => {
     if (userLoaded) {
@@ -76,7 +74,7 @@ export default function Component() {
     }
   }, [uidFilter, userLoaded]);
 
-  const title = isFiltered ? "My Workouts" : "Workouts";
+  const title = uidFilter ? "My Workouts" : "Workouts";
 
   const subtitle = (
     <>
@@ -103,15 +101,8 @@ export default function Component() {
         Generate
       </Link>
     </div>,
-    <Link key="2" onClick={() => setFiltered(!isFiltered)}>
-      {isFiltered &&
-        <>Show All</>
-      }
-      {!isFiltered &&
-        <>Filter</>
-      }
-    </Link>
-    // <Link key="1">View Leaderboard</Link>,
+    uidFilter && <Link key="1" href={`/workouts`}>Show All</Link>,
+    !uidFilter && <Link key="2" href={`/workouts?uid=${user?.uid || ""}`}>Filter</Link>,
   ];
 
   if (!loaded) {
@@ -119,7 +110,6 @@ export default function Component() {
       <Page
         title={title}
         subtitle={subtitle}
-        // links={[<BackLink key="0" />]}
         loading={true}
       />
     )
@@ -151,14 +141,14 @@ export default function Component() {
         }
         {(!filteredWorkouts || filteredWorkouts.length == 0) &&
           <>
-            {isFiltered &&
+            {uidFilter &&
               <p className='italic text-center'>
                 <span className="opacity-50">No workouts created yet</span> <span className="not-italic">😞</span>
                 <br />
                 <span className="opacity-50">You can create or generate one, or show all with the links above.</span>
               </p>
             }
-            {!isFiltered &&
+            {!uidFilter &&
               <p className='italic text-center'>No workouts yet :(</p>
             }
           </>

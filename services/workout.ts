@@ -164,7 +164,7 @@ export async function generateWorkout(user: User, name: string, parameters: any[
 
   const exercises = parsedWorkout.exercises.map((e1: Exercise) => {
     const generatedExercise = generatedExercises.filter((e2: Exercise) => e1.name.toLowerCase() == e2.name.toLowerCase())[0];
-    return  {
+    return {
       ...generatedExercise,
       ...e1,
     }
@@ -180,7 +180,15 @@ export async function generateWorkout(user: User, name: string, parameters: any[
     updatedAt: moment().valueOf(),
   };
 
-  return store.workouts.create(user.uid, workout);
+  return store.workouts.create(user.uid, summarizeWorkout(
+    { ...workout, exercises, status: "created" },
+    {
+      exercises: {
+        status: true,
+        description: true,
+        directions: true,
+      }
+    }));
 }
 
 export async function deleteWorkout(user: any, id: string): Promise<void> {

@@ -37,7 +37,7 @@ export function getUserName(user: User): string {
 export function getProviderType(user: User): string | undefined {
   const providerId = user?.providerData[0]?.providerId;
   return !user.isAnonymous && providerId == "password" ? "email" : providerId;
-    
+
 }
 
 export function getProviderName(user: User): string {
@@ -46,8 +46,8 @@ export function getProviderName(user: User): string {
 
   return user?.isAnonymous
     ? "(anonymous)"
-    : providerEmail && providerId && (providerId != "password") 
-      ? `${providerEmail} via ${providerId}` 
+    : providerEmail && providerId && (providerId != "password")
+      ? `${providerEmail} via ${providerId}`
       : providerEmail || providerId || "(unknown)";
 }
 
@@ -62,7 +62,7 @@ export async function authenticateUser(request: any) {
   // console.log(">> services.users.authenticateUser", { request });
   const authorization = request.headers.get("Authorization");
   // console.log(">> services.users.authenticateUser", { authorization });
-  
+
   let idToken;
   if (authorization?.startsWith("Bearer ")) {
     idToken = authorization.split("Bearer ")[1];
@@ -88,25 +88,29 @@ export async function authenticateUser(request: any) {
   return {}
 }
 
+export async function getUserFromToken(refreshToken: string): Promise<any> {
+  try {
+    // const tokens = await verifyIdToken(authToken);
+    const handleredRefreshToken = await handleTokenRefresh(refreshToken, firebaseConfig.apiKey || "", firebaseConfig.authDomain || "");
+    // console.log("*** validateUserSession", { refreshToken, handleredRefreshToken });
+
+    const user = await getUser(handleredRefreshToken.decodedToken.uid);
+    // console.log("*** validateUserSession ***", { user, refreshToken });
+    return { user };
+  } catch (error: any) {
+    // console.warn("*** validateUserSession ***", { code: error.code, message: error.message, error });
+    // throw 'authentication failed';
+    return { error };
+  }
+}
+
 export async function validateUserSession(request: any): Promise<any> {
-  const refreshToken = request.cookies.get("session")?.value;
+  const refreshToken = request && request.cookies.get("session")?.value;
   // console.log("*** validateUserSession ***", { refreshToken });
 
   if (refreshToken) {
-    try {
-      // const tokens = await verifyIdToken(authToken);
-      const handleredRefreshToken = await handleTokenRefresh(refreshToken, firebaseConfig.apiKey || "", firebaseConfig.authDomain || "");
-      // console.log("*** validateUserSession", { refreshToken, handleredRefreshToken });
-
-      const user = await getUser(handleredRefreshToken.decodedToken.uid);
-      // console.log("*** validateUserSession ***", { user, refreshToken });
-      return { user };
-    } catch (error: any) {
-      // console.warn("*** validateUserSession ***", { code: error.code, message: error.message, error });
-      // throw 'authentication failed';
-      return { error };
-    }
+    return getUserFromToken(refreshToken);
   }
 
-  return {}
+  return {};
 }

@@ -1,11 +1,22 @@
+// 'use client'
+
 import { BsGithub } from "react-icons/bs";
 import { MdMail, MdHome } from "react-icons/md";
-import { GenerateLink, SignupOrWhatever } from "@/app/_components/HomePage";
+import { GenerateLink } from "@/app/_components/HomePage";
 import Link from "@/app/_components/Link"
 import Page from "@/app/_components/Page";
 
-export default function Component() {
+import * as users from "@/services/users";
+import { cookies } from "next/headers";
+
+
+
+export default async function Component() {
   console.log('>> app.page.render()');
+  const token = cookies().get("session")?.value;
+  const user = token && (await users.getUserFromToken(token))?.user;
+
+  console.log('>> app.page.render()', { token, user });
 
   const links = [
     <Link useClient={true} key="0" href="https://www.desmat.ca" target="_blank" className="_bg-yellow-200 flex flex-row gap-1 align-text-bottom">
@@ -32,31 +43,27 @@ export default function Component() {
           </Link>
         </p>
         <p>
-        <GenerateLink style="plain" className="group">
-          &#8226;&nbsp;<Link useClient={true} style="child" className="font-semibold">Generate</Link> your own personalized workout plans
+          <GenerateLink style="plain" className="group">
+            &#8226;&nbsp;<Link useClient={true} style="child" className="font-semibold">Generate</Link> your own personalized workout plans
           </GenerateLink>
         </p>
         <p>
-          <Link useClient={true} href="/workouts" style="plain" className="group">
-          &#8226;&nbsp;Customize your <Link useClient={true} style="child" className="font-semibold">workouts</Link> 
+          <Link useClient={true} href={`/workouts?uid=${user?.uid || ""}`} style="plain" className="group">
+            &#8226;&nbsp;Customize your <Link useClient={true} style="child" className="font-semibold">workouts</Link>
           </Link>
         </p>
         <p>
-        <Link useClient={true} href="/profile" style="plain" className="group">
-          &#8226;&nbsp;<Link useClient={true} style="child" className="font-semibold">Signup</Link> and track your progress over time
+          <Link useClient={true} href="/profile" style="plain" className="group">
+            &#8226;&nbsp;<Link useClient={true} style="child" className="font-semibold">Signup</Link> and track your progress over time
           </Link>
         </p>
         <p>
-        &#8226;&nbsp;More to come soon!
+          &#8226;&nbsp;More to come soon!
         </p>
       </div>
       <div className="my-6 text-center">
-        {/* <SignupOrWhatever
-          signup={<Link useClient={true} href="/profile" className="font-semibold">Signup now!</Link>}
-          whatever={<>More to come soon!</>}
-        /> */}
         <Link useClient={true} href="mailto:workout@desmat.ca" style="plain" className="group">
-        Your <Link useClient={true} style="child" className="font-semibold">feedback</Link> is appreciated 🙏
+          Your <Link useClient={true} style="child" className="font-semibold">feedback</Link> is appreciated 🙏
         </Link>
       </div>
     </Page>

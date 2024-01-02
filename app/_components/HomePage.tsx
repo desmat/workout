@@ -2,7 +2,7 @@
 
 // client-side components for the home page - this will allow us to render server side
 
-import { usePathname, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import useAlert from "@/app/_hooks/alert";
 import useUser from '@/app/_hooks/user';
 import useWorkouts from "@/app/_hooks/workouts";
@@ -21,9 +21,8 @@ export function GenerateLink({
   target?: string,
 }) {
   // console.log('>> components.Nav.GenerateLink()', { isActive });
-  const pathname = usePathname();
   const [user] = useUser((state: any) => [state.user]);
-  const [createWorkout, generateWorkout] = useWorkouts((state: any) => [state.createWorkout, state.generateWorkout]);
+  const [generateWorkout] = useWorkouts((state: any) => [state.createWorkout, state.generateWorkout]);
   const router = useRouter();
   const [info, success] = useAlert((state: any) => [state.info, state.success]);
 
@@ -44,20 +43,4 @@ export function GenerateLink({
       {children}
     </Link>
   )
-}
-
-export function SignupOrWhatever({
-  signup, whatever
-}: {
-  signup: React.ReactNode
-  whatever: React.ReactNode
-}) {
-  const [user, userLoaded] = useUser((state: any) => [state.user, state.loaded]);
-  const isSignedUp = userLoaded && user && !user.isAnonymous;
-
-  if (!isSignedUp) {
-    return ( signup )
-  } else {
-    return ( whatever )
-  }
 }

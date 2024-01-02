@@ -110,7 +110,7 @@ const useUser: any = create(devtools((set: any, get: any) => ({
               Authorization: `Bearer ${authToken}`,
             },
           }).then(async (response: any) => {
-            const updatedUser = await response.json() as User;
+            const updatedUser = await response.json();
             console.log('>> hooks.User.signin', { updatedUser });
 
             trackEvent("user-signedin", {

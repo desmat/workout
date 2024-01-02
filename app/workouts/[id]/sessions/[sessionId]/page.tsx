@@ -207,8 +207,8 @@ export default function Component({ params }: { params: { id: string, sessionId?
       <div className='flex flex-col gap-3 text-center'>
         <span
           className={`font-bold text-6xl transition-all
-            ${workout && user && session?.status == "stopped" ? "_bg-pink-200 opacity-30 hover:opacity-100 animate-pulse hover:animate-none opacity-" : ""}
-            ${workout && user && sessionStarted && !sessionPaused ? "_bg-yellow-200 text-dark-1" : ""}
+            ${workout && user && session?.status == "stopped" ? "_bg-pink-200 opacity-30 hover:opacity-100 animate-pulse hover:animate-none opacity- text-dark-1 active:text-light-1" : ""}
+            ${workout && user && sessionStarted && !sessionPaused ? "_bg-yellow-200 active:text-light-1" : ""}
             ${session?.status != "completed" ? " text-dark-1 cursor-pointer" : ""}          
           `}
           title={
@@ -235,7 +235,7 @@ export default function Component({ params }: { params: { id: string, sessionId?
           <div className="flex flex-row justify-center items-center gap-2 text-5xl _bg-pink-100">
             {sessionStarted && currentSet?.offset > 0 &&
               <Link onClick={() => handlePrevious(user, workout, session, sessionStarted, currentSet, startSet, startSession)}>
-                <IoPlayBack className="hover:text-dark-1" />
+                <IoPlayBack className="text-dark-2 hover:text-dark-1 active:text-light-1" />
               </Link>
             }
             {!(sessionStarted && currentSet?.offset > 0) &&
@@ -243,20 +243,20 @@ export default function Component({ params }: { params: { id: string, sessionId?
             }
             {workout && user && sessionStarted && !sessionPaused &&
               <Link onClick={() => handleStopSession(user, session, stopSession)}>
-                <IoPause className="text-6xl text-dark-1" />
+                <IoPause className="text-6xl text-dark-2 hover:text-dark-1 active:text-light-1" />
               </Link>
             }
             {workout && user && sessionStarted && sessionPaused &&
               <Link onClick={() => handleResumeSession(user, session, resumeSession)}>
-                <IoPlay className="text-6xl hover:text-dark-1" />
+                <IoPlay className="text-6xl text-dark-2 hover:text-dark-1 active:text-light-1" />
               </Link>
             }
             {!(workout && user && sessionStarted) &&
-              <IoPlay className="text-6xl text-dark-2" />
+              <IoPlay className="text-6xl text-dark-2 " />
             }
             {sessionStarted && currentSet.offset < workout.exercises.length - 1 &&
               <Link onClick={() => handleNext(user, workout, session, sessionStarted, currentSet, startSet, startSession)} >
-                <IoPlayForward className="hover:text-dark-1" />
+                <IoPlayForward className="text-dark-2 hover:text-dark-1 active:text-light-1" />
               </Link>
             }
             {!(sessionStarted && currentSet.offset < workout.exercises.length - 1) &&

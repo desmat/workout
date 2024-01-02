@@ -143,7 +143,7 @@ function NavPopup({
   return (
     <Menu as="div" className="relative inline-block text-left">
       <div>
-        <Menu.Button className="flex items-center rounded-full -ml-14 text-slate-300 hover:text-slate-100">
+        <Menu.Button className="flex items-center rounded-full ml-[-4.2rem] text-slate-300 hover:text-slate-100">
           <span className="sr-only">Open options</span>
           <EllipsisVerticalIcon className="h-5 w-5" aria-hidden="true" />
           {/* <Bars3Icon className="h-6 w-6" aria-hidden="true" /> */}

@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import { AlertType } from '@/types/Alert';
+import trackEvent from '@/utils/trackEvent';
 
 const useAlert: any = create(devtools((set: any, get: any) => ({
   message: undefined as string | undefined,
@@ -8,6 +9,7 @@ const useAlert: any = create(devtools((set: any, get: any) => ({
 
   error: async (message?: string) => {
     console.log(">> hooks.alert.error", { message });
+    trackEvent("error", { message })
     set({ message, type: message && "error" });
   },
 

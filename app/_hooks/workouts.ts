@@ -5,6 +5,7 @@ import { devtools } from 'zustand/middleware'
 import { Workout, WorkoutSession, WorkoutSet } from '@/types/Workout';
 import { Exercise } from '@/types/Exercise';
 import { uuid } from '@/utils/misc';
+import trackEvent from '@/utils/trackEvent';
 import { byCreatedAtDesc } from '@/utils/sort';
 import useAlert from "./alert";
 
@@ -212,6 +213,13 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
 
         const data = await res.json();
         const workout = data.workout;
+
+        trackEvent("workout-created", { 
+          id: workout.id, 
+          name: workout.name, 
+          createdBy: workout.createdBy,
+         });
+
         // remove optimistic
         const workouts = get().workouts.filter((workout: Workout) => workout.id != tempId);
         set({ workouts: [...workouts, workout] });
@@ -251,8 +259,15 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
         }
 
         const data = await res.json();
-        console.log(">> hooks.workout.generateWorkout", { data });
+        // console.log(">> hooks.workout.generateWorkout", { data });
         const workout = data.workout;
+
+        trackEvent("workout-generated", { 
+          id: workout.id, 
+          name: workout.name, 
+          createdBy: workout.createdBy,
+         });
+
         // remove optimistic
         const workouts = get().workouts.filter((workout: Workout) => workout.id != tempId);
         set({ workouts: [...workouts, workout] });
@@ -309,6 +324,14 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
 
     fetchSession("POST", get, set, session, (newSession: WorkoutSession) => {
       console.log(">> hooks.workout.startSession fetch callback", { newSession });
+
+      trackEvent("workout-session-started", { 
+        id: newSession.id, 
+        workoutId: workout.id,
+        workoutName: workout.name, 
+        createdBy: newSession.createdBy,
+       });
+
       const firstExercise = newSession.workout?.exercises && newSession.workout?.exercises[0];
       get().startSet(user, id, newSession.id, firstExercise, 0);
     });
@@ -333,7 +356,14 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
     session = stopSet(session, "completed");
     session.status = "completed";
 
-    fetchSession("PUT", get, set, session);
+    fetchSession("PUT", get, set, session, (updatedSession: WorkoutSession) => {
+      trackEvent("workout-session-completed", { 
+        id: updatedSession.id, 
+        workoutId: updatedSession.workout?.id,
+        workoutName: updatedSession.workout?.name,
+        createdBy: updatedSession.createdBy,
+       });
+    });
 
     return session;
   },

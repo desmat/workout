@@ -13,7 +13,7 @@ export function menuItems({ pathname, user, router, createWorkout, generateWorko
   return [
     {
       name: "Exercises",
-      href: `/exercises?uid=${user?.uid || ""}`,
+      href: `/exercises`,
       icon: <LuDumbbell className="my-auto text-right" />
     },
     {

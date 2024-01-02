@@ -3,6 +3,8 @@ import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import { init as doInit, logout as doLogout, signin as doSignin, signInAnonymously as doSignInAnonymously } from "@/services/auth";
 import { SigninMethod } from "@/types/SigninMethod";
+import { getProviderType, getUserName } from "@/services/users";
+import trackEvent from "@/utils/trackEvent";
 import useAlert from "./alert";
 
 const useUser: any = create(devtools((set: any, get: any) => ({
@@ -52,7 +54,7 @@ const useUser: any = create(devtools((set: any, get: any) => ({
         if (!loaded && !loading) {
           set({ loaded: false, loading: true });
           console.log('>> hooks.User.useUser.onAuthStateChanged doSignInAnonymously', { loading, loaded });
-          
+
           doSignInAnonymously().then(async (auth: any) => {
             const user = auth.user;
             const authToken = await user.getIdToken();
@@ -67,7 +69,7 @@ const useUser: any = create(devtools((set: any, get: any) => ({
             }).then(async (response: any) => {
               const updatedUser = await response.json();
               console.log('>> hooks.User.useUser.onAuthStateChanged doSignInAnonymously fetch user completed', { updatedUser });
-              set({ user: { ...user, admin: updatedUser.customClaims?.admin }, loaded: true, loading: false });              
+              set({ user: { ...user, admin: updatedUser.customClaims?.admin }, loaded: true, loading: false });
             });
           });
         }
@@ -108,8 +110,17 @@ const useUser: any = create(devtools((set: any, get: any) => ({
               Authorization: `Bearer ${authToken}`,
             },
           }).then(async (response: any) => {
-            const updatedUser = await response.json();
+            const updatedUser = await response.json() as User;
             console.log('>> hooks.User.signin', { updatedUser });
+
+            trackEvent("user-signedin", {
+              id: updatedUser.uid,
+              name: getUserName(updatedUser),
+              email: updatedUser.email,
+              isAnonymous: updatedUser.isAnonymous,
+              provider: getProviderType(updatedUser),
+            });
+
             set({ user: { ...user, admin: updatedUser.customClaims?.admin }, loaded: true, loading: false });
             resolve(user);
           });

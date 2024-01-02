@@ -4,6 +4,7 @@ import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import { Exercise } from '@/types/Exercise';
 import { uuid } from '@/utils/misc';
+import trackEvent from '@/utils/trackEvent';
 import useAlert from "./alert";
 
 const useExercises: any = create(devtools((set: any, get: any) => ({
@@ -80,6 +81,13 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
 
         const data = await res.json();
         const exercise = data.exercise;
+        
+        trackEvent("exercise-created", { 
+          id: exercise.id, 
+          name: exercise.name, 
+          createdBy: exercise.createdBy,
+        });
+      
         // replace optimistic 
         const exercises = get().exercises.filter((exercise: Exercise) => exercise.id != tempId);
         set({ exercises: [...exercises, exercise] });
@@ -145,6 +153,13 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
 
         const data = await res.json();
         const updatedExercise = data.exercise as Exercise;
+
+        trackEvent("exercise-generated", { 
+          id: updatedExercise.id, 
+          name: updatedExercise.name, 
+          createdBy: updatedExercise.createdBy,
+        });
+
         // replace optimistic 
         const exercises = get().exercises.filter((e: Exercise) => e.id != exercise.id);
         set({ exercises: [...exercises, updatedExercise] });

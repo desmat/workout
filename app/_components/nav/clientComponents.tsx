@@ -56,7 +56,7 @@ export function NavPopup() {
     <div className="foobar md:hidden mt-1">
       <Menu as="div" className="relative inline-block text-left">
         <div>
-          <Menu.Button className="flex items-center rounded-full -ml-14 text-slate-300 hover:text-slate-100">
+          <Menu.Button className="flex items-center rounded-full ml-[-4.5rem] text-slate-300 hover:text-slate-100">
             <span className="sr-only">Open options</span>
             <EllipsisVerticalIcon className="h-5 w-5" aria-hidden="true" />
             {/* <Bars3Icon className="h-6 w-6" aria-hidden="true" /> */}
@@ -72,7 +72,7 @@ export function NavPopup() {
           leaveFrom="transform opacity-100 scale-100"
           leaveTo="transform opacity-0 scale-95"
         >
-          <Menu.Items className="absolute -left-16 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+          <Menu.Items className="absolute -left-20 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
             <div className="py-1" >
               {menuItems({ pathname, user, router, createWorkout, generateWorkout, info, success }).map((menuItem: any) => (
                 <div

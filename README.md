@@ -2,12 +2,18 @@
 
 An exercise web app powered by OpenAI's ChatGPT.
 
-Functionality:
+### Functionality:
 - **AI-assisted exercises**: learn how to perform any exercise, see suggested duration and set/repetition numbers, find varations of various difficulty.
 - **AI-generated personalized workout plans**: answer a few questions and enjoy a workout plan made just for you.
 - **Customized workouts** based on desired exercises and durations.
 - **Performance tracking** with a Strava-like experience for tracking workouts and progress.
 
+### Screenshots:
+<p align="center">
+  <img height="300" alt="Screen Shot 1" src="https://github.com/desmat/workout/assets/3298837/99c2f9ff-f724-4198-8b6e-a62f91ee3205">  
+  <img height="300" alt="Screen Shot 2" src="https://github.com/desmat/workout/assets/3298837/d73453a3-0f45-47c5-a673-39f2c299334b">
+  <img height="300" alt="Screen Shot 3" src="https://github.com/desmat/workout/assets/3298837/1533212c-7238-4fcd-a7a2-360f8e1e3d09">
+</p>
 
 ## Demo
 

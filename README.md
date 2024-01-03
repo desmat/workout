@@ -3,9 +3,9 @@
 An exercise web app powered by OpenAI's ChatGPT.
 
 Functionality:
-- **AI-assisted exercise instructions and variations**: learn how to perform specific exercises and find varations, all provided by AI.
-- **AI-generated personalized workout plans**: answer a few questions and enjoy a custom-made workout plan.
-- **Customized workouts** based on specific exercises and durations.
+- **AI-assisted exercises**: learn how to perform any exercise, see suggested duration and set/repetition numbers, find varations of various difficulty.
+- **AI-generated personalized workout plans**: answer a few questions and enjoy a workout plan made just for you.
+- **Customized workouts** based on desired exercises and durations.
 - **Workout sessions tracking** with a Strava-like experience for tracking workouts and progress.
 
 

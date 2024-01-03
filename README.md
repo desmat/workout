@@ -17,7 +17,7 @@ An exercise web app powered by OpenAI's ChatGPT.
 
 ## Demo
 
-[https://workout.desmat.ca](workout.desmat.ca)
+[workout.desmat.ca](https://workout.desmat.ca)
 
 
 ## Tech

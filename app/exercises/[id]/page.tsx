@@ -1,32 +1,21 @@
-'use client'
-
-import { User } from 'firebase/auth';
-import { useRouter } from 'next/navigation'
-import { useEffect, useState } from "react";
-import BackLink from '@/app/_components/BackLink';
-import Link from "@/app/_components/Link"
+import { Suspense } from "react";
 import Page from "@/app/_components/Page";
 import { formatDirections } from '@/app/_components/Exercise';
-import useExercises from "@/app/_hooks/exercises";
-import useUser from "@/app/_hooks/user";
-import { Exercise } from "@/types/Exercise";
+// import { Exercise } from "@/types/Exercise";
 import { formatNumber, formatRange, formatTime } from '@/utils/format';
+import { getExercise } from '@/services/exercise';
+import { cookies } from 'next/headers';
+import { getUserFromToken } from '@/services/users';
+import BackLink from '@/app/_components/BackLink';
+import { DeleteLink, RegenerateLink } from './clientComponents';
 
-function ExerciseVariation({ name, description, instructions, level, directions, showDetails }: any) {
-  const [showDetail, setshowDetail] = useState(false);
+function ExerciseVariation({ name, description, instructions, level, directions }: any) {
   const formattedDirections = directions && formatDirections(directions);
 
   // console.log('>> app.exercises[id].page.ExerciseVariation', { name, directions });
 
-  useEffect(() => {
-    if (showDetails) {
-      setshowDetail(false);
-    }
-  }, [showDetails]);
-
   return (
     <div className="flex flex-col gap-0">
-      {/* <Link style="parent" onClick={() => !showDetails && setshowDetail(!showDetail)}> */}
       <div className="">
         <span className="capitalize _text-dark-1 font-semibold">{name}{level ? ` (${level})` : ""}</span>
         {description &&
@@ -34,21 +23,8 @@ function ExerciseVariation({ name, description, instructions, level, directions,
             : <span className="_opacity-60 _italic">{description}</span>
           </>
         }
-        {/* {!showDetails &&
-            <>
-              <Link style="child light" className="ml-2">{showDetail ? "Hide details" : "Show details"}</Link>
-            </>
-          } */}
       </div>
-      {/* {description &&
-        <div className="_opacity-60 _italic">
-          {description}
-        </div>
-      } */}
       {instructions && instructions.length > 0 &&
-        // <div className="_opacity-60 _italic">
-        //   {instructions}
-        // </div>
         <ul className="list-disc ml-6 mt-1">
           {instructions && instructions.map((step: string, i: number) => <li key={i}>{step}</li>)
           }
@@ -58,12 +34,11 @@ function ExerciseVariation({ name, description, instructions, level, directions,
         </ul>
 
       }
-      {/* </link> */}
     </div>
   );
 }
 
-function Exercise({ id, instructions, category, directions, variations, showDetails }: any) {
+function Exercise({ id, instructions, category, directions, variations }: any) {
   console.log('>> app.exercises[id].page.Exercise', { id });
   const formattedDuration = directions?.duration && formatRange(directions.duration, formatTime);
   const formattedSets = directions?.sets && formatRange(directions.sets, formatNumber, "set");
@@ -100,15 +75,13 @@ function Exercise({ id, instructions, category, directions, variations, showDeta
       }
       {variations && variations.length > 0 &&
         <div className="flex flex-col _gap-2">
-          {/* <div className="text-dark-1 font-bold">Variations</div> */}
           <h2>Variations</h2>
           <div className="flex flex-col gap-3">
             {
               variations
-                // .sort((a: Post, b: Post) => b.postedAt.valueOf() - a.postedAt.valueOf())
                 .map((item: any, offset: number) => (
                   <div key={offset}>
-                    <ExerciseVariation {...{ ...item, offset, showDetails }} />
+                    <ExerciseVariation {...{ ...item, offset }} />
                   </div>
                 )
                 )
@@ -120,69 +93,56 @@ function Exercise({ id, instructions, category, directions, variations, showDeta
   );
 }
 
-async function handleDeleteExercise(id: string, deleteFn: any, router: any) {
-  const response = confirm("Delete exercise?");
-  if (response) {
-    deleteFn(id);
-    router.back();
-  }
-}
 
-const handleRegenerate = (user: User, exercise: Exercise, generateFn: any) => {
-  console.log('>> app.trivia[id].page.regenerate()', { exercise, user });
-  generateFn(user, exercise).then((res: any) => {
-    console.log('>> app.trivia[id].page.regenerate() after generate', { res });
-  });
-}
+export default async function Component({ params }: { params: { id: string } }) {
+  const token = cookies().get("session")?.value;
+  const user = token && (await getUserFromToken(token))?.user;
+  const exercisePromise = getExercise(params.id);
 
-export default function Component({ params }: { params: { id: string } }) {
-  // console.log('>> app.trivia[id].page.render()', { id: params.id });
-  const router = useRouter();
-  const [showDetails, setshowDetails] = useState(false);
-  const [exercises, loaded, load, deleteExercise, generateExercise] = useExercises((state: any) => [state.exercises, state.loaded, state.load, state.deleteExercise, state.generateExercise]);
-  const [user] = useUser((state: any) => [state.user]);
-  const exercise = exercises.filter((exercise: any) => exercise.id == params.id)[0];
-
-  console.log('>> app.exercises[id].page.render()', { id: params.id, exercise, loaded }); //, loadedId: loaded && loaded.includes(params.id) });
-
-  useEffect(() => {
-    load({ id: params.id });
-  }, [params.id]);
+  console.log('>> app.exercises[id].page.render()', { id: params.id }); //, loadedId: loaded && loaded.includes(params.id) });
 
   const links = [
     <BackLink key="0" />,
-    exercise && user && (user.uid == exercise.createdBy || user.admin) && <Link key="2" style="warning" onClick={() => handleDeleteExercise(params.id, deleteExercise, router)}>Delete</Link>,
-    exercise && user && (user.uid == exercise.createdBy || user.admin) && <Link key="1" onClick={() => handleRegenerate(user, exercise, generateExercise)}>Regenerate</Link>,
+    <span key="1"><DeleteLink user={user} exercise={exercisePromise} /></span>,
+    <span key="2"><RegenerateLink user={user} exercise={exercisePromise} /></span>,
   ];
 
-  if (!loaded || !loaded.includes(params.id)) {
-    return (
-      <Page
-        bottomLinks={[<BackLink key="0" />]}
-        loading={true}
-      />
-    )
-  }
+  const LoadedComponent = async () => {
+    const exercise = await exercisePromise;
 
-  if (!exercise) {
+    if (!exercise) {
+      return (
+        <Page
+          title="Exercise not found"
+          subtitle={params.id}
+          links={[<BackLink key="0" />]}
+        />
+      )
+    }
+
     return (
       <Page
-        title="Exercise not found"
-        subtitle={params.id}
-        links={[<BackLink key="0" />]}
-      />
+        title={`${exercise.name}${exercise.category ? ` (${exercise.category})` : ""}`}
+        subtitle={exercise.description && exercise.status != "generating" && exercise.description}
+        links={links}
+      >
+        {exercise &&
+          <Exercise { ...exercise } />
+        }
+      </Page>
     )
   }
 
   return (
-    <Page
-      title={`${exercise.name}${exercise.category ? ` (${exercise.category})` : ""}`}
-      subtitle={exercise.description && exercise.status != "generating" && exercise.description}
-      links={links}
+    <Suspense
+      fallback=
+      <Page
+        // title="Exercise"
+        bottomLinks={[<BackLink key="0" />]}
+        loading={true}
+      />
     >
-      {exercise &&
-        <Exercise {...{ ...exercise, showDetails }} />
-      }
-    </Page>
+      <LoadedComponent />
+    </Suspense>
   )
 }

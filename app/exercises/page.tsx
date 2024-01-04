@@ -1,51 +1,27 @@
-'use client'
-
 import { User } from 'firebase/auth';
-import { useRouter, useSearchParams } from 'next/navigation'
-import { useEffect } from "react";
 import { ExerciseEntry } from '@/app/_components/Exercise';
 import Link from "@/app/_components/Link"
 import Page from "@/app/_components/Page";
-import useExercises from '@/app/_hooks/exercises';
-import useUser from '@/app/_hooks/user';
-import { Exercise } from "@/types/Exercise"
 import { byName } from '@/utils/sort';
+import { getUserFromToken } from '@/services/users';
+import { cookies } from 'next/headers';
+import { getExercises } from '@/services/exercise';
+import { Suspense } from 'react';
+import { CreateLink } from './clientComponents';
 
-async function handleCreateExercise(createExercise: any, generateExercise: any, router: any, user: User | undefined) {
-  const name = window.prompt("Name?", "");
+export default async function Component({
+  params,
+  searchParams,
+}: {
+  params: { slug: string };
+  searchParams?: { [key: string]: string | string[] | undefined };
+}) {
+  const token = cookies().get("session")?.value;
+  const user = token && (await getUserFromToken(token))?.user;
+  const uidFilter = searchParams?.uid;
+  const exercises = uidFilter && getExercises({ createdBy: uidFilter }) || getExercises();
 
-  if (name) {
-    const created = await createExercise(user, name);
-    // console.log("*** handleCreateExercise", { created });
-
-    if (created) {
-      const generating = generateExercise(user, created);
-      // console.log("*** handleCreateExercise", { generating });
-      router.push(`/exercises/${created.id}`);
-      return true
-    }
-  }
-
-  return false;
-}
-
-export default function Component() {
-  const router = useRouter();
-  const [user] = useUser((state: any) => [state.user]);
-  const [exercises, loaded, load, createExercise, generateExercise] = useExercises((state: any) => [state.exercises, state.loaded, state.load, state.createExercise, state.generateExercise]);
-  const params = useSearchParams();
-  const uidFilter = params.get("uid");
-  const filteredExercises = uidFilter && exercises ? exercises.filter((exercise: Exercise) => exercise.createdBy == uidFilter) : exercises;
-
-  console.log('>> app.trivia.page.render()', { loaded, exercises });
-
-  useEffect(() => {
-    if (uidFilter) {
-      load({ createdBy: uidFilter });
-    } else {
-      load();
-    }
-  }, [uidFilter]);
+  console.log('>> app.exercises.page.render()', { searchParams, exercises });
 
   const title = uidFilter ? "My Exercises" : "Exercises"
 
@@ -53,63 +29,64 @@ export default function Component() {
 
   const links = [
     <div key="0" title={user ? "" : "Login to create new exercise"}>
-      <Link
-        className={user ? "" : "cursor-not-allowed"}
-        onClick={() => /* user && */ handleCreateExercise(createExercise, generateExercise, router, user)}
-      >
-        Create New Exercise
-      </Link>
+      <CreateLink />
     </div>,
-    uidFilter && <Link key="1" href={`/exercises`}>Show All</Link>,
-    !uidFilter && <Link key="2" href={`/exercises?uid=${user?.uid || ""}`}>Filter</Link>,
-  ];
+    uidFilter && <Link useClient={true} key="1" href={`/exercises`}>Show All</Link>,
+    !uidFilter && <Link useClient={true} key="2" href={`/exercises?uid=${user?.uid || ""}`}>Filter</Link>,
+  ]
 
-  if (!loaded) {
+  const LoadedComponent = async () => {
+    const filteredExercises = await exercises;
+
     return (
       <Page
         title={title}
         subtitle={subtitle}
-        loading={true}
-      />
+        links={links}
+      >
+        {filteredExercises && filteredExercises.length > 0 &&
+          <div className="self-center flex flex-col gap-3">
+            {
+              filteredExercises
+                // .filter(...)
+                .sort(byName)
+                .map((exercise: any) => {
+                  return (
+                    <span key={exercise.id}>
+                      <ExerciseEntry exercise={exercise} user={user} />
+                    </span>)
+                })
+            }
+          </div>
+        }
+        {(!filteredExercises || filteredExercises.length == 0) &&
+          <>
+            {uidFilter &&
+              <p className='italic text-center'>
+                <span className="opacity-50">No exercises created yet</span> <span className="not-italic opacity-100">😞</span>
+                <br />
+                <span className="opacity-50">You can create one, or show all with the links above.</span>
+              </p>
+            }
+            {!uidFilter &&
+              <p className='italic text-center opacity-50'>No exercises yet :(</p>
+            }
+          </>
+        }
+      </Page>
     )
   }
 
   return (
-    <Page
-      title={title}
-      subtitle={subtitle}
-      links={links}
-      loading={!loaded}
+    <Suspense
+      fallback=<Page
+        title={title}
+        subtitle={subtitle}
+        links={links}
+        loading={true}
+      />
     >
-      {filteredExercises && filteredExercises.length > 0 &&
-        <div className="self-center flex flex-col gap-3">
-          {
-            filteredExercises
-              // .filter(...)
-              .sort(byName)
-              .map((exercise: any) => {
-                return (
-                  <span key={exercise.id}>
-                    <ExerciseEntry exercise={exercise} user={user} />
-                  </span>)
-              })
-          }
-        </div>
-      }
-      {(!filteredExercises || filteredExercises.length == 0) &&
-        <>
-          {uidFilter &&
-            <p className='italic text-center'>
-              <span className="opacity-50">No exercises created yet</span> <span className="not-italic opacity-100">😞</span>
-              <br />
-              <span className="opacity-50">You can create one, or show all with the links above.</span>
-            </p>
-          }
-          {!uidFilter &&
-            <p className='italic text-center opacity-50'>No workouts yet :(</p>
-          }
-        </>
-      }
-    </Page>
+      <LoadedComponent />
+    </Suspense>
   )
 }

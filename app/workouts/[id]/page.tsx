@@ -15,6 +15,7 @@ import { ExerciseEntry } from '@/app/_components/Exercise';
 import { byCreatedAtDesc, byName } from '@/utils/sort';
 import Clock from '@/app/_components/Clock';
 import moment from 'moment';
+import { PrefetchKind } from 'next/dist/client/components/router-reducer/router-reducer-types';
 
 function SessionSummary({ session, workout }: any) {
   // console.log('>> app.workouts[id].SessionSummary.render()', { session });
@@ -140,11 +141,15 @@ export default function Component({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     load({ id: params.id });
-    loadExercises(); // prefetch
+    // loadExercises(); // prefetch
   }, [params.id]);
 
   useEffect(() => {
-    if (workout?.id) loadSessions(workout.id);
+    if (workout?.id) {
+      loadSessions(workout.id);
+      // prefetch exercise server components (DOESNT WORK?)
+      // workout.exercises.forEach((exercise: Exercise) => router.prefetch(`/exercises/${exercise.id}`, {kind: PrefetchKind.FULL}));
+    }
   }, [workout?.id]);
 
   if (!loaded) {

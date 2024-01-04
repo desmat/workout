@@ -1,4 +1,6 @@
 import { default as NextLink } from 'next/link'
+import { Suspense } from 'react';
+import ClientLink from './ClientLink';
 
 export default function Link({
   children, href, className, onClick, style, title, target, useClient
@@ -51,14 +53,25 @@ export default function Link({
   }
 
   return (
-    <NextLink
-      href={href || "#"}
-      onClick={(e) => { if (onClick) { e.preventDefault(); onClick(e); } else if (!href) { e.preventDefault(); } }}
-      title={title || ""}
-      target={target || ""}
-      className={computedClassName}
+    <Suspense fallback=
+      <NextLink
+        href={href || "#"}
+        title={title || ""}
+        target={target || ""}
+        className={computedClassName}
+      >
+        {children}
+      </NextLink>
     >
-      {children}
-    </NextLink>
+      <ClientLink
+        href={href || "#"}
+        onClick={onClick}
+        title={title || ""}
+        target={target || ""}
+        className={computedClassName}
+      >
+        {children}
+      </ClientLink>
+    </Suspense>
   )
 }

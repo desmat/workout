@@ -62,7 +62,7 @@ export default function Component() {
   const uidFilter = params.get("uid");
   const filteredWorkouts = loaded && uidFilter && workouts.filter((workout: Workout) => workout.createdBy == uidFilter) || workouts;
 
-  console.log('>> app.trivia.page.render()', { uidFilter, loaded, workouts });
+  console.log('>> app.workouts.page.render()', { uidFilter, loaded, workouts });
 
   useEffect(() => {
     if (userLoaded) {

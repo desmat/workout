@@ -1,6 +1,6 @@
 # Workout: AI-Powered Personal Trainer
 
-An exercise web app powered by OpenAI's ChatGPT.
+A fitness web app powered by OpenAI's ChatGPT.
 
 ### Functionality:
 - **AI-assisted exercises**: learn how to perform any exercise, see suggested duration and set/repetition numbers, find varations of various difficulty.

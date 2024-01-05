@@ -1,22 +1,17 @@
-// 'use client'
-
+import { cookies } from "next/headers";
 import { BsGithub } from "react-icons/bs";
 import { MdMail, MdHome } from "react-icons/md";
 import { GenerateLink } from "@/app/_components/HomePage";
 import Link from "@/app/_components/Link"
 import Page from "@/app/_components/Page";
-
 import * as users from "@/services/users";
-import { cookies } from "next/headers";
-
-
 
 export default async function Component() {
-  console.log('>> app.page.render()');
+  // console.log('>> app.page.render()');
   const token = cookies().get("session")?.value;
   const user = token && (await users.getUserFromToken(token))?.user;
 
-  console.log('>> app.page.render()', { token, user });
+  // console.log('>> app.page.render()', { token, user });
 
   const links = [
     <Link useClient={true} key="0" href="https://www.desmat.ca" target="_blank" className="_bg-yellow-200 flex flex-row gap-1 align-text-bottom">

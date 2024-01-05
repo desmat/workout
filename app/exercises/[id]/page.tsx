@@ -10,19 +10,11 @@ import { formatDirections } from '@/app/_components/Exercise';
 import useExercises from "@/app/_hooks/exercises";
 import useUser from "@/app/_hooks/user";
 import { Exercise } from "@/types/Exercise";
-import { formatNumber, formatRange, formatTime } from '@/utils/format';
+import { capitalize, formatNumber, formatRange, formatTime } from '@/utils/format';
 
-function ExerciseVariation({ name, description, instructions, level, directions, showDetails }: any) {
-  const [showDetail, setshowDetail] = useState(false);
+function ExerciseVariation({ name, description, instructions, level, directions }: any) {
   const formattedDirections = directions && formatDirections(directions);
-
   // console.log('>> app.exercises[id].page.ExerciseVariation', { name, directions });
-
-  useEffect(() => {
-    if (showDetails) {
-      setshowDetail(false);
-    }
-  }, [showDetails]);
 
   return (
     <div className="flex flex-col gap-0">
@@ -34,11 +26,6 @@ function ExerciseVariation({ name, description, instructions, level, directions,
             : <span className="_opacity-60 _italic">{description}</span>
           </>
         }
-        {/* {!showDetails &&
-            <>
-              <Link style="child light" className="ml-2">{showDetail ? "Hide details" : "Show details"}</Link>
-            </>
-          } */}
       </div>
       {/* {description &&
         <div className="_opacity-60 _italic">
@@ -63,12 +50,12 @@ function ExerciseVariation({ name, description, instructions, level, directions,
   );
 }
 
-function Exercise({ id, instructions, category, directions, variations, showDetails }: any) {
-  console.log('>> app.exercises[id].page.Exercise', { id });
+function ExerciseDetails({ id, instructions, category, directions, variations }: any) {
+  // console.log('>> app.exercises[id].page.Exercise', { id });
   const formattedDuration = directions?.duration && formatRange(directions.duration, formatTime);
   const formattedSets = directions?.sets && formatRange(directions.sets, formatNumber, "set");
   const formattedReps = directions?.reps && formatRange(directions.reps, formatNumber, "rep");
-  console.log('>> app.exercises[id].page.Exercise', { formattedDuration, formattedSets, formattedReps });
+  // console.log('>> app.exercises[id].page.Exercise', { formattedDuration, formattedSets, formattedReps });
 
   return (
     <div className="text-left pb-4 flex flex-col gap-4">
@@ -108,7 +95,7 @@ function Exercise({ id, instructions, category, directions, variations, showDeta
                 // .sort((a: Post, b: Post) => b.postedAt.valueOf() - a.postedAt.valueOf())
                 .map((item: any, offset: number) => (
                   <div key={offset}>
-                    <ExerciseVariation {...{ ...item, offset, showDetails }} />
+                    <ExerciseVariation {...{ ...item, offset }} />
                   </div>
                 )
                 )
@@ -120,39 +107,38 @@ function Exercise({ id, instructions, category, directions, variations, showDeta
   );
 }
 
-async function handleDeleteExercise(id: string, deleteFn: any, router: any) {
-  const response = confirm("Delete exercise?");
-  if (response) {
-    deleteFn(id);
-    router.back();
-  }
-}
-
-const handleRegenerate = (user: User, exercise: Exercise, generateFn: any) => {
-  console.log('>> app.trivia[id].page.regenerate()', { exercise, user });
-  generateFn(user, exercise).then((res: any) => {
-    console.log('>> app.trivia[id].page.regenerate() after generate', { res });
-  });
-}
-
 export default function Component({ params }: { params: { id: string } }) {
   // console.log('>> app.trivia[id].page.render()', { id: params.id });
   const router = useRouter();
-  const [showDetails, setshowDetails] = useState(false);
   const [exercises, loaded, load, deleteExercise, generateExercise] = useExercises((state: any) => [state.exercises, state.loaded, state.load, state.deleteExercise, state.generateExercise]);
   const [user] = useUser((state: any) => [state.user]);
   const exercise = exercises.filter((exercise: any) => exercise.id == params.id)[0];
-
-  console.log('>> app.exercises[id].page.render()', { id: params.id, exercise, loaded }); //, loadedId: loaded && loaded.includes(params.id) });
+  const isReady = exercise?.status == "created";
+  // console.log('>> app.exercises[id].page.render()', { id: params.id, exercise, loaded }); //, loadedId: loaded && loaded.includes(params.id) });
 
   useEffect(() => {
     load({ id: params.id });
   }, [params.id]);
 
+  async function handleDeleteExercise() {
+    const response = confirm("Delete exercise?");
+    if (response) {
+      deleteExercise(params.id);
+      router.back();
+    }
+  }
+
+  const handleRegenerate = () => {
+    // console.log('>> app.trivia[id].page.regenerate()', { exercise, user });
+    generateExercise(user, exercise).then((res: any) => {
+      // console.log('>> app.trivia[id].page.regenerate() after generate', { res });
+    });
+  }
+
   const links = [
     <BackLink key="0" />,
-    exercise && user && (user.uid == exercise.createdBy || user.admin) && <Link key="2" style="warning" onClick={() => handleDeleteExercise(params.id, deleteExercise, router)}>Delete</Link>,
-    exercise && user && (user.uid == exercise.createdBy || user.admin) && <Link key="1" onClick={() => handleRegenerate(user, exercise, generateExercise)}>Regenerate</Link>,
+    exercise && isReady && user && (user.uid == exercise.createdBy || user.admin) && <Link key="2" style="warning" onClick={handleDeleteExercise}>Delete</Link>,
+    exercise && isReady && user && (user.uid == exercise.createdBy || user.admin) && <Link key="1" onClick={handleRegenerate}>Regenerate</Link>,
   ];
 
   if (!loaded || !loaded.includes(params.id)) {
@@ -174,14 +160,28 @@ export default function Component({ params }: { params: { id: string } }) {
     )
   }
 
+  if (!isReady) {
+    return (
+      <Page
+        title={exercise.name || "(Unnamed Exercise)"}
+        subtitle={`(${capitalize(exercise.status)}...)`}
+        links={links}
+        loading={true}
+      />
+    )
+  }
+
   return (
     <Page
       title={`${exercise.name}${exercise.category ? ` (${exercise.category})` : ""}`}
-      subtitle={exercise.description && exercise.status != "generating" && exercise.description}
+      subtitle={["creating", "generating"].includes(exercise?.status)
+        ? `(${capitalize(exercise.status)})`
+        : exercise.description}
       links={links}
+      loading={["creating", "generating"].includes(exercise?.status)}
     >
       {exercise &&
-        <Exercise {...{ ...exercise, showDetails }} />
+        <ExerciseDetails {...exercise} />
       }
     </Page>
   )

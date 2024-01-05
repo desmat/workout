@@ -15,61 +15,8 @@ import { Workout, WorkoutSession, WorkoutSet } from '@/types/Workout';
 import { Exercise } from '@/types/Exercise';
 import { byCreatedAtDesc } from '@/utils/sort';
 
-async function handleStartSession(user: User, workout: Workout, fn: any) {
-  console.log('>> app.workout[id].session.handleStartSession()', { user, workout });
-  fn(user, workout.id);
-}
-
-async function handleStopSession(user: User, session: WorkoutSession, fn: any) {
-  console.log('>> app.workout[id].session.handleStopSession()', { user, session });
-  fn(user, session?.id);
-}
-
-async function handleResumeSession(user: User, session: WorkoutSession, fn: any) {
-  console.log('>> app.workout[id].session.handleResumeSession()', { user, session });
-  fn(user, session?.id);
-}
-
-async function handleCompleteSession(user: User, session: WorkoutSession, fn: any) {
-  console.log('>> app.workout[id].session.handleCompleteSession()', { user, session });
-  fn(user, session?.id);
-}
-
-async function handleDeleteSession(user: User, session: WorkoutSession, fn: any, router: any) {
-  console.log('>> app.workout[id].session.handleDeleteSession()', { user, session });
-
-  const response = confirm("Delete session?");
-  if (response) {
-    fn(user, session?.id);
-    router.push(`/workouts/${session?.workout?.id}`);
-  }
-}
-
-async function handleStartSet(user: User, workout: Workout, session: WorkoutSession, exercise: Exercise, offset: number, startSetFn: any, startSessionFn: any) {
-  console.log('>> app.workout[id].session.handleStartSet()', { user, workout, session, exercise, offset });
-
-  let _session = session;
-  if (!_session) {
-    _session = await startSessionFn(user, workout.id);
-  }
-
-  return startSetFn(user, workout.id, _session.id, exercise, offset);
-}
-
-async function handleNext(user: User, workout: Workout, session: WorkoutSession, sessionStarted: boolean, currentSet: WorkoutSet, startSet: any, startSession: any) {
-  if (workout && user && workout.exercises && sessionStarted && (currentSet.offset < workout.exercises.length - 1)) {
-    return handleStartSet(user, workout, session, workout.exercises[currentSet.offset + 1], currentSet.offset + 1, startSet, startSession);
-  }
-}
-
-async function handlePrevious(user: User, workout: Workout, session: WorkoutSession, sessionStarted: boolean, currentSet: WorkoutSet, startSet: any, startSession: any) {
-  if (workout && user && workout.exercises && sessionStarted && (currentSet.offset > 0)) {
-    return handleStartSet(user, workout, session, workout.exercises[currentSet.offset - 1], currentSet.offset - 1, startSet, startSession);
-  }
-}
-
 export default function Component({ params }: { params: { id: string, sessionId?: string } }) {
-  console.log('>> app.workout[id].session[sessionId].Page.render()', { id: params.id, sessionId: params.sessionId });
+  // console.log('>> app.workout[id].session[sessionId].Page.render()', { id: params.id, sessionId: params.sessionId });
   const [
     workouts,
     loaded,
@@ -113,9 +60,7 @@ export default function Component({ params }: { params: { id: string, sessionId?
   const [previousSet, setPreviousSet] = useState<WorkoutSet | undefined>(undefined);
   const [currentSetDuration, setCurrentSetDuration] = useState(0);
   let [timer, setTimer] = useState(0);
-
-  console.log('>> app.workouts[id].session.Page.render()', { id: params.id, workout, sessions, session, currentSet });
-  // console.log('>> app.workouts[id].session.Page.render()', { id: params.id, sessionsLoaded: sessionsLoaded && sessionsLoaded.includes(params.sessionId), status: session?.status });
+  // console.log('>> app.workouts[id].session.Page.render()', { id: params.id, workout, sessions, session, currentSet });
 
   useEffect(() => {
     if (!sessionsLoaded || !sessionsLoaded.includes(params.sessionId) || session?.status != "creating") {
@@ -166,15 +111,66 @@ export default function Component({ params }: { params: { id: string, sessionId?
     )
   }
 
+  async function handleStartSession() {
+    // console.log('>> app.workout[id].session.handleStartSession()', { user, workout });
+    startSession(user, workout.id);
+  }
+
+  async function handleStopSession() {
+    // console.log('>> app.workout[id].session.handleStopSession()', { user, session });
+    stopSession(user, session?.id);
+  }
+
+  async function handleResumeSession() {
+    // console.log('>> app.workout[id].session.handleResumeSession()', { user, session });
+    resumeSession(user, session?.id);
+  }
+
+  async function handleCompleteSession() {
+    // console.log('>> app.workout[id].session.handleCompleteSession()', { user, session });
+    completeSession(user, session?.id);
+  }
+
+  async function handleDeleteSession() {
+    // console.log('>> app.workout[id].session.handleDeleteSession()', { user, session });
+    const response = confirm("Delete session?");
+    if (response) {
+      deleteSession(user, session?.id);
+      router.push(`/workouts/${session?.workout?.id}`);
+    }
+  }
+
+  async function handleStartSet(exercise: Exercise, offset: number) {
+    console.log('>> app.workout[id].session.handleStartSet()', { user, workout, session, exercise, offset });
+
+    let _session = session;
+    if (!_session) {
+      _session = await startSession(user, workout.id);
+    }
+
+    return startSet(user, workout.id, _session.id, exercise, offset);
+  }
+
+  async function handleNext(sessionStarted: boolean, currentSet: WorkoutSet) {
+    if (workout && user && workout.exercises && sessionStarted && (currentSet.offset < workout.exercises.length - 1)) {
+      return handleStartSet(workout.exercises[currentSet.offset + 1], currentSet.offset + 1);
+    }
+  }
+
+  async function handlePrevious(sessionStarted: boolean, currentSet: WorkoutSet) {
+    if (workout && user && workout.exercises && sessionStarted && (currentSet.offset > 0)) {
+      return handleStartSet(workout.exercises[currentSet.offset - 1], currentSet.offset - 1);
+    }
+  }
+
   const links = [
     <BackLink key="0" />,
-    workout && user && !sessionStarted && (user.uid == workout.createdBy || user.admin) && <Link key="6" style="warning" onClick={() => handleDeleteSession(user, session, deleteSession, router)}>Delete</Link>,
-    // {workout && <Link key="0" onClick={() => setshowDetails(!showDetails)}>{showDetails ? "Hide details" : "Show details"}</Link>},
-    workout && user && !session && <Link key="1" onClick={() => handleStartSession(user, workout, startSession)}>Start</Link>,
-    workout && user && sessionStarted && <Link key="4" onClick={() => handleCompleteSession(user, session, completeSession)}>Complete</Link>,
-    workout && user && sessionStarted && !sessionPaused && <Link key="2" onClick={() => handleStopSession(user, session, stopSession)}>Pause</Link>,
-    workout && user && session?.status == "stopped" && <Link key="3" onClick={() => handleResumeSession(user, session, resumeSession)}>Resume</Link>,
-    // workout && user && sessionStarted && (currentSet.offset < workout.exercises.length - 1) && <Link key="5" onClick={() => handleStartSet(user, workout, session, workout.exercises[currentSet.offset + 1], currentSet.offset + 1, startSet, startSession)}>Next</Link>,
+    workout && user && !sessionStarted && (user.uid == workout.createdBy || user.admin) && <Link key="6" style="warning" onClick={handleDeleteSession}>Delete</Link>,
+    workout && user && !session && <Link key="1" onClick={handleStartSession}>Start</Link>,
+    workout && user && sessionStarted && <Link key="4" onClick={handleCompleteSession}>Complete</Link>,
+    workout && user && sessionStarted && !sessionPaused && <Link key="2" onClick={handleStopSession}>Pause</Link>,
+    workout && user && session?.status == "stopped" && <Link key="3" onClick={handleResumeSession}>Resume</Link>,
+    workout && user && sessionStarted && (currentSet.offset < workout.exercises.length - 1) && <Link key="5" onClick={() => handleStartSet(workout.exercises[currentSet.offset + 1], currentSet.offset + 1)}>Next</Link>,
   ];
 
   if (!session && sessionsLoaded && !sessionsLoaded.includes(params.sessionId)) {
@@ -222,9 +218,9 @@ export default function Component({ params }: { params: { id: string, sessionId?
           }
           onClick={() => {
             session?.status == "stopped"
-              ? handleResumeSession(user, session, resumeSession)
+              ? handleResumeSession()
               : session?.status == "started"
-                ? handleStopSession(user, session, stopSession)
+                ? handleStopSession()
                 : null;
           }}
         >
@@ -234,7 +230,7 @@ export default function Component({ params }: { params: { id: string, sessionId?
         {workout && user && session?.status != "completed" &&
           <div className="flex flex-row justify-center items-center gap-2 text-5xl _bg-pink-100">
             {sessionStarted && currentSet?.offset > 0 &&
-              <Link onClick={() => handlePrevious(user, workout, session, sessionStarted, currentSet, startSet, startSession)}>
+              <Link onClick={() => handlePrevious(sessionStarted, currentSet)}>
                 <IoPlayBack className="text-dark-2 hover:text-dark-1 active:text-light-1" />
               </Link>
             }
@@ -242,12 +238,12 @@ export default function Component({ params }: { params: { id: string, sessionId?
               <IoPlayBack className="text-dark-2" />
             }
             {workout && user && sessionStarted && !sessionPaused &&
-              <Link onClick={() => handleStopSession(user, session, stopSession)}>
+              <Link onClick={handleStopSession}>
                 <IoPause className="text-6xl text-dark-2 hover:text-dark-1 active:text-light-1" />
               </Link>
             }
             {workout && user && sessionStarted && sessionPaused &&
-              <Link onClick={() => handleResumeSession(user, session, resumeSession)}>
+              <Link onClick={handleResumeSession}>
                 <IoPlay className="text-6xl text-dark-2 hover:text-dark-1 active:text-light-1" />
               </Link>
             }
@@ -255,7 +251,7 @@ export default function Component({ params }: { params: { id: string, sessionId?
               <IoPlay className="text-6xl text-dark-2 " />
             }
             {sessionStarted && currentSet.offset < workout.exercises.length - 1 &&
-              <Link onClick={() => handleNext(user, workout, session, sessionStarted, currentSet, startSet, startSession)} >
+              <Link onClick={() => handleNext(sessionStarted, currentSet)} >
                 <IoPlayForward className="text-dark-2 hover:text-dark-1 active:text-light-1" />
               </Link>
             }
@@ -278,7 +274,7 @@ export default function Component({ params }: { params: { id: string, sessionId?
                       key={i}
                       style="primary"
                       className="_bg-yellow-200 mx-auto text-2xl"
-                      onClick={() => handleStartSet(user, workout, session, exercise, i, startSet, startSession)}
+                      onClick={() => handleStartSet(exercise, i)}
                     >
                       <div
                         className={`_text-dark-1 flex flex-row _flex-nowrap max-w-[calc(100vw-2rem)] ${i == currentSet?.offset && sessionStarted && !sessionPaused ? " text-dark-1 font-bold" : " font-semibold"}`}

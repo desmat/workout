@@ -14,7 +14,7 @@ import { Exercise } from '@/types/Exercise';
 import { byName } from '@/utils/sort';
 
 function WorkoutEntry({ workout, user }: any) {
-  const isReady = ["created"].includes(workout.status);
+  const isReady = workout?.status == "created";
   const maxSummaryItems = 5;
   const uniqueExerciseNames = workout.exercises
     ? Array.from(new Set(workout.exercises.map((e: Exercise) => e.name)))
@@ -25,7 +25,7 @@ function WorkoutEntry({ workout, user }: any) {
   const summaryMore = uniqueExerciseNames.length > maxSummaryItems
     ? ` and ${workout.exercises.length - maxSummaryItems} more`
     : "";
-  console.log('>> app.workouts.page.WorkoutEntry.render()', { workout, user, summary });
+  // console.log('>> app.workouts.page.WorkoutEntry.render()', { workout, user, summary });
 
   return (
     <Link style="parent" href={`/workouts/${workout.id}`}>
@@ -34,18 +34,15 @@ function WorkoutEntry({ workout, user }: any) {
         {isReady &&
           <>
             <span>
-              <span className="capitalize">{` (${summary}`}</span>
-              {summaryMore})
+              <span className="capitalize">{` (${summary}`}</span>{summaryMore})
             </span>
-            <span className="relative px-4">
-              <Link style="child light" className="absolute right-0 -mr-3">View</Link>
+            <span className="relative px-2">
+              <Link style="child light" className="absolute left-1.5">View</Link>
             </span>
           </>
         }
         {!isReady &&
-          <>
-            {` (${workout.status})`}
-          </>
+          <span className="capitalize animate-pulse">{` (${workout.status || "unknown"}...)`}</span>
         }
       </span>
     </Link>
@@ -61,8 +58,7 @@ export default function Component() {
   const params = useSearchParams();
   const uidFilter = params.get("uid");
   const filteredWorkouts = loaded && uidFilter && workouts.filter((workout: Workout) => workout.createdBy == uidFilter) || workouts;
-
-  console.log('>> app.trivia.page.render()', { uidFilter, loaded, workouts });
+  // console.log('>> app.trivia.page.render()', { uidFilter, loaded, workouts });
 
   useEffect(() => {
     if (userLoaded) {
@@ -101,8 +97,8 @@ export default function Component() {
         Generate
       </Link>
     </div>,
-    uidFilter && <Link key="1" href={`/workouts`}>Show All</Link>,
-    !uidFilter && <Link key="2" href={`/workouts?uid=${user?.uid || ""}`}>Filter</Link>,
+    uidFilter && <Link key="2" href={`/workouts`}>Show All</Link>,
+    !uidFilter && <Link key="3" href={`/workouts?uid=${user?.uid || ""}`}>Filter</Link>,
   ];
 
   if (!loaded) {

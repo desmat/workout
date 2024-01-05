@@ -26,7 +26,7 @@ function FormInput({
 }
 
 export default function Component() {
-  console.log('>> app.profile.auth.page.render()');
+  // console.log('>> app.profile.auth.page.render()');
   const [user, signin] = useUser((state: any) => [state.user, state.signin]);
   const router = useRouter();
   const params = useSearchParams();
@@ -35,7 +35,7 @@ export default function Component() {
   const [alertError] = useAlert((state: any) => [state.warning]);
 
   function doLogin(e: any) {
-    console.log("** app.profile.auth.page.doLogin");
+    // console.log("** app.profile.auth.page.doLogin");
     e.preventDefault();
 
     const validationError =
@@ -54,7 +54,7 @@ export default function Component() {
   }
 
   function doSignup(e: any) {
-    console.log("** app.profile.auth.page.doSignup");
+    // console.log("** app.profile.auth.page.doSignup");
     e.preventDefault();
 
     const validationError =
@@ -88,7 +88,7 @@ export default function Component() {
   }
 
   const bottomLinks = [
-    <BackLink key="0"/>
+    <BackLink key="0" />
   ];
 
   const links = [
@@ -117,32 +117,34 @@ export default function Component() {
         bottomLinks={bottomLinks}
       >
         <table className="my-1">
-          <tr>
-            <td className="text-right pr-2 opacity-40 font-semibold">
-              Email
-            </td>
-            <td>
-              <FormInput field="email" form={form} setForm={setForm} />
-            </td>
-          </tr>
-          <tr>
-            <td className="text-right pr-2 opacity-40 font-semibold">
-              Password
-            </td>
-            <td>
-              <FormInput field="password" form={form} setForm={setForm} />
-            </td>
-          </tr>
-          {method == "signup-email" &&
+          <tbody>
             <tr>
               <td className="text-right pr-2 opacity-40 font-semibold">
-                Confirm Password
+                Email
               </td>
               <td>
-                <FormInput field="confirmPassword" form={form} setForm={setForm} />
+                <FormInput field="email" form={form} setForm={setForm} />
               </td>
             </tr>
-          }
+            <tr>
+              <td className="text-right pr-2 opacity-40 font-semibold">
+                Password
+              </td>
+              <td>
+                <FormInput field="password" form={form} setForm={setForm} />
+              </td>
+            </tr>
+            {method == "signup-email" &&
+              <tr>
+                <td className="text-right pr-2 opacity-40 font-semibold">
+                  Confirm Password
+                </td>
+                <td>
+                  <FormInput field="confirmPassword" form={form} setForm={setForm} />
+                </td>
+              </tr>
+            }
+          </tbody>
         </table>
         <div className={`mt-2 mb-4`}>
           <PageLinks>

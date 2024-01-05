@@ -14,7 +14,7 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
 
   load: async (query?: any) => {
     const id = query?.id;
-    console.log(">> hooks.exercise.load", { id });
+    // console.log(">> hooks.exercise.load", { id });
 
     if (id) {
       fetch(`/api/exercises/${id}`).then(async (res) => {
@@ -53,7 +53,7 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
   },
 
   createExercise: async (user: User, name: string) => {
-    console.log(">> hooks.exercise.createExercise", { name });
+    // console.log(">> hooks.exercise.createExercise", { name });
 
     // optimistic
     const tempId = uuid();

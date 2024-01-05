@@ -1,5 +1,3 @@
-// 'use server'
-
 import moment from 'moment';
 import { Exercise } from "@/types/Exercise";
 import { sampleExercises, sampleWorkouts } from './samples';

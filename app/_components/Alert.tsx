@@ -19,7 +19,7 @@ function TypedAlert({
   closed: boolean,
   handleClose: any,
 }) {
-  console.log('>> app._components.Alert.Alert.render()', { message, type, closed });
+  // console.log('>> app._components.Alert.Alert.render()', { message, type, closed });
   let icon;
   let colorClasses;
 

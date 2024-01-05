@@ -1,5 +1,3 @@
-// 'use server'
-
 import { User } from 'firebase/auth';
 import moment from 'moment';
 import * as openai from "@/services/openai";

@@ -12,30 +12,6 @@ import * as users from "@/services/users";
 import { Exercise } from "@/types/Exercise";
 import { Workout } from "@/types/Workout";
 
-function doSigninWithGoogle(e: any, signinFn: any) {
-  console.log("** app.profile.page.doSigninWithGoogle");
-  e.preventDefault();
-  signinFn("google");
-}
-
-function doSigninWithGithub(e: any, signinFn: any) {
-  console.log("** app.profile.page.doSigninWithGithub");
-  e.preventDefault();
-  signinFn("github");
-}
-
-function doSigningAnonymously(e: any, signinFn: any) {
-  console.log("** app.profile.page.doSigningAnonymously");
-  e.preventDefault();
-  signinFn("anonymous");
-}
-
-function doLogout(e: any, logoutFn: any) {
-  console.log("** app.profile.page.doLogout");
-  e.preventDefault();
-  logoutFn();
-}
-
 export default function Component({ params }: { params: { uid?: string } }) {
   // console.log('>> app.profile.page.render()', params.uid);
   const [copiedValue, copy] = useCopyToClipboard();
@@ -44,7 +20,7 @@ export default function Component({ params }: { params: { uid?: string } }) {
   const [workouts, workoutsLoaded, loadWorkouts] = useWorkouts((state: any) => [state.workouts, state.loaded, state.load]);
   const myWorkouts = workoutsLoaded && workouts && workouts.filter((workout: Workout) => workout.createdBy == user?.uid);
   const myExercises = exercisesLoaded && exercises && exercises.filter((exercise: Exercise) => exercise.createdBy == user?.uid);
-  console.log('>> app.profile.page.render()', { uid: params.uid, user, userLoaded, userLoading });
+  // console.log('>> app.profile.page.render()', { uid: params.uid, user, userLoaded, userLoading });
 
   useEffect(() => {
     // console.log("** app.profile.page.useEffect", { uid: params.uid, user });
@@ -53,20 +29,38 @@ export default function Component({ params }: { params: { uid?: string } }) {
     if (!workoutsLoaded) loadWorkouts();
   }, [params.uid]);
 
+  function doSigninWithGoogle(e: any) {
+    // console.log("** app.profile.page.doSigninWithGoogle");
+    e.preventDefault();
+    signin("google");
+  }
+
+  function doSigninWithGithub(e: any) {
+    // console.log("** app.profile.page.doSigninWithGithub");
+    e.preventDefault();
+    signin("github");
+  }
+
+  function doLogout(e: any) {
+    // console.log("** app.profile.page.doLogout");
+    e.preventDefault();
+    logout();
+  }
+
   const links = [
-    user && !user.isAnonymous && <Link key="0" href="/" style="warning" onClick={(e) => doLogout(e, logout)}>Logout</Link>,
+    user && !user.isAnonymous && <Link key="0" href="/" style="warning" onClick={doLogout}>Logout</Link>,
     user && myWorkouts?.length > 0 && <Link key="1" href={`/workouts?uid=${user.uid}`}>Workouts ({myWorkouts.length})</Link>,
     user && myExercises?.length > 0 && <Link key="2" href={`/exercises?uid=${user.uid}`}>Exercises ({myExercises.length})</Link>,
     (!user || user.isAnonymous) && <Link key="3" href="/auth?method=login-email">Login</Link>,
     (!user || user.isAnonymous) && <Link key="4" href="/auth?method=signup-email">Signup</Link>,
     (!user || user.isAnonymous) &&
-    <Link key="5" className="flex flex-row gap-1 items-center" onClick={(e) => doSigninWithGoogle(e, signin)}>
-      <BsGoogle /> 
-        Signin
+    <Link key="5" className="flex flex-row gap-1 items-center" onClick={doSigninWithGoogle}>
+      <BsGoogle />
+      Signin
     </Link>,
     (!user || user.isAnonymous) &&
-    <Link key="6" className="flex flex-row gap-1 items-center" onClick={(e) => doSigninWithGithub(e, signin)}>
-      <BsGithub /> 
+    <Link key="6" className="flex flex-row gap-1 items-center" onClick={doSigninWithGithub}>
+      <BsGithub />
       Signin
     </Link>,
     // TODO CRIPPLE
@@ -97,33 +91,35 @@ export default function Component({ params }: { params: { uid?: string } }) {
     >
       {user &&
         <table className="my-1">
-          <tr>
-            <td width="50%" className="text-right pr-2 opacity-40 font-semibold">ID</td>
-            <td width="50%">
-              <Link onClick={() => copy(user.uid)} style="parent secondary" className="flex flex-row">
-                <div title={user.id} className="max-w-[10rem] truncate text-ellipsis">{user.uid}</div>
-                <span className="relative px-0">
-                  <Link style="child light" className="absolute left-0.5">{copiedValue == user?.uid ? "Copied" : "Copy"}</Link>
-                </span>
-              </Link>
-            </td>
-          </tr>
-          <tr>
-            <td className="text-right pr-2 opacity-40 font-semibold">Type</td>
-            <td>{user?.isAnonymous && " Anonymous"}{user.admin && " Administrator"}{user && !user.isAnonymous && !user.admin && " User"}</td>
-          </tr>
-          {user.email &&
+          <tbody>
             <tr>
-              <td className="text-right pr-2 opacity-40 font-semibold">Email</td>
-              <td>{user.email}</td>
+              <td width="50%" className="text-right pr-2 opacity-40 font-semibold">ID</td>
+              <td width="50%">
+                <Link onClick={() => copy(user.uid)} style="parent secondary" className="flex flex-row">
+                  <div title={user.id} className="max-w-[10rem] truncate text-ellipsis">{user.uid}</div>
+                  <span className="relative px-0">
+                    <Link style="child light" className="absolute left-0.5">{copiedValue == user?.uid ? "Copied" : "Copy"}</Link>
+                  </span>
+                </Link>
+              </td>
             </tr>
-          }
-          {!user.isAnonymous &&
             <tr>
-              <td className="text-right pr-2 opacity-40 font-semibold">Provider</td>
-              <td>{users.getProviderType(user)}</td>
+              <td className="text-right pr-2 opacity-40 font-semibold">Type</td>
+              <td>{user?.isAnonymous && " Anonymous"}{user.admin && " Administrator"}{user && !user.isAnonymous && !user.admin && " User"}</td>
             </tr>
-          }
+            {user.email &&
+              <tr>
+                <td className="text-right pr-2 opacity-40 font-semibold">Email</td>
+                <td>{user.email}</td>
+              </tr>
+            }
+            {!user.isAnonymous &&
+              <tr>
+                <td className="text-right pr-2 opacity-40 font-semibold">Provider</td>
+                <td>{users.getProviderType(user)}</td>
+              </tr>
+            }
+          </tbody>
         </table>
       }
       {false && !params.uid &&
@@ -150,17 +146,17 @@ export default function Component({ params }: { params: { uid?: string } }) {
           }
           {user && user.isAnonymous &&
             <div className="text-dark-2">
-              <Link href="/" onClick={(e) => doSigninWithGoogle(e, signin)}>Signin (Google)</Link>
+              <Link href="/" onClick={doSigninWithGoogle}>Signin (Google)</Link>
             </div>
           }
           {user && user.isAnonymous &&
             <div className="text-dark-2">
-              <Link href="/" onClick={(e) => doSigninWithGithub(e, signin)}>Signin (GitHub)</Link>
+              <Link href="/" onClick={doSigninWithGithub}>Signin (GitHub)</Link>
             </div>
           }
           {user && !user.isAnonymous &&
             <div className="text-dark-2 hover:text-light-2">
-              <Link href="/" onClick={(e) => doLogout(e, logout)}>Logout</Link>
+              <Link href="/" onClick={doLogout}>Logout</Link>
             </div>
           }
           {/* {user && user.isAnonymous && // TODO CRIPPLE

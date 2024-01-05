@@ -1,5 +1,3 @@
-'use client'
-
 import Link from "@/app/_components/Link"
 import { ExerciseDirections } from "@/types/Exercise";
 import { formatNumber, formatTime, formatRange } from "@/utils/format";
@@ -14,7 +12,7 @@ export function formatDirections({ duration, sets, reps }: ExerciseDirections) {
 }
 
 export function ExerciseEntry({ exercise, user }: any) {
-  const isReady = ["created"].includes(exercise?.status);
+  const isReady = exercise?.status == "created";
   const summary = exercise?.description || exercise?.directions && formatDirections(exercise?.directions);
   // console.log('>> app.exercises.page.ExerciseEntry.render()', { exercise, user, summary });
 
@@ -28,15 +26,13 @@ export function ExerciseEntry({ exercise, user }: any) {
         {isReady &&
           <>
             {summary ? `: ${summary}` : ""}
-            <span className="relative px-4 _ml-2">
-              <Link style="child light" className="absolute right-0 -mr-3">View</Link>
+            <span className="relative px-3">
+              <Link style="child light" className="absolute left-1.5">View</Link>
             </span>
           </>
         }
         {!isReady &&
-          <>
-            {` (${exercise.status || "Unknown"})`}
-          </>
+          <span className="capitalize animate-pulse">{` (${exercise.status || "unknown"}...)`}</span>
         }
       </span>
     </Link>

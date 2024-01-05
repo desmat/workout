@@ -74,7 +74,7 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
 
   load: async (query?: any) => {
     const id = query?.id
-    console.log(">> hooks.workout.load", { id });
+    // console.log(">> hooks.workout.load", { id });
 
     // rest api (optimistic: all or just the one)
     if (id) {
@@ -114,7 +114,7 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
   },
 
   loadSessions: async (workoutId: string, sessionId?: string) => {
-    console.log(">> hooks.workout.loadSessions", { workoutId, sessionId });
+    // console.log(">> hooks.workout.loadSessions", { workoutId, sessionId });
 
     if (!workoutId) {
       throw `Unable to load sessions with no workoutId`;
@@ -155,7 +155,7 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
   },
 
   createWorkout: async (user: User, name: string, exerciseNames: string) => {
-    console.log(">> hooks.workout.createWorkout", { name });
+    // console.log(">> hooks.workout.createWorkout", { name });
 
     // optimistic
     const tempId = uuid();
@@ -229,7 +229,7 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
   },
 
   generateWorkout: async (user: User, name: string, parameters: []) => {
-    console.log(">> hooks.workout.generateWorkout", { name, parameters });
+    // console.log(">> hooks.workout.generateWorkout", { name, parameters });
 
     // optimistic
     const tempId = uuid();
@@ -277,7 +277,7 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
   },
 
   deleteWorkout: async (id: string) => {
-    console.log(">> hooks.workout.deleteWorkout id:", id);
+    // console.log(">> hooks.workout.deleteWorkout id:", id);
 
     if (!id) {
       throw `Cannot delete workout with null id`;
@@ -305,7 +305,7 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
   },
 
   startSession: async (user: User, id: string) => {
-    console.log(">> hooks.workout.startSession", { user, id });
+    // console.log(">> hooks.workout.startSession", { user, id });
 
     if (!id) {
       throw `Cannot create workout session with null id`;
@@ -323,7 +323,7 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
     };
 
     fetchSession("POST", get, set, session, (newSession: WorkoutSession) => {
-      console.log(">> hooks.workout.startSession fetch callback", { newSession });
+      // console.log(">> hooks.workout.startSession fetch callback", { newSession });
 
       trackEvent("workout-session-started", { 
         id: newSession.id, 
@@ -340,7 +340,7 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
   },
 
   completeSession: async (user: User, id: string) => {
-    console.log(">> hooks.workout.stopSession", { user, id });
+    // console.log(">> hooks.workout.stopSession", { user, id });
 
     if (!id) {
       throw `Cannot complete workout session with null id`;
@@ -369,7 +369,7 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
   },
 
   stopSession: async (user: User, id: string) => {
-    console.log(">> hooks.workout.stopSession", { user, id });
+    // console.log(">> hooks.workout.stopSession", { user, id });
 
     if (!id) {
       throw `Cannot stop workout session with null id`;
@@ -391,7 +391,7 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
   },
 
   resumeSession: async (user: User, id: string) => {
-    console.log(">> hooks.workout.resumeSession", { user, id });
+    // console.log(">> hooks.workout.resumeSession", { user, id });
 
     if (!id) {
       throw `Cannot resume workout session with null id`;
@@ -414,14 +414,14 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
       throw `Unable to resume session: no set found: ${id}`;
     }
 
-    console.log(">> hooks.workout.resumeSession", { sessionSet });
+    // console.log(">> hooks.workout.resumeSession", { sessionSet });
 
     sessionSet.startedAt = moment().valueOf();
     sessionSet.stoppedAt = 0;
     sessionSet.status = "started";
     session.status = "started";
 
-    console.log(">> hooks.workout.resumeSession", { session });
+    // console.log(">> hooks.workout.resumeSession", { session });
 
     fetchSession("PUT", get, set, session);
 
@@ -429,7 +429,7 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
   },
 
   deleteSession: async (user: any, id: string) => {
-    console.log(">> hooks.workout.deleteSession id:", id);
+    // console.log(">> hooks.workout.deleteSession id:", id);
 
     if (!id) {
       throw `Cannot delete workout session with null id`;
@@ -460,7 +460,7 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
   startSet: async (user: User, workoutId: string, sessionId: string, exercise: Exercise, offset: number) => {
     const exerciseId = exercise.id;
     const exerciseName = exercise.name;
-    console.log(">> hooks.workout.startSet", { user, workoutId, sessionId, exerciseId, offset });
+    // console.log(">> hooks.workout.startSet", { user, workoutId, sessionId, exerciseId, offset });
 
     if (!workoutId || !sessionId || !exerciseId) {
       throw `Cannot create workout set with null id`;

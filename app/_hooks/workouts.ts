@@ -4,10 +4,11 @@ import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import { Workout, WorkoutSession, WorkoutSet } from '@/types/Workout';
 import { Exercise } from '@/types/Exercise';
-import { uuid } from '@/utils/misc';
+import { arrayToObject, uuid } from '@/utils/misc';
 import trackEvent from '@/utils/trackEvent';
 import { byCreatedAtDesc } from '@/utils/sort';
 import useAlert from "./alert";
+import useExercises from "./exercises";
 
 const stopSet = (session: WorkoutSession, status = "stopped") => {
   const sets = session.sets && session.sets.filter((set: WorkoutSet) => set.status == "started");
@@ -62,6 +63,17 @@ const fetchSession = (putOrPost: "PUT" | "POST", get: any, set: any, newSession:
       callback(savedSession);
     }
   });
+}
+
+// TODO deduplicate from exercise service
+const pickFromRange = (range: any, level?: "beginner" | "intermediate" | "advanced") => {
+  return Array.isArray(range) && range.length > 1
+    ? level == "beginner"
+      ? range[0]
+      : level == "advanced"
+        ? range[1]
+        : Math.floor((Number(range[0]) + Number(range[1])) / 2)
+    : range;
 }
 
 const useWorkouts: any = create(devtools((set: any, get: any) => ({
@@ -278,8 +290,91 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
     })
   },
 
+  updateWorkoutAddExercise: async (user: User, workout: Workout, exerciseNames: string) => {
+    // console.log(">> hooks.workout.addExercise", { workout, exerciseNames });
+
+    // start by adding a "loading" stub
+
+    const exercises = exerciseNames
+      .split(/\s*,\s*/)
+      .map((name: string) => {
+        return {
+          // id: uuid(),
+          name: name.toLowerCase(),
+          status: "loading",
+        }
+      });
+
+    workout.exercises = [
+      ...workout.exercises || [],
+      ...exercises,
+    ];
+
+    get().updateWorkout(user, workout);
+
+    // next resolve exercise with existing or create a new one
+
+    return new Promise(async (resolve, reject) => {
+      // console.debug("loading exercises", { exercises: workout.exercises })
+      if (!useExercises.getState().loadedAll) {
+        await useExercises.getState().load();
+      }
+      // console.debug("loading exercises load completed", { exercises: useExercises.getState().exercises })
+
+      const exerciseMap = arrayToObject(useExercises.getState().exercises
+        .map((e: Exercise) => [e.name.toLowerCase(), e]));
+
+      // console.debug("loading exercises", { exerciseMap })
+
+      (workout.exercises || [])
+        .filter((e: Exercise) => !e.id) // non-resolved should not have an id (id this one was not added just now)
+        .forEach((e: Exercise) => {
+          // console.debug("loading exercises resolving exercises", { e })
+          const found = exerciseMap[e.name.toLowerCase()];
+          // exists
+          if (found) {
+            console.debug("loading exercises found exercise", { found });
+            e.id = found.id;
+            e.name = found.name;
+            e.status = found.status;
+            e.directions = {
+              duration: pickFromRange(found.directions?.duration),
+              sets: pickFromRange(found.directions?.sets),
+              reps: pickFromRange(found.directions?.reps),
+            };
+
+            return e;
+          }
+
+          // does not exist: create and update when done; return generating stub
+          // console.debug("loading exercises creating exercise", { e });
+          useExercises.getState().createExercise(user, e.name).then((created: Exercise) => {
+            e.id = created.id;
+            e.name = created.name;
+            e.status = "generating";
+            get().updateWorkout(user, workout);
+
+            useExercises.getState().generateExercise(user, e).then((generated: Exercise) => {
+              e.status = generated.status;
+              e.directions = {
+                duration: pickFromRange(generated.directions?.duration),
+                sets: pickFromRange(generated.directions?.sets),
+                reps: pickFromRange(generated.directions?.reps),
+              };
+              get().updateWorkout(user, workout);
+            });
+          });
+
+          e.status = "creating";
+        });
+
+      get().updateWorkout(user, workout);
+      return resolve(workout);
+    });
+  },
+
   updateWorkout: async (user: User, workout: Workout, remove?: boolean) => {
-    console.log(">> hooks.workout.updateWorkout", { workout });
+    // console.log(">> hooks.workout.updateWorkout", { workout });
 
     if (remove) {
       set({
@@ -293,7 +388,7 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
   },
 
   saveWorkout: async (user: User, workout: Workout) => {
-    console.log(">> hooks.workout.saveWorkout", { workout });
+    // console.log(">> hooks.workout.saveWorkout", { workout });
 
     // optimistic
     workout.status = "saving";
@@ -314,6 +409,13 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
 
         const data = await res.json();
         const workout = data.workout;
+
+        trackEvent("workout-saved", {
+          id: workout.id,
+          name: workout.name,
+          createdBy: workout.createdBy,
+        });
+
         // replace optimistic 
         const workouts = get().workouts.filter((w: Workout) => w.id != workout.id);
         set({ workouts: [...workouts, workout] });

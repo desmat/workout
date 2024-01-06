@@ -11,6 +11,7 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
   exercises: [],
   deletedExercises: [], // to smooth out visual glitches when deleting
   loaded: undefined,
+  loadedAll: false, // only if we've loaded all with no filter
 
   load: async (query?: any) => {
     const id = query?.id;
@@ -47,6 +48,7 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
         set({
           exercises,
           loaded: [...(get().loaded || []), ...exercises.map((e: Exercise) => e.id)],
+          loadedAll: get().loadedAll || !query,
         });
       });
     }

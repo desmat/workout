@@ -65,7 +65,7 @@ function ExerciseEntry({ user, workout, exercise, offset }: any) {
         <span className="capitalize font-semibold"> ({exercise.category})</span>
       }
       {isReady &&
-        <div className="flex flex-row gap-1 group">
+        <div className="flex flex-row gap-1 grow group">
           <Link onClick={() => handleUpdateDirections("sets", "Number of Sets", sets)}>
             {formattedSets}
           </Link>
@@ -77,7 +77,7 @@ function ExerciseEntry({ user, workout, exercise, offset }: any) {
           <Link onClick={() => handleUpdateDirections("duration", "Duration (in milliseconds)", duration)}>
             {formattedDuration}
           </Link>
-          <div className="flex flex-row justify-end grow items-center gap-1 pl-2 opacity-60 group-hover:opacity-100">
+          <div className="flex flex-row justify-end grow items-center gap-0.5 pl-1 opacity-50 group-hover:opacity-100">
             <Link onClick={handleRemove} style="warning" className="hover:text-dark-1">
               <FaXmark />
             </Link>

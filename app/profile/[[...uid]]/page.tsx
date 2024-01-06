@@ -48,18 +48,18 @@ export default function Component({ params }: { params: { uid?: string } }) {
   }
 
   const links = [
-    user && !user.isAnonymous && <Link key="0" href="/" style="warning" onClick={doLogout}>Logout</Link>,
-    user && myWorkouts?.length > 0 && <Link key="1" href={`/workouts?uid=${user.uid}`}>Workouts ({myWorkouts.length})</Link>,
-    user && myExercises?.length > 0 && <Link key="2" href={`/exercises?uid=${user.uid}`}>Exercises ({myExercises.length})</Link>,
-    (!user || user.isAnonymous) && <Link key="3" href="/auth?method=login-email">Login</Link>,
-    (!user || user.isAnonymous) && <Link key="4" href="/auth?method=signup-email">Signup</Link>,
+    user && !user.isAnonymous && <Link key="logout" href="/" style="warning" onClick={doLogout}>Logout</Link>,
+    user && myWorkouts?.length > 0 && <Link key="workouts" href={`/workouts?uid=${user.uid}`}>Workouts ({myWorkouts.length})</Link>,
+    user && myExercises?.length > 0 && <Link key="exercises" href={`/exercises?uid=${user.uid}`}>Exercises ({myExercises.length})</Link>,
+    (!user || user.isAnonymous) && <Link key="login" href="/auth?method=login-email">Login</Link>,
+    (!user || user.isAnonymous) && <Link key="signuo" href="/auth?method=signup-email">Signup</Link>,
     (!user || user.isAnonymous) &&
-    <Link key="5" className="flex flex-row gap-1 items-center" onClick={doSigninWithGoogle}>
+    <Link key="google" className="flex flex-row gap-1 items-center" onClick={doSigninWithGoogle}>
       <BsGoogle />
       Signin
     </Link>,
     (!user || user.isAnonymous) &&
-    <Link key="6" className="flex flex-row gap-1 items-center" onClick={doSigninWithGithub}>
+    <Link key="github" className="flex flex-row gap-1 items-center" onClick={doSigninWithGithub}>
       <BsGithub />
       Signin
     </Link>,

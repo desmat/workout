@@ -88,13 +88,13 @@ export default function Component() {
   }
 
   const bottomLinks = [
-    <BackLink key="0" />
+    <BackLink key="back" />
   ];
 
   const links = [
     // <Link key="0" href="/profile">Cancel</Link>,
     <Link
-      key="1"
+      key="signin"
       href="/"
       onClick={submitFn}
     >

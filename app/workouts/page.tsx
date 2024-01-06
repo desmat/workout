@@ -14,7 +14,7 @@ import { Exercise } from '@/types/Exercise';
 import { byName } from '@/utils/sort';
 
 function WorkoutEntry({ workout, user }: any) {
-  const isReady = workout?.status == "created";
+  const isReady = ["created", "saved"].includes(workout?.status);
   const maxSummaryItems = 5;
   const uniqueExerciseNames = workout.exercises
     ? Array.from(new Set(workout.exercises.map((e: Exercise) => e.name)))
@@ -81,7 +81,7 @@ export default function Component() {
   )
 
   const links = [
-    <div key="0" title={user ? "" : "Login to create new workout"}>
+    <div key="create" title={user ? "" : "Login to create new workout"}>
       <Link
         className={user ? "" : "cursor-not-allowed"}
         onClick={() => user && handleCreateWorkout(createWorkout, router, user)}
@@ -89,7 +89,7 @@ export default function Component() {
         Create
       </Link>
     </div>,
-    <div key="1" title={user ? "" : "Login to generate a workout"}>
+    <div key="generate" title={user ? "" : "Login to generate a workout"}>
       <Link
         className={user ? "" : "cursor-not-allowed"}
         onClick={() => user && handleGenerateWorkout(generateWorkout, router, user, info, success)}
@@ -97,8 +97,8 @@ export default function Component() {
         Generate
       </Link>
     </div>,
-    uidFilter && <Link key="2" href={`/workouts`}>Show All</Link>,
-    !uidFilter && <Link key="3" href={`/workouts?uid=${user?.uid || ""}`}>Filter</Link>,
+    uidFilter && <Link key="showall" href={`/workouts`}>Show All</Link>,
+    !uidFilter && <Link key="filer" href={`/workouts?uid=${user?.uid || ""}`}>Filter</Link>,
   ];
 
   if (!loaded) {

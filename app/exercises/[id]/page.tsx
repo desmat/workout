@@ -136,15 +136,15 @@ export default function Component({ params }: { params: { id: string } }) {
   }
 
   const links = [
-    <BackLink key="0" />,
-    exercise && isReady && user && (user.uid == exercise.createdBy || user.admin) && <Link key="2" style="warning" onClick={handleDeleteExercise}>Delete</Link>,
-    exercise && isReady && user && (user.uid == exercise.createdBy || user.admin) && <Link key="1" onClick={handleRegenerate}>Regenerate</Link>,
+    <BackLink key="back" />,
+    exercise && isReady && user && (user.uid == exercise.createdBy || user.admin) && <Link key="delete" style="warning" onClick={handleDeleteExercise}>Delete</Link>,
+    exercise && isReady && user && (user.uid == exercise.createdBy || user.admin) && <Link key="regenerate" onClick={handleRegenerate}>Regenerate</Link>,
   ];
 
   if (!loaded || !loaded.includes(params.id)) {
     return (
       <Page
-        bottomLinks={[<BackLink key="0" />]}
+        bottomLinks={links}
         loading={true}
       />
     )
@@ -155,7 +155,7 @@ export default function Component({ params }: { params: { id: string } }) {
       <Page
         title="Exercise not found"
         subtitle={params.id}
-        links={[<BackLink key="0" />]}
+        links={links}
       />
     )
   }

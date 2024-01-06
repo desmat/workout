@@ -189,6 +189,30 @@ export async function generateWorkout(user: User, name: string, parameters: any[
     }));
 }
 
+export async function saveWorkout(user: User, workout: Workout): Promise<Workout | undefined> {
+  console.log(`>> services.workout.saveWorkout`, { workout });
+
+  if (!workout.id) {
+    throw `Error saving workout: null id`;
+  }
+
+  const existingWorkout = await store.workouts.get(workout.id);
+  console.log(`>> services.workout.saveWorkout`, { workout, existingWorkout });
+
+  // TODO check something here?
+
+  return store.workouts.update(user.uid, summarizeWorkout(
+    { ...workout, status: "saved" },
+    {
+      exercises: {
+        status: true,
+        description: true,
+        directions: true,
+      }
+    })
+  );
+}
+
 export async function deleteWorkout(user: any, id: string): Promise<void> {
   console.log(">> services.workout.deleteWorkout", { id, user });
 

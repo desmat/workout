@@ -38,9 +38,11 @@ export function formatTime(v: number | string): string {
 
 export function formatNumber(v: number | string, unit?: string, unitMany?: string): string {
   const n = Number(v);
-  const unitStr = n > 1
-    ? (unitMany || ` ${unit}s`)
-    : ` ${unit}`;
+  const unitStr = unit
+    ? n > 1
+      ? (unitMany || ` ${unit}s`)
+      : ` ${unit}`
+    : "";
 
   return `${n}${unitStr}`;
 }

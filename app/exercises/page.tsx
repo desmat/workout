@@ -51,7 +51,7 @@ export default function Component() {
   const subtitle = "Let ChatGPT create exercises for you!";
 
   const links = [
-    <div key="0" title={user ? "" : "Login to create new exercise"}>
+    <div key="generate" title={user ? "" : "Login to create new exercise"}>
       <Link
         className={user ? "" : "cursor-not-allowed"}
         onClick={handleCreateExercise}
@@ -59,8 +59,8 @@ export default function Component() {
         Create New Exercise
       </Link>
     </div>,
-    uidFilter && <Link key="1" href={`/exercises`}>Show All</Link>,
-    !uidFilter && <Link key="2" href={`/exercises?uid=${user?.uid || ""}`}>Filter</Link>,
+    uidFilter && <Link key="showall" href={`/exercises`}>Show All</Link>,
+    !uidFilter && <Link key="filter" href={`/exercises?uid=${user?.uid || ""}`}>Filter</Link>,
   ];
 
   if (!loaded) {

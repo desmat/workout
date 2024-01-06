@@ -15,7 +15,7 @@ export default function Link({
   // console.log('>> components.Link.render()', { isActive });
 
   const styleSet = new Set(style && style.split(/\s+/));
-  const computedClassName = "  cursor-pointer"
+  const computedClassName = "  "
     + (styleSet.has("parent") ? " group" : "")
     + (styleSet.has("child") ? " group-active:text-light-1 group-hover:underline" : "")
     + (!styleSet.has("plain") && !styleSet.has("secondary") && !styleSet.has("parent") ? " text-dark-2" : "")
@@ -23,6 +23,7 @@ export default function Link({
     + (styleSet.has("secondary") ? " hover:text-dark-2 " : "")
     + (styleSet.has("warning") ? " hover:text-light-2 _px-1" : "")
     + (styleSet.has("light") ? " opacity-40 hover:opacity-100 group-hover:opacity-100" : "")
+    + (styleSet.has("disabled") ? " cursor-not-allowed hover:no-underline" : " cursor-pointer")
     + " " + className;
 
   if (styleSet.has("child")) {

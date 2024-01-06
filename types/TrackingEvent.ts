@@ -1,1 +1,1 @@
-export type TrackingEventType = "error" | "user-signedin" | "exercise-created" | "exercise-generated" | "workout-created" | "workout-generated" | "workout-session-started" | "workout-session-completed";
+export type TrackingEventType = "error" | "user-signedin" | "exercise-created" | "exercise-generated" | "workout-created" | "workout-saved" | "workout-generated" | "workout-session-started" | "workout-session-completed";

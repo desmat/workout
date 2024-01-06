@@ -5,7 +5,6 @@ import moment from 'moment';
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from "react";
 import { IoPause, IoPlay, IoPlayBack, IoPlayForward } from "react-icons/io5";
-import BackLink from '@/app/_components/BackLink';
 import Clock from '@/app/_components/Clock';
 import Link from "@/app/_components/Link"
 import Page from "@/app/_components/Page";
@@ -102,15 +101,6 @@ export default function Component({ params }: { params: { id: string, sessionId?
     }
   }, [currentSet?.id, session?.id, session?.status]);
 
-  if (!sessionsLoaded || !sessionsLoaded.includes(params.sessionId)) {
-    return (
-      <Page
-        bottomLinks={[<BackLink key="0" />]}
-        loading={true}
-      />
-    )
-  }
-
   async function handleStartSession() {
     // console.log('>> app.workout[id].session.handleStartSession()', { user, workout });
     startSession(user, workout.id);
@@ -164,14 +154,23 @@ export default function Component({ params }: { params: { id: string, sessionId?
   }
 
   const links = [
-    <BackLink key="0" />,
-    workout && user && !sessionStarted && (user.uid == workout.createdBy || user.admin) && <Link key="6" style="warning" onClick={handleDeleteSession}>Delete</Link>,
-    workout && user && !session && <Link key="1" onClick={handleStartSession}>Start</Link>,
-    workout && user && sessionStarted && <Link key="4" onClick={handleCompleteSession}>Complete</Link>,
-    workout && user && sessionStarted && !sessionPaused && <Link key="2" onClick={handleStopSession}>Pause</Link>,
-    workout && user && session?.status == "stopped" && <Link key="3" onClick={handleResumeSession}>Resume</Link>,
-    workout && user && sessionStarted && (currentSet.offset < workout.exercises.length - 1) && <Link key="5" onClick={() => handleStartSet(workout.exercises[currentSet.offset + 1], currentSet.offset + 1)}>Next</Link>,
+    workout && <Link key="back" href={`/workouts/${workout.id}`}>Back</Link>,
+    workout && user && !sessionStarted && (user.uid == workout.createdBy || user.admin) && <Link key="delete" style="warning" onClick={handleDeleteSession}>Delete</Link>,
+    workout && user && !session && <Link key="start" onClick={handleStartSession}>Start</Link>,
+    workout && user && sessionStarted && <Link key="complete" onClick={handleCompleteSession}>Complete</Link>,
+    workout && user && sessionStarted && !sessionPaused && <Link key="pause" onClick={handleStopSession}>Pause</Link>,
+    workout && user && session?.status == "stopped" && <Link key="resume" onClick={handleResumeSession}>Resume</Link>,
+    workout && user && sessionStarted && (currentSet.offset < workout.exercises.length - 1) && <Link key="next" onClick={() => handleStartSet(workout.exercises[currentSet.offset + 1], currentSet.offset + 1)}>Next</Link>,
   ];
+
+  if (!sessionsLoaded || !sessionsLoaded.includes(params.sessionId)) {
+    return (
+      <Page
+        bottomLinks={links}
+        loading={true}
+      />
+    )
+  }
 
   if (!session && sessionsLoaded && !sessionsLoaded.includes(params.sessionId)) {
     return (

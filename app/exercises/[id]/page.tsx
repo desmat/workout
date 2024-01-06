@@ -144,7 +144,7 @@ export default function Component({ params }: { params: { id: string } }) {
   if (!loaded || !loaded.includes(params.id)) {
     return (
       <Page
-        bottomLinks={[<BackLink key="0" />]}
+        bottomLinks={links}
         loading={true}
       />
     )
@@ -155,7 +155,7 @@ export default function Component({ params }: { params: { id: string } }) {
       <Page
         title="Exercise not found"
         subtitle={params.id}
-        links={[<BackLink key="0" />]}
+        links={links}
       />
     )
   }

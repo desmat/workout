@@ -14,7 +14,7 @@ import { Exercise } from '@/types/Exercise';
 import { byName } from '@/utils/sort';
 
 function WorkoutEntry({ workout, user }: any) {
-  const isReady = workout?.status == "created";
+  const isReady = ["created", "saved"].includes(workout?.status);
   const maxSummaryItems = 5;
   const uniqueExerciseNames = workout.exercises
     ? Array.from(new Set(workout.exercises.map((e: Exercise) => e.name)))

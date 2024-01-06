@@ -67,6 +67,7 @@ const fetchSession = (putOrPost: "PUT" | "POST", get: any, set: any, newSession:
 const useWorkouts: any = create(devtools((set: any, get: any) => ({
   workouts: [],
   deletedWorkouts: [], // to smooth out visual glitches when deleting
+  updatedWorkouts: [],
   sessions: [],
   deletedSessions: [], // to smooth out visual glitches when deleting
   loaded: undefined,
@@ -81,7 +82,7 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
       fetch(`/api/workouts/${id}`).then(async (res) => {
         if (res.status != 200) {
           useAlert.getState().error(`Error fetching workout ${id}: ${res.status} (${res.statusText})`);
-          set({ loaded: [...get().loaded || []] });
+          set({ loaded: [...get().loaded || [], id] });
           return;
         }
 
@@ -99,6 +100,7 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
       fetch(`/api/workouts${q ? `?${q}=${v}` : ""}`).then(async (res) => {
         if (res.status != 200) {
           useAlert.getState().error(`Error fetching workouts: ${res.status} (${res.statusText})`);
+          set({ loaded: [...get().loaded || []] });
           return;
         }
 
@@ -106,7 +108,7 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
         const deleted = get().deletedWorkouts.map((workout: Workout) => workout.id);
         const workouts = data.workouts.filter((workout: Workout) => !deleted.includes(workout.id));
         set({
-          workouts: data.workouts.filter((workout: Workout) => !deleted.includes(workout.id)),
+          workouts,
           loaded: [...get().loaded || [], ...workouts.map((workout: Workout) => workout.id)],
         });
       });
@@ -214,11 +216,11 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
         const data = await res.json();
         const workout = data.workout;
 
-        trackEvent("workout-created", { 
-          id: workout.id, 
-          name: workout.name, 
+        trackEvent("workout-created", {
+          id: workout.id,
+          name: workout.name,
           createdBy: workout.createdBy,
-         });
+        });
 
         // remove optimistic
         const workouts = get().workouts.filter((workout: Workout) => workout.id != tempId);
@@ -262,11 +264,11 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
         // console.log(">> hooks.workout.generateWorkout", { data });
         const workout = data.workout;
 
-        trackEvent("workout-generated", { 
-          id: workout.id, 
-          name: workout.name, 
+        trackEvent("workout-generated", {
+          id: workout.id,
+          name: workout.name,
           createdBy: workout.createdBy,
-         });
+        });
 
         // remove optimistic
         const workouts = get().workouts.filter((workout: Workout) => workout.id != tempId);
@@ -274,6 +276,50 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
         return resolve(workout);
       });
     })
+  },
+
+  updateWorkout: async (user: User, workout: Workout, remove?: boolean) => {
+    console.log(">> hooks.workout.updateWorkout", { workout });
+
+    if (remove) {
+      set({
+        updatedWorkouts: get().updatedWorkouts.filter((w: Workout) => w.id != workout.id),
+      });
+    } else {
+      const workouts = get().updatedWorkouts.filter((w: Workout) => w.id != workout.id);
+      set({ updatedWorkouts: [...workouts, { ...workout, status: "updated" }] });
+      return workout;
+    }
+  },
+
+  saveWorkout: async (user: User, workout: Workout) => {
+    console.log(">> hooks.workout.saveWorkout", { workout });
+
+    // optimistic
+    workout.status = "saving";
+    const workouts = get().workouts.filter((e: Workout) => e.id != workout.id);
+    set({ workouts: [...workouts, workout] });
+
+    return new Promise((resolve, reject) => {
+      fetch(`/api/workouts/${workout.id}`, {
+        method: "PUT",
+        body: JSON.stringify({ workout }),
+      }).then(async (res) => {
+        if (res.status != 200) {
+          useAlert.getState().error(`Error saving workout: ${res.status} (${res.statusText})`);
+          const workouts = get().workouts.filter((w: Workout) => w.id != workout.id);
+          set({ workouts });
+          return reject(res.statusText);
+        }
+
+        const data = await res.json();
+        const workout = data.workout;
+        // replace optimistic 
+        const workouts = get().workouts.filter((w: Workout) => w.id != workout.id);
+        set({ workouts: [...workouts, workout] });
+        return resolve(workout);
+      });
+    });
   },
 
   deleteWorkout: async (id: string) => {
@@ -325,12 +371,12 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
     fetchSession("POST", get, set, session, (newSession: WorkoutSession) => {
       // console.log(">> hooks.workout.startSession fetch callback", { newSession });
 
-      trackEvent("workout-session-started", { 
-        id: newSession.id, 
+      trackEvent("workout-session-started", {
+        id: newSession.id,
         workoutId: workout.id,
-        workoutName: workout.name, 
+        workoutName: workout.name,
         createdBy: newSession.createdBy,
-       });
+      });
 
       const firstExercise = newSession.workout?.exercises && newSession.workout?.exercises[0];
       get().startSet(user, id, newSession.id, firstExercise, 0);
@@ -357,12 +403,12 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
     session.status = "completed";
 
     fetchSession("PUT", get, set, session, (updatedSession: WorkoutSession) => {
-      trackEvent("workout-session-completed", { 
-        id: updatedSession.id, 
+      trackEvent("workout-session-completed", {
+        id: updatedSession.id,
         workoutId: updatedSession.workout?.id,
         workoutName: updatedSession.workout?.name,
         createdBy: updatedSession.createdBy,
-       });
+      });
     });
 
     return session;

@@ -3,7 +3,6 @@
 import moment from 'moment';
 import { useRouter } from 'next/navigation'
 import { useEffect } from "react";
-import BackLink from '@/app/_components/BackLink';
 import Page from "@/app/_components/Page";
 import Link from "@/app/_components/Link"
 import useExercises from '@/app/_hooks/exercises';
@@ -108,7 +107,7 @@ export default function Component({ params }: { params: { id: string } }) {
   const [exercisesLoaded, loadExercises] = useExercises((state: any) => [state.loaded, state.load]);
   const [user] = useUser((state: any) => [state.user]);
   const workout = workouts.filter((workout: any) => workout.id == params.id)[0];
-  const isReady = workout?.status == "created";
+  const isReady = ["created", "saved"].includes(workout?.status);
   const workoutSessions = workout && sessions && sessions.filter((session: WorkoutSession) => session?.workout?.id == workout.id);
   const filteredSessions = workout && sessions && sessions.filter((session: WorkoutSession) => session?.workout?.id == workout.id && session.status != "completed");
   const session = filteredSessions && filteredSessions.length > 0 && filteredSessions[filteredSessions.length - 1];
@@ -122,15 +121,6 @@ export default function Component({ params }: { params: { id: string } }) {
   useEffect(() => {
     workout?.id && loadSessions(workout.id);
   }, [workout?.id]);
-
-  if (!loaded) {
-    return (
-      <Page
-        bottomLinks={[<BackLink key="0" />]}
-        loading={true}
-      />
-    )
-  }
 
   async function handleDeleteWorkout() {
     // console.log('>> app.workout[id].Page.handleDeleteWorkout()', { user, workout });
@@ -156,12 +146,22 @@ export default function Component({ params }: { params: { id: string } }) {
   }
 
   const links = [
-    <BackLink key="0" />,
-    workout && isReady && user && (user.uid == workout.createdBy || user.admin) && <Link key="3" style="warning" onClick={handleDeleteWorkout}>Delete</Link>,
-    // workout isReady && && user && workout.prompt && <Link key="1" onClick={() => handleRegenerate()}>Regenerate</Link>,
-    workout && isReady && user && !session && <Link key="1" onClick={handleStartSession}>Start</Link>,
-    workout && isReady && user && session && <Link key="2" href={`/workouts/${workout.id}/sessions/${session.id}`}>Resume</Link>,
+    <Link key="back" href="/workouts">Back</Link>,
+    workout && isReady && user && (user.uid == workout.createdBy || user.admin) && <Link key="delete" style="warning" onClick={handleDeleteWorkout}>Delete</Link>,
+    // workout isReady && && user && workout.prompt && <Link key="regen" onClick={() => handleRegenerate()}>Regenerate</Link>,
+    workout && isReady && user && (user.uid == workout.createdBy || user.admin) && <Link key="edit" href={`/workouts/${workout.id}/edit`}>Edit</Link>,
+    workout && isReady && user && !session && <Link key="start" onClick={handleStartSession}>Start</Link>,
+    workout && isReady && user && session && <Link key="resume" href={`/workouts/${workout.id}/sessions/${session.id}`}>Resume</Link>,
   ];
+
+  if (!isReady) {
+    return (
+      <Page
+        bottomLinks={links}
+        loading={true}
+      />
+    )
+  }
 
   if (!workout) {
     return (

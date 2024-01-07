@@ -1,30 +1,69 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import moment from 'moment';
 import { useEffect } from "react";
 import { FaArrowDown, FaArrowUp } from "react-icons/fa";
 import { FaXmark } from "react-icons/fa6";
 import Page from "@/app/_components/Page";
 import Link from "@/app/_components/Link"
+import useAlert from '@/app/_hooks/alert';
 import useWorkouts from "@/app/_hooks/workouts";
 import useUser from "@/app/_hooks/user";
 import { Exercise } from '@/types/Exercise';
 import { capitalize, formatNumber, formatRange, formatTime } from '@/utils/format';
 
 function ExerciseEntry({ user, workout, exercise, offset }: any) {
+  const [warning] = useAlert((state: any) => [state.warning]);
   const [updateWorkout] = useWorkouts((state: any) => [state.updateWorkout]);
   const { duration, sets, reps } = exercise.directions || {};
-  let formattedSets = formatRange(sets || 0, formatNumber, "set");
-  const formattedReps = formatRange(reps || 0, formatNumber, "rep");
-  const formattedDuration = formatRange(duration || 0, formatTime);
+  let formattedSets = sets ? formatRange(sets, formatNumber, "set") : "no set";
+  const formattedReps = reps ? formatRange(reps, formatNumber, "rep") : "no rep";
+  const formattedDuration = duration ? formatRange(duration, formatTime) : "no time";
   const isReady = exercise?.status == "created";
   // console.log('>> app.exercises[id].edit.page.ExerciseEntry.render()', { exercise, user });
 
   async function handleUpdateDirections(field: string, label?: string, defaultValue?: string) {
     console.log('>> app.workout[id].edit.handleUpdateDirections()', { user, workout, exercise, field, label });
-    const val = window.prompt(`${label || field || ""}?`, defaultValue);
+    const val = window.prompt(`${label || field || ""}? (Number or blank)`, defaultValue);
     if (exercise && typeof (val) == "string") {
       exercise.directions = { ...exercise.directions, [field]: Number(val) }
+      updateWorkout(user, workout);
+    }
+  }
+
+  async function handleUpdateDuration() {
+    // console.log('>> app.workout[id].edit.handleUpdateDuration()', { user, workout, exercise, duration });
+    const val = window.prompt("Duration? (Ex: 10 minutes, 90s, etc. or blank)", `${formatTime(duration || 0)}`);
+    if (exercise && typeof (val) != "undefined") {
+      if ([null, "", "0"].includes(val)) {
+        exercise.directions = { ...exercise.directions, duration: 0 }
+        updateWorkout(user, workout);
+        return;
+      }
+
+      const regex = /([\d\.]+)\s*([a-zA-Z])/g; // ex "1 minute", "1h 20m", etc
+      const matches = `${val}`.matchAll(regex);
+      
+      if (!matches) {
+        warning(`Invalid duration: ${val}`);
+        return;
+      }
+
+      // @ts-ignore
+      const allMatches = [...matches];
+      // console.log(">> app.workout[id].edit.handleUpdateDuration()", { allMatches });
+
+      if (!allMatches || allMatches.length == 0) {
+        warning(`Invalid duration: ${val}`);
+        return;
+      }
+
+      var millis = allMatches
+        .map((m) => m.length > 2 ? moment.duration(m[1], m[2]).asMilliseconds() : 0)
+        .reduce((total, val) => total + val, 0);
+
+      exercise.directions = { ...exercise.directions, duration: millis }
       updateWorkout(user, workout);
     }
   }
@@ -70,12 +109,12 @@ function ExerciseEntry({ user, workout, exercise, offset }: any) {
             <Link onClick={() => handleUpdateDirections("sets", "Number of Sets", sets)}>
               {formattedSets}
             </Link>
-            <span> of </span>
-            <Link onClick={() => handleUpdateDirections("reps", "Number of Repetitions (per set)", reps)}>
+            <span>{sets && reps ? "of" : ""}</span>
+            <Link onClick={() => handleUpdateDirections("reps", "Number of Repetitions", reps)}>
               {formattedReps}
             </Link>
-            <span> of </span>
-            <Link onClick={() => handleUpdateDirections("duration", "Duration (in milliseconds)", duration)}>
+            <span>{reps ? "in" : sets ? "of" : ""}</span>
+            <Link onClick={handleUpdateDuration}>
               {formattedDuration}
             </Link>
           </div>

@@ -27,3 +27,8 @@ export function searchParamsToObject(searchParams: string) {
     .filter(Boolean)
     .map((entry: string) => entry.split("=")))
 }
+
+export function round(n: number, digits?: any) {
+  const exp = 10 ** digits || 10;
+  return Math.round(n * exp) / exp;
+}

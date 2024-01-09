@@ -4,7 +4,6 @@
   // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
   "version": "0.2.0",
   "configurations": [
-
     // from https://nextjs.org/docs/pages/building-your-application/configuring/debugging
     {
       "name": "Debug server",
@@ -29,7 +28,6 @@
         "action": "debugWithChrome"
       }
     },
-
     {
       "name": "Build",
       "type": "node-terminal",
@@ -41,6 +39,6 @@
       "type": "node-terminal",
       "request": "launch",
       "command": "npm start"
-    }    
+    }
   ]
 }

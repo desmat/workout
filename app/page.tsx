@@ -14,14 +14,17 @@ export default async function Component() {
   // console.log('>> app.page.render()', { token, user });
 
   const links = [
-    <Link useClient={true} key="web" href="https://www.desmat.ca" target="_blank" className="_bg-yellow-200 flex flex-row gap-1 align-text-bottom">
-      <MdHome className="mt-[5px]" />www.desmat.ca
+    <Link useClient={true} key="web" href="https://www.desmat.ca" target="_blank" className="_bg-yellow-200 flex flex-row gap-0.5 items-center">
+      {/* <MdHome className=" _mt-[0.1rem] _mr-[-0.2rem] text-xl" /> */}
+      www.desmat.ca
     </Link>,
-    // <Link key="email" href="mailto:mail@desmat.ca" target="_blank" className="_bg-yellow-200 flex flex-row gap-1.5 align-text-bottom">
-    //   <MdMail className="mt-1.5" />mail@desmat.ca
-    // </Link>,
-    <Link useClient={true} key="github" href="https://github.com/desmat" target="_blank" className="_bg-yellow-200 flex flex-row gap-1.5 align-text-bottom">
-      <BsGithub className="mt-1.5" />github.com/desmat
+    <Link useClient={true} key="email" href="mailto:workout@desmat.ca" target="_blank" className="_bg-yellow-200 flex flex-row gap-1 items-center">
+      {/* <MdMail className="_mt-[0.05rem] _mr-[-0.25rem] text-xl" /> */}
+      @desmat.ca
+    </Link>,
+    <Link useClient={true} key="github" href="https://github.com/desmat/workout" target="_blank" className="_bg-yellow-200 flex flex-row gap-0.5 items-center">
+      <BsGithub className="mt-[0.1rem] text-md" />
+      desmat
     </Link>,
   ];
 

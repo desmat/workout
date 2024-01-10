@@ -111,7 +111,7 @@ export default function Component({ params }: { params: { id: string } }) {
     loadExercises
   ] = useExercises((state: any) => [
     state.loaded(query) || state.loaded(),
-    state.load(),
+    state.load,
   ]);
   const workout = workouts.filter((workout: any) => workout.id == params.id)[0];
   const isReady = ["created", "saved"].includes(workout?.status);

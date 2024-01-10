@@ -21,15 +21,15 @@ export default function Component() {
     exercises,
     loaded,
     load,
-    createExercise,
-    generateExercise, 
+    create,
+    generate, 
     _loaded,
   ] = useExercises((state: any) => [
     state.find(query),
     state.loaded(query) || state.loaded(), // smooth transition between unfiltered and filtered view (loaded with query is subset of loaded all)
     state.load,
-    state.createExercise,
-    state.generateExercise, 
+    state.create,
+    state.generate, 
     state._loaded,
   ]);
   console.log('>> app.trivia.page.render()', { loaded, exercises, _loaded });
@@ -38,16 +38,16 @@ export default function Component() {
     load(query);
   }, [uidFilter]);
 
-  async function handleCreateExercise() {
+  async function handleCreate() {
     const name = window.prompt("Name?", "");
 
     if (name) {
-      const created = await createExercise(user, name);
-      // console.log("*** handleCreateExercise", { created });
+      const created = await create(user, name);
+      // console.log("*** handleCreate", { created });
 
       if (created) {
-        const generating = generateExercise(user, created);
-        // console.log("*** handleCreateExercise", { generating });
+        const generating = generate(user, created);
+        // console.log("*** handleCreate", { generating });
         router.push(`/exercises/${created.id}`);
         return true
       }
@@ -64,7 +64,7 @@ export default function Component() {
     <div key="generate" title={user ? "" : "Login to create new exercise"}>
       <Link
         className={user ? "" : "cursor-not-allowed"}
-        onClick={handleCreateExercise}
+        onClick={handleCreate}
       >
         Create New Exercise
       </Link>

@@ -114,43 +114,41 @@ export default function Component({ params }: { params: { id: string } }) {
     exercise,
     loaded,
     load,
-    deleteExercise,
-    generateExercise,
-    _loaded,
+    del, // delete is a js keyword 😒
+    generate,
   ] = useExercises((state: any) => [
     state.get(params.id),
     state.loaded(params.id),
     state.load,
-    state.deleteExercise,
-    state.generateExercise,
-    state._loaded,
+    state.delete,
+    state.generate,
   ]);
   const user = useUser((state: any) => state.user);
   const isReady = exercise?.status == "created";
-  console.log('>> app.exercises[id].page.render()', { id: params.id, exercise, loaded, _loaded }); //, loadedId: loaded && loaded.includes(params.id) });
+  // console.log('>> app.exercises[id].page.render()', { id: params.id, exercise, loaded }); //, loadedId: loaded && loaded.includes(params.id) });
 
   useEffect(() => {
     load(params.id);
   }, [params.id]);
 
-  async function handleDeleteExercise() {
+  async function handleDelete() {
     const response = confirm("Delete exercise?");
     if (response) {
-      deleteExercise(params.id);
+      del(params.id);
       router.back();
     }
   }
 
   const handleRegenerate = () => {
     // console.log('>> app.trivia[id].page.regenerate()', { exercise, user });
-    generateExercise(user, exercise).then((res: any) => {
+    generate(user, exercise).then((res: any) => {
       // console.log('>> app.trivia[id].page.regenerate() after generate', { res });
     });
   }
 
   const links = [
     <BackLink key="back" />,
-    exercise && isReady && user && (user.uid == exercise.createdBy || user.admin) && <Link key="delete" style="warning" onClick={handleDeleteExercise}>Delete</Link>,
+    exercise && isReady && user && (user.uid == exercise.createdBy || user.admin) && <Link key="delete" style="warning" onClick={handleDelete}>Delete</Link>,
     exercise && isReady && user && (user.uid == exercise.createdBy || user.admin) && <Link key="regenerate" onClick={handleRegenerate}>Regenerate</Link>,
   ];
 

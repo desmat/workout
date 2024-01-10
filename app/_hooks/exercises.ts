@@ -126,8 +126,8 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
     }
   },
 
-  createExercise: async (user: User, name: string) => {
-    // console.log(">> hooks.exercise.createExercise", { name });
+  create: async (user: User, name: string) => {
+    // console.log(">> hooks.exercise.create", { name });
 
     // optimistic
     const tempId = uuid();
@@ -182,8 +182,8 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
     });
   },
 
-  saveExercise: async (user: User, exercise: Exercise) => {
-    console.log(">> hooks.exercise.saveExercise", { exercise });
+  save: async (user: User, exercise: Exercise) => {
+    console.log(">> hooks.exercise.save", { exercise });
 
     const { exercises, _exercises } = get()
 
@@ -220,8 +220,8 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
     });
   },
 
-  generateExercise: async (user: User, exercise: Exercise) => {
-    console.log(">> hooks.exercise.generateExercise", { exercise });
+  generate: async (user: User, exercise: Exercise) => {
+    console.log(">> hooks.exercise.generate", { exercise });
 
     const { exercises, _exercises } = get()
 
@@ -270,8 +270,8 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
     });
   },
 
-  deleteExercise: async (id: string) => {
-    console.log(">> hooks.exercise.deleteExercise id:", id);
+  delete: async (id: string) => {
+    console.log(">> hooks.exercise.delete id:", id);
 
     if (!id) {
       throw `Cannot delete exercise with null id`;

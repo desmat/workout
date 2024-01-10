@@ -348,13 +348,13 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
 
           // does not exist: create and update when done; return generating stub
           // console.debug("loading exercises creating exercise", { e });
-          useExercises.getState().createExercise(user, e.name).then((created: Exercise) => {
+          useExercises.getState().create(user, e.name).then((created: Exercise) => {
             e.id = created.id;
             e.name = created.name;
             e.status = "generating";
             get().updateWorkout(user, workout);
 
-            useExercises.getState().generateExercise(user, e).then((generated: Exercise) => {
+            useExercises.getState().generate(user, e).then((generated: Exercise) => {
               e.status = generated.status;
               e.directions = {
                 duration: pickFromRange(generated.directions?.duration),

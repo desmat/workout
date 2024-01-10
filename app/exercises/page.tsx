@@ -13,19 +13,29 @@ import { byName } from '@/utils/sort';
 
 export default function Component() {
   const router = useRouter();
-  const [user] = useUser((state: any) => [state.user]);
-  const [exercises, loaded, load, createExercise, generateExercise] = useExercises((state: any) => [state.exercises, state.loaded, state.load, state.createExercise, state.generateExercise]);
+  const user = useUser((state: any) => state.user);
   const params = useSearchParams();
   const uidFilter = params.get("uid");
-  const filteredExercises = uidFilter && exercises ? exercises.filter((exercise: Exercise) => exercise.createdBy == uidFilter) : exercises;
-  // console.log('>> app.trivia.page.render()', { loaded, exercises });
+  const query = uidFilter && { createdBy: uidFilter };
+  const [
+    exercises,
+    loaded,
+    load,
+    createExercise,
+    generateExercise, 
+    _loaded,
+  ] = useExercises((state: any) => [
+    state.find(query),
+    state.loaded(query) || state.loaded(), // smooth transition between unfiltered and filtered view (loaded with query is subset of loaded all)
+    state.load,
+    state.createExercise,
+    state.generateExercise, 
+    state._loaded,
+  ]);
+  console.log('>> app.trivia.page.render()', { loaded, exercises, _loaded });
 
   useEffect(() => {
-    if (uidFilter) {
-      load({ createdBy: uidFilter });
-    } else {
-      load();
-    }
+    load(query);
   }, [uidFilter]);
 
   async function handleCreateExercise() {
@@ -61,6 +71,7 @@ export default function Component() {
     </div>,
     uidFilter && <Link key="showall" href={`/exercises`}>Show All</Link>,
     !uidFilter && <Link key="filter" href={`/exercises?uid=${user?.uid || ""}`}>Filter</Link>,
+    //TODO REMOVE:  !uidFilter && <Link key="filter" href={`/exercises?uid=${"pmb7AM3SFsdKixaM3eJ4Vj3uCig2"}`}>Filter</Link>,
   ];
 
   if (!loaded) {
@@ -80,10 +91,10 @@ export default function Component() {
       links={links}
       loading={!loaded}
     >
-      {filteredExercises && filteredExercises.length > 0 &&
+      {exercises.length > 0 &&
         <div className="self-center flex flex-col gap-3">
           {
-            filteredExercises
+            exercises
               // .filter(...)
               .sort(byName)
               .map((exercise: any) => {
@@ -95,7 +106,7 @@ export default function Component() {
           }
         </div>
       }
-      {(!filteredExercises || filteredExercises.length == 0) &&
+      {exercises.length == 0 &&
         <>
           {uidFilter &&
             <p className='italic text-center'>

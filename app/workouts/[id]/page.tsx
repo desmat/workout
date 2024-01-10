@@ -104,8 +104,15 @@ export default function Component({ params }: { params: { id: string } }) {
   // console.log('>> app.workout[id].Page.render()', { id: params.id });
   const router = useRouter();
   const [workouts, loaded, load, deleteWorkout, startSession, sessions, sessionsLoaded, loadSessions] = useWorkouts((state: any) => [state.workouts, state.loaded, state.load, state.deleteWorkout, state.startSession, state.sessions, state.sessionsLoaded, state.loadSessions]);
-  const [exercisesLoaded, loadExercises] = useExercises((state: any) => [state.loaded, state.load]);
   const [user] = useUser((state: any) => [state.user]);
+  const query = user && { createdBy: user.uid };
+  const [
+    exercisesLoaded, 
+    loadExercises
+  ] = useExercises((state: any) => [
+    state.loaded(query) || state.loaded(),
+    state.load(),
+  ]);
   const workout = workouts.filter((workout: any) => workout.id == params.id)[0];
   const isReady = ["created", "saved"].includes(workout?.status);
   const workoutSessions = workout && sessions && sessions.filter((session: WorkoutSession) => session?.workout?.id == workout.id);

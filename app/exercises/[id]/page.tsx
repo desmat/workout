@@ -110,14 +110,27 @@ function ExerciseDetails({ id, instructions, category, directions, variations }:
 export default function Component({ params }: { params: { id: string } }) {
   // console.log('>> app.trivia[id].page.render()', { id: params.id });
   const router = useRouter();
-  const [exercises, loaded, load, deleteExercise, generateExercise] = useExercises((state: any) => [state.exercises, state.loaded, state.load, state.deleteExercise, state.generateExercise]);
-  const [user] = useUser((state: any) => [state.user]);
-  const exercise = exercises.filter((exercise: any) => exercise.id == params.id)[0];
+  const [
+    exercise,
+    loaded,
+    load,
+    deleteExercise,
+    generateExercise,
+    _loaded,
+  ] = useExercises((state: any) => [
+    state.get(params.id),
+    state.loaded(params.id),
+    state.load,
+    state.deleteExercise,
+    state.generateExercise,
+    state._loaded,
+  ]);
+  const user = useUser((state: any) => state.user);
   const isReady = exercise?.status == "created";
-  // console.log('>> app.exercises[id].page.render()', { id: params.id, exercise, loaded }); //, loadedId: loaded && loaded.includes(params.id) });
+  console.log('>> app.exercises[id].page.render()', { id: params.id, exercise, loaded, _loaded }); //, loadedId: loaded && loaded.includes(params.id) });
 
   useEffect(() => {
-    load({ id: params.id });
+    load(params.id);
   }, [params.id]);
 
   async function handleDeleteExercise() {
@@ -141,7 +154,7 @@ export default function Component({ params }: { params: { id: string } }) {
     exercise && isReady && user && (user.uid == exercise.createdBy || user.admin) && <Link key="regenerate" onClick={handleRegenerate}>Regenerate</Link>,
   ];
 
-  if (!loaded || !loaded.includes(params.id)) {
+  if (!loaded) {
     return (
       <Page
         bottomLinks={links}

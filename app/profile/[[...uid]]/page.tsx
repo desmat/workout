@@ -16,16 +16,24 @@ export default function Component({ params }: { params: { uid?: string } }) {
   // console.log('>> app.profile.page.render()', params.uid);
   const [copiedValue, copy] = useCopyToClipboard();
   const [user, userLoaded, userLoading, loadUser, signin, logout] = useUser((state: any) => [state.user, state.loaded, state.loading, state.load, state.signin, state.logout]);
-  const [exercises, exercisesLoaded, loadExercises] = useExercises((state: any) => [state.exercises, state.loaded, state.load]);
+  const query = user && { createdBy: user.uid }
+  const [
+    myExercises,
+    exercisesLoaded,
+    loadExercises,
+  ] = useExercises((state: any) => [
+    state.find(query),
+    state.loaded(query) || state.loaded(), // smooth transition between unfiltered and filtered view (loaded with query is subset of loaded all)
+    state.load,
+  ]);
   const [workouts, workoutsLoaded, loadWorkouts] = useWorkouts((state: any) => [state.workouts, state.loaded, state.load]);
   const myWorkouts = workoutsLoaded && workouts && workouts.filter((workout: Workout) => workout.createdBy == user?.uid);
-  const myExercises = exercisesLoaded && exercises && exercises.filter((exercise: Exercise) => exercise.createdBy == user?.uid);
   // console.log('>> app.profile.page.render()', { uid: params.uid, user, userLoaded, userLoading });
 
   useEffect(() => {
     // console.log("** app.profile.page.useEffect", { uid: params.uid, user });
     if (!userLoaded) loadUser();
-    if (!exercisesLoaded) loadExercises();
+    if (!exercisesLoaded) loadExercises(query);
     if (!workoutsLoaded) loadWorkouts();
   }, [params.uid]);
 

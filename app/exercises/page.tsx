@@ -13,10 +13,11 @@ import { byName } from '@/utils/sort';
 
 export default function Component() {
   const router = useRouter();
-  const user = useUser((state: any) => state.user);
   const params = useSearchParams();
   const uidFilter = params.get("uid");
   const query = uidFilter && { createdBy: uidFilter };
+  const user = useUser((state: any) => state.user);
+
   const [
     exercises,
     loaded,
@@ -32,6 +33,7 @@ export default function Component() {
     state.generate, 
     state._loaded,
   ]);
+
   console.log('>> app.trivia.page.render()', { loaded, exercises, _loaded });
 
   useEffect(() => {
@@ -66,7 +68,7 @@ export default function Component() {
         className={user ? "" : "cursor-not-allowed"}
         onClick={handleCreate}
       >
-        Create New Exercise
+        Add
       </Link>
     </div>,
     uidFilter && <Link key="showall" href={`/exercises`}>Show All</Link>,

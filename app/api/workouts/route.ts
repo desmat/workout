@@ -24,7 +24,15 @@ export async function POST(request: Request) {
     );
   }
 
-  const data: any = await request.json();
-  const workout = await createWorkout(user, data.name, data.exercises.split(/\s*,\s*/));
+  const { name, exercises } = await request.json();
+
+  if (!name || !exercises) {
+    return NextResponse.json(
+      { success: false, message: 'input required: name, exercise' },
+      { status: 400 }
+    );
+  }
+
+  const workout = await createWorkout(user, name, exercises.split(/\s*,\s*/));
   return NextResponse.json({ workout });
 }

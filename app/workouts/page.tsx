@@ -51,22 +51,47 @@ function WorkoutEntry({ workout, user }: any) {
 
 export default function Component() {
   const router = useRouter();
-  const [user, userLoaded] = useUser((state: any) => [state.user, state.loaded]);
-  const [workouts, workoutsLoaded, load, createWorkout, generateWorkout] = useWorkouts((state: any) => [state.workouts, state.loaded, state.load, state.createWorkout, state.generateWorkout]);
-  const loaded = userLoaded && workoutsLoaded;
-  const [info, success] = useAlert((state: any) => [state.info, state.success]);
   const params = useSearchParams();
   const uidFilter = params.get("uid");
+  const query = uidFilter && { createdBy: uidFilter };
+
+  const [
+    user,
+    userLoaded
+  ] = useUser((state: any) => [
+    state.user,
+    state.loaded
+  ]);
+
+  const [
+    workouts,
+    workoutsLoaded,
+    load,
+    createWorkout,
+    generateWorkout,
+  ] = useWorkouts((state: any) => [
+    state.find(),
+    state.loaded(query) || state.loaded(), // smooth transition between unfiltered and filtered view (loaded with query is subset of loaded all)    
+    state.load,
+    state.create,
+    state.generate,
+  ]);
+
+  const [
+    info,
+    success
+  ] = useAlert((state: any) => [
+    state.info,
+    state.success
+  ]);
+
+  const loaded = userLoaded && workoutsLoaded;
   const filteredWorkouts = loaded && uidFilter && workouts.filter((workout: Workout) => workout.createdBy == uidFilter) || workouts;
   // console.log('>> app.trivia.page.render()', { uidFilter, loaded, workouts });
 
   useEffect(() => {
     if (userLoaded) {
-      if (uidFilter) {
-        load({ createdBy: uidFilter });
-      } else {
-        load();
-      }
+      load(query);
     }
   }, [uidFilter, userLoaded]);
 

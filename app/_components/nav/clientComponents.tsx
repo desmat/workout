@@ -17,7 +17,7 @@ import Link from '../Link';
 export function NavLinks() {
   const pathname = usePathname();
   const [user] = useUser((state: any) => [state.user]);
-  const [createWorkout, generateWorkout] = useWorkouts((state: any) => [state.createWorkout, state.generateWorkout]);
+  const [createWorkout, generateWorkout] = useWorkouts((state: any) => [state.create, state.generate]);
   const router = useRouter();
   const [info, success] = useAlert((state: any) => [state.info, state.success]);
 

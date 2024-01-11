@@ -15,19 +15,45 @@ import { Workout } from "@/types/Workout";
 export default function Component({ params }: { params: { uid?: string } }) {
   // console.log('>> app.profile.page.render()', params.uid);
   const [copiedValue, copy] = useCopyToClipboard();
-  const [user, userLoaded, userLoading, loadUser, signin, logout] = useUser((state: any) => [state.user, state.loaded, state.loading, state.load, state.signin, state.logout]);
+
+  const [
+    user,
+    userLoaded,
+    userLoading,
+    loadUser,
+    signin,
+    logout
+  ] = useUser((state: any) => [
+    state.user,
+    state.loaded,
+    state.loading,
+    state.load,
+    state.signin,
+    state.logout
+  ]);
+
   const query = user && { createdBy: user.uid }
+
   const [
     myExercises,
     exercisesLoaded,
     loadExercises,
   ] = useExercises((state: any) => [
     state.find(query),
-    state.loaded(query) || state.loaded(), // smooth transition between unfiltered and filtered view (loaded with query is subset of loaded all)
+    state.loaded(query),
     state.load,
   ]);
-  const [workouts, workoutsLoaded, loadWorkouts] = useWorkouts((state: any) => [state.workouts, state.loaded, state.load]);
-  const myWorkouts = workoutsLoaded && workouts && workouts.filter((workout: Workout) => workout.createdBy == user?.uid);
+
+  const [
+    myWorkouts,
+    workoutsLoaded,
+    loadWorkouts
+  ] = useWorkouts((state: any) => [
+    state.find(query),
+    state.loaded(query),
+    state.load
+  ]);
+
   // console.log('>> app.profile.page.render()', { uid: params.uid, user, userLoaded, userLoading });
 
   useEffect(() => {
@@ -57,13 +83,13 @@ export default function Component({ params }: { params: { uid?: string } }) {
 
   const links = [
     user && !user.isAnonymous && <Link key="logout" href="/" style="warning" onClick={doLogout}>Logout</Link>,
-    (!user || user.isAnonymous) && <Link key="login" href="/auth?method=login-email">Login</Link>,
-    (!user || user.isAnonymous) && <Link key="signuo" href="/auth?method=signup-email">Signup</Link>,
-    (!user || user.isAnonymous) &&
+    userLoaded && (!user || user.isAnonymous) && <Link key="login" href="/auth?method=login-email">Login</Link>,
+    userLoaded && (!user || user.isAnonymous) && <Link key="signuo" href="/auth?method=signup-email">Signup</Link>,
+    userLoaded && (!user || user.isAnonymous) &&
     <Link key="google" className="flex flex-row gap-1 items-center" onClick={doSigninWithGoogle}>
       <BsGoogle />Signin
     </Link>,
-    (!user || user.isAnonymous) &&
+    userLoaded && (!user || user.isAnonymous) &&
     <Link key="github" className="flex flex-row gap-1 items-center" onClick={doSigninWithGithub}>
       <BsGithub />Signin
     </Link>,
@@ -71,7 +97,7 @@ export default function Component({ params }: { params: { uid?: string } }) {
     // user && user.isAnonymous && <Link key="" href="/" onClick={(e) => doLogout(e, logout)}>Logout</Link>,
   ];
 
-  if (userLoading) {
+  if (!userLoaded) {
     return (
       <Page
         title="Profile"
@@ -123,16 +149,30 @@ export default function Component({ params }: { params: { uid?: string } }) {
                 <td>{users.getProviderType(user)}</td>
               </tr>
             }
-            {user &&
+            {user && myWorkouts.length > 0 &&
               <tr>
                 <td className="text-right pr-2 opacity-40 font-semibold">Workouts</td>
-                <td><Link key="workouts" href={`/workouts?uid=${user.uid}`}>{myWorkouts.length}</Link></td>
+                <td>
+                  <Link href={`/workouts?uid=${user.uid}`} style="parent secondary" className="flex flex-row">
+                    <div>{myWorkouts.length}</div>
+                    <span className="relative px-0">
+                      <Link style="child light" className="absolute left-2">View</Link>
+                    </span>
+                  </Link>
+                </td>
               </tr>
             }
-            {user &&
+            {user && myExercises.length > 0 &&
               <tr className={myExercises.length == 0 ? "cursor-pointer hover:underline" : ""}>
                 <td className="text-right pr-2 opacity-40 font-semibold">Exercises</td>
-                <td><Link href={`/exercises?uid=${user.uid}`}>{myExercises.length}</Link></td>
+                <td>
+                  <Link href={`/exercises?uid=${user.uid}`} style="parent secondary" className="flex flex-row">
+                    <div>{myExercises.length}</div>
+                    <span className="relative px-0">
+                      <Link style="child light" className="absolute left-2">View</Link>
+                    </span>
+                  </Link>
+                </td>
               </tr>
             }
           </tbody>

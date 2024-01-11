@@ -10,7 +10,7 @@ import useAlert from "./alert";
 const useExercises: any = create(devtools((set: any, get: any) => ({
   _exercises: {}, // access via get(id) or find(query?)
   _deleted: {}, // to smooth out UX when deleting
-  _loaded: {}, // access via loaded(queryOrId?)
+  _loaded: {}, // access via loaded(queryOrId?); stored as id->bool or query->bool
 
   _setLoaded: (entitiesOrQueryOrId: any, loaded: boolean = true) => {
     const { _loaded } = get();
@@ -28,8 +28,9 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
       return set({
         _loaded: {
           ..._loaded,
-          ...arrayToObject(entitiesOrQueryOrId
-            .map((e: any) => [JSON.stringify({ id: e.id }), loaded]))
+          ...arrayToObject(
+            entitiesOrQueryOrId
+              .map((e: any) => [e.id, loaded]))
         }
       });
     }
@@ -38,7 +39,7 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
       return set({
         _loaded: {
           ..._loaded,
-          [JSON.stringify({ id: entitiesOrQueryOrId })]: loaded
+          [entitiesOrQueryOrId]: loaded,
         }
       });
     }
@@ -74,7 +75,7 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
     }
 
     if (typeof (idOrQuery) == "string") {
-      return _loaded[JSON.stringify({ id: idOrQuery })];
+      return _loaded[idOrQuery];
     }
 
     if (typeof (idOrQuery) == "object") {

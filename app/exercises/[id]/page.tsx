@@ -116,16 +116,18 @@ export default function Component({ params }: { params: { id: string } }) {
     load,
     del, // delete is a js keyword 😒
     generate,
+    _loaded,
   ] = useExercises((state: any) => [
     state.get(params.id),
     state.loaded(params.id),
     state.load,
     state.delete,
     state.generate,
+    state._loaded,
   ]);
   const user = useUser((state: any) => state.user);
   const isReady = exercise?.status == "created";
-  // console.log('>> app.exercises[id].page.render()', { id: params.id, exercise, loaded }); //, loadedId: loaded && loaded.includes(params.id) });
+  // console.log('>> app.exercises[id].page.render()', { id: params.id, exercise, loaded, _loaded }); //, loadedId: loaded && loaded.includes(params.id) });
 
   useEffect(() => {
     load(params.id);

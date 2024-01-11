@@ -3,15 +3,16 @@
 import moment from 'moment';
 import { useRouter } from 'next/navigation'
 import { useEffect } from "react";
-import Page from "@/app/_components/Page";
+import Clock from '@/app/_components/Clock';
+import { ExerciseEntry } from '@/app/_components/Exercise';
 import Link from "@/app/_components/Link"
+import Page from "@/app/_components/Page";
 import useExercises from '@/app/_hooks/exercises';
 import useWorkouts from "@/app/_hooks/workouts";
+import useWorkoutSessions from '@/app/_hooks/workoutSessions';
 import useUser from "@/app/_hooks/user";
 import { Exercise } from '@/types/Exercise';
 import { Workout, WorkoutSession, WorkoutSet } from '@/types/Workout';
-import { ExerciseEntry } from '@/app/_components/Exercise';
-import Clock from '@/app/_components/Clock';
 import { byCreatedAtDesc, byName } from '@/utils/sort';
 import { capitalize } from '@/utils/format';
 
@@ -103,10 +104,41 @@ function Sessions({ id, prompt, exercises, sessions, showDetails, user }: any) {
 export default function Component({ params }: { params: { id: string } }) {
   // console.log('>> app.workout[id].Page.render()', { id: params.id });
   const router = useRouter();
-  const [workouts, loaded, load, deleteWorkout, startSession, sessions, sessionsLoaded, loadSessions] = useWorkouts((state: any) => [state.workouts, state.loaded, state.load, state.deleteWorkout, state.startSession, state.sessions, state.sessionsLoaded, state.loadSessions]);
-  const [exercisesLoaded, loadExercises] = useExercises((state: any) => [state.loaded, state.load]);
-  const [user] = useUser((state: any) => [state.user]);
-  const workout = workouts.filter((workout: any) => workout.id == params.id)[0];
+  const user = useUser((state: any) => state.user);
+  const query = user && { createdBy: user.uid };
+
+  const [
+    workout,
+    loaded,
+    load,
+    deleteWorkout,
+  ] = useWorkouts((state: any) => [
+    state.get(params.id),
+    state.loaded(params.id),
+    state.load,
+    state.delete,
+  ]);
+
+  const [
+    startSession,
+    sessions,
+    sessionsLoaded,
+    loadSessions
+  ] = useWorkoutSessions((state: any) => [
+    state.start,
+    state.find(),
+    state.loaded({ workoutId: params.id }),
+    state.load
+  ]);
+
+  const [
+    exercisesLoaded,
+    loadExercises
+  ] = useExercises((state: any) => [
+    state.loaded(query) || state.loaded(),
+    state.load,
+  ]);
+
   const isReady = ["created", "saved"].includes(workout?.status);
   const workoutSessions = workout && sessions && sessions.filter((session: WorkoutSession) => session?.workout?.id == workout.id);
   const filteredSessions = workout && sessions && sessions.filter((session: WorkoutSession) => session?.workout?.id == workout.id && session.status != "completed");
@@ -114,7 +146,7 @@ export default function Component({ params }: { params: { id: string } }) {
   // console.log('>> app.workouts[id].page.render()', { id: params.id, workout });
 
   useEffect(() => {
-    load({ id: params.id });
+    load(params.id);
     loadExercises(); // prefetch
   }, [params.id]);
 
@@ -196,7 +228,7 @@ export default function Component({ params }: { params: { id: string } }) {
           {workout && workout.exercises && workout.exercises.length > 0 &&
             <Exercises {...{ ...workout, sessions: workoutSessions, user }} />
           }
-          {sessions && sessions.length > 0 &&
+          {workoutSessions && workoutSessions.length > 0 &&
             <Sessions {...{ ...workout, sessions: workoutSessions, user }} />
           }
         </div>

@@ -17,16 +17,47 @@ export function hashCode(str: string): number {
   return hash;
 }
 
-export function arrayToObject(array: any[]) {
+function kvArrayToObject(array: any[]) {
   return array.reduce((o, [k, v]) => Object.assign(o, { [k]: v }), {});
 }
 
-export function searchParamsToObject(searchParams: string) {
-  return arrayToObject(searchParams
-    .split(",")
-    .filter(Boolean)
-    .map((entry: string) => entry.split("=")))
+export function searchParamsToMap(searchParams: string): object {
+  return kvArrayToObject(
+    searchParams
+      .split("&")
+      .filter(Boolean)
+      .map((e) => e.split(","))
+      .flat()
+      .map((e) => e.split("=")));
 }
+
+export function mapToSearchParams(m: object): string {
+  return Object.entries(m)
+    .map((e) => e.join("="))
+    .join("&");
+}
+
+export function listToMap(
+  l: any[],
+  opts?: {
+    keyFn?: (e: any) => string,
+    valFn?: (e: any) => any,
+  }) {
+  const keyFn = opts?.keyFn || function (e: any) { return e.id };
+  const valFn = opts?.valFn || function (e: any) { return e };
+
+  return kvArrayToObject(l.map((e: any) => [keyFn(e), valFn(e)]));
+}
+
+export function mapToList(
+  m: any = {},
+  entryFn: (e: [any, any]) => any = ([k, v]: any) => v): any[] {
+  return Object.entries(m).map((e: any) => entryFn(e));
+}
+
+// export function mapToKeyVals(m: object): [k: string, v: any] {
+//   return Object.entries(m || {}) || [];
+// }
 
 export function round(n: number, digits?: any) {
   const exp = 10 ** digits || 10;

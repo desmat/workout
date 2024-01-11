@@ -13,31 +13,43 @@ import { byName } from '@/utils/sort';
 
 export default function Component() {
   const router = useRouter();
-  const [user] = useUser((state: any) => [state.user]);
-  const [exercises, loaded, load, createExercise, generateExercise] = useExercises((state: any) => [state.exercises, state.loaded, state.load, state.createExercise, state.generateExercise]);
   const params = useSearchParams();
   const uidFilter = params.get("uid");
-  const filteredExercises = uidFilter && exercises ? exercises.filter((exercise: Exercise) => exercise.createdBy == uidFilter) : exercises;
-  // console.log('>> app.trivia.page.render()', { loaded, exercises });
+  const query = uidFilter && { createdBy: uidFilter };
+  const user = useUser((state: any) => state.user);
+
+  const [
+    exercises,
+    loaded,
+    load,
+    create,
+    generate, 
+    _loaded,
+  ] = useExercises((state: any) => [
+    state.find(query),
+    state.loaded(query) || state.loaded(), // smooth transition between unfiltered and filtered view (loaded with query is subset of loaded all)
+    state.load,
+    state.create,
+    state.generate, 
+    state._loaded,
+  ]);
+
+  console.log('>> app.trivia.page.render()', { loaded, exercises, _loaded });
 
   useEffect(() => {
-    if (uidFilter) {
-      load({ createdBy: uidFilter });
-    } else {
-      load();
-    }
+    load(query);
   }, [uidFilter]);
 
-  async function handleCreateExercise() {
+  async function handleCreate() {
     const name = window.prompt("Name?", "");
 
     if (name) {
-      const created = await createExercise(user, name);
-      // console.log("*** handleCreateExercise", { created });
+      const created = await create(user, name);
+      // console.log("*** handleCreate", { created });
 
       if (created) {
-        const generating = generateExercise(user, created);
-        // console.log("*** handleCreateExercise", { generating });
+        const generating = generate(user, created);
+        // console.log("*** handleCreate", { generating });
         router.push(`/exercises/${created.id}`);
         return true
       }
@@ -54,9 +66,9 @@ export default function Component() {
     <div key="generate" title={user ? "" : "Login to create new exercise"}>
       <Link
         className={user ? "" : "cursor-not-allowed"}
-        onClick={handleCreateExercise}
+        onClick={handleCreate}
       >
-        Create New Exercise
+        Add
       </Link>
     </div>,
     uidFilter && <Link key="showall" href={`/exercises`}>Show All</Link>,
@@ -80,10 +92,10 @@ export default function Component() {
       links={links}
       loading={!loaded}
     >
-      {filteredExercises && filteredExercises.length > 0 &&
+      {exercises.length > 0 &&
         <div className="self-center flex flex-col gap-3">
           {
-            filteredExercises
+            exercises
               // .filter(...)
               .sort(byName)
               .map((exercise: any) => {
@@ -95,7 +107,7 @@ export default function Component() {
           }
         </div>
       }
-      {(!filteredExercises || filteredExercises.length == 0) &&
+      {exercises.length == 0 &&
         <>
           {uidFilter &&
             <p className='italic text-center'>

@@ -14,8 +14,8 @@ import { Exercise } from '@/types/Exercise';
 import { capitalize, formatNumber, formatRange, formatTime } from '@/utils/format';
 
 function ExerciseEntry({ user, workout, exercise, offset }: any) {
-  const [warning] = useAlert((state: any) => [state.warning]);
-  const [updateWorkout] = useWorkouts((state: any) => [state.updateWorkout]);
+  const warning = useAlert((state: any) => state.warning);
+  const updateWorkout = useWorkouts((state: any) => state.update);
   const { duration, sets, reps } = exercise.directions || {};
   let formattedSets = sets ? formatRange(sets, formatNumber, "set") : "no set";
   const formattedReps = reps ? formatRange(reps, formatNumber, "rep") : "no rep";
@@ -184,28 +184,24 @@ export default function Component({ params }: { params: { id: string } }) {
   // console.log('>> app.workout[id].Page.render()', { id: params.id });
   const router = useRouter();
   const [
-    workouts,
-    updatedWorkouts,
+    originalWorkout,
+    workout,
     loaded,
     load,
-    deleteWorkout,
     saveWorkout,
     updateWorkout,
-    addExercise
+    addExercise,
   ] = useWorkouts((state: any) => [
-    state.workouts,
-    state.updatedWorkouts,
-    state.loaded,
+    state.get(params.id),
+    state.get(params.id, true),
+    state.loaded(params.id),
     state.load,
-    state.deleteWorkout,
-    state.saveWorkout,
-    state.updateWorkout,
-    state.updateWorkoutAddExercise
+    state.save,
+    state.update,
+    state.addExercise,
   ]);
   // const [exercisesLoaded, loadExercises] = useExercises((state: any) => [state.loaded, state.load]);
   const [user] = useUser((state: any) => [state.user]);
-  const originalWorkout = workouts && workouts.filter((workout: any) => workout.id == params.id)[0];
-  const workout = updatedWorkouts && updatedWorkouts.filter((workout: any) => workout?.id == params.id)[0];
   const isReady = loaded && workout;
   // console.log('>> app.workouts[id].edit.render()', { id: params.id, workout });
 

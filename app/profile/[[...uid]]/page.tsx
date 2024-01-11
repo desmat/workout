@@ -15,17 +15,51 @@ import { Workout } from "@/types/Workout";
 export default function Component({ params }: { params: { uid?: string } }) {
   // console.log('>> app.profile.page.render()', params.uid);
   const [copiedValue, copy] = useCopyToClipboard();
-  const [user, userLoaded, userLoading, loadUser, signin, logout] = useUser((state: any) => [state.user, state.loaded, state.loading, state.load, state.signin, state.logout]);
-  const [exercises, exercisesLoaded, loadExercises] = useExercises((state: any) => [state.exercises, state.loaded, state.load]);
-  const [workouts, workoutsLoaded, loadWorkouts] = useWorkouts((state: any) => [state.workouts, state.loaded, state.load]);
-  const myWorkouts = workoutsLoaded && workouts && workouts.filter((workout: Workout) => workout.createdBy == user?.uid);
-  const myExercises = exercisesLoaded && exercises && exercises.filter((exercise: Exercise) => exercise.createdBy == user?.uid);
+
+  const [
+    user,
+    userLoaded,
+    userLoading,
+    loadUser,
+    signin,
+    logout
+  ] = useUser((state: any) => [
+    state.user,
+    state.loaded,
+    state.loading,
+    state.load,
+    state.signin,
+    state.logout
+  ]);
+
+  const query = user && { createdBy: user.uid }
+
+  const [
+    myExercises,
+    exercisesLoaded,
+    loadExercises,
+  ] = useExercises((state: any) => [
+    state.find(query),
+    state.loaded(query),
+    state.load,
+  ]);
+
+  const [
+    myWorkouts,
+    workoutsLoaded,
+    loadWorkouts
+  ] = useWorkouts((state: any) => [
+    state.find(query),
+    state.loaded(query),
+    state.load
+  ]);
+
   // console.log('>> app.profile.page.render()', { uid: params.uid, user, userLoaded, userLoading });
 
   useEffect(() => {
     // console.log("** app.profile.page.useEffect", { uid: params.uid, user });
     if (!userLoaded) loadUser();
-    if (!exercisesLoaded) loadExercises();
+    if (!exercisesLoaded) loadExercises(query);
     if (!workoutsLoaded) loadWorkouts();
   }, [params.uid]);
 
@@ -49,25 +83,21 @@ export default function Component({ params }: { params: { uid?: string } }) {
 
   const links = [
     user && !user.isAnonymous && <Link key="logout" href="/" style="warning" onClick={doLogout}>Logout</Link>,
-    user && myWorkouts?.length > 0 && <Link key="workouts" href={`/workouts?uid=${user.uid}`}>Workouts ({myWorkouts.length})</Link>,
-    user && myExercises?.length > 0 && <Link key="exercises" href={`/exercises?uid=${user.uid}`}>Exercises ({myExercises.length})</Link>,
-    (!user || user.isAnonymous) && <Link key="login" href="/auth?method=login-email">Login</Link>,
-    (!user || user.isAnonymous) && <Link key="signuo" href="/auth?method=signup-email">Signup</Link>,
-    (!user || user.isAnonymous) &&
+    userLoaded && (!user || user.isAnonymous) && <Link key="login" href="/auth?method=login-email">Login</Link>,
+    userLoaded && (!user || user.isAnonymous) && <Link key="signuo" href="/auth?method=signup-email">Signup</Link>,
+    userLoaded && (!user || user.isAnonymous) &&
     <Link key="google" className="flex flex-row gap-1 items-center" onClick={doSigninWithGoogle}>
-      <BsGoogle />
-      Signin
+      <BsGoogle />Signin
     </Link>,
-    (!user || user.isAnonymous) &&
+    userLoaded && (!user || user.isAnonymous) &&
     <Link key="github" className="flex flex-row gap-1 items-center" onClick={doSigninWithGithub}>
-      <BsGithub />
-      Signin
+      <BsGithub />Signin
     </Link>,
     // TODO CRIPPLE
     // user && user.isAnonymous && <Link key="" href="/" onClick={(e) => doLogout(e, logout)}>Logout</Link>,
   ];
 
-  if (userLoading) {
+  if (!userLoaded) {
     return (
       <Page
         title="Profile"
@@ -117,6 +147,32 @@ export default function Component({ params }: { params: { uid?: string } }) {
               <tr>
                 <td className="text-right pr-2 opacity-40 font-semibold">Provider</td>
                 <td>{users.getProviderType(user)}</td>
+              </tr>
+            }
+            {user && myWorkouts.length > 0 &&
+              <tr>
+                <td className="text-right pr-2 opacity-40 font-semibold">Workouts</td>
+                <td>
+                  <Link href={`/workouts?uid=${user.uid}`} style="parent secondary" className="flex flex-row">
+                    <div>{myWorkouts.length}</div>
+                    <span className="relative px-0">
+                      <Link style="child light" className="absolute left-2">View</Link>
+                    </span>
+                  </Link>
+                </td>
+              </tr>
+            }
+            {user && myExercises.length > 0 &&
+              <tr className={myExercises.length == 0 ? "cursor-pointer hover:underline" : ""}>
+                <td className="text-right pr-2 opacity-40 font-semibold">Exercises</td>
+                <td>
+                  <Link href={`/exercises?uid=${user.uid}`} style="parent secondary" className="flex flex-row">
+                    <div>{myExercises.length}</div>
+                    <span className="relative px-0">
+                      <Link style="child light" className="absolute left-2">View</Link>
+                    </span>
+                  </Link>
+                </td>
               </tr>
             }
           </tbody>

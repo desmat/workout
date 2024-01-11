@@ -110,38 +110,51 @@ function ExerciseDetails({ id, instructions, category, directions, variations }:
 export default function Component({ params }: { params: { id: string } }) {
   // console.log('>> app.trivia[id].page.render()', { id: params.id });
   const router = useRouter();
-  const [exercises, loaded, load, deleteExercise, generateExercise] = useExercises((state: any) => [state.exercises, state.loaded, state.load, state.deleteExercise, state.generateExercise]);
-  const [user] = useUser((state: any) => [state.user]);
-  const exercise = exercises.filter((exercise: any) => exercise.id == params.id)[0];
+  const [
+    exercise,
+    loaded,
+    load,
+    del, // delete is a js keyword 😒
+    generate,
+    _loaded,
+  ] = useExercises((state: any) => [
+    state.get(params.id),
+    state.loaded(params.id),
+    state.load,
+    state.delete,
+    state.generate,
+    state._loaded,
+  ]);
+  const user = useUser((state: any) => state.user);
   const isReady = exercise?.status == "created";
-  // console.log('>> app.exercises[id].page.render()', { id: params.id, exercise, loaded }); //, loadedId: loaded && loaded.includes(params.id) });
+  // console.log('>> app.exercises[id].page.render()', { id: params.id, exercise, loaded, _loaded }); //, loadedId: loaded && loaded.includes(params.id) });
 
   useEffect(() => {
-    load({ id: params.id });
+    load(params.id);
   }, [params.id]);
 
-  async function handleDeleteExercise() {
+  async function handleDelete() {
     const response = confirm("Delete exercise?");
     if (response) {
-      deleteExercise(params.id);
+      del(params.id);
       router.back();
     }
   }
 
   const handleRegenerate = () => {
     // console.log('>> app.trivia[id].page.regenerate()', { exercise, user });
-    generateExercise(user, exercise).then((res: any) => {
+    generate(user, exercise).then((res: any) => {
       // console.log('>> app.trivia[id].page.regenerate() after generate', { res });
     });
   }
 
   const links = [
     <BackLink key="back" />,
-    exercise && isReady && user && (user.uid == exercise.createdBy || user.admin) && <Link key="delete" style="warning" onClick={handleDeleteExercise}>Delete</Link>,
+    exercise && isReady && user && (user.uid == exercise.createdBy || user.admin) && <Link key="delete" style="warning" onClick={handleDelete}>Delete</Link>,
     exercise && isReady && user && (user.uid == exercise.createdBy || user.admin) && <Link key="regenerate" onClick={handleRegenerate}>Regenerate</Link>,
   ];
 
-  if (!loaded || !loaded.includes(params.id)) {
+  if (!loaded) {
     return (
       <Page
         bottomLinks={links}

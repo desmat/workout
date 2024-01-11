@@ -22,7 +22,7 @@ export function GenerateLink({
 }) {
   // console.log('>> components.Nav.GenerateLink()', { isActive });
   const [user] = useUser((state: any) => [state.user]);
-  const [generateWorkout] = useWorkouts((state: any) => [state.createWorkout, state.generateWorkout]);
+  const [generateWorkout] = useWorkouts((state: any) => [state.generate]);
   const router = useRouter();
   const [info, success] = useAlert((state: any) => [state.info, state.success]);
 

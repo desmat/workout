@@ -32,6 +32,7 @@ function TypedAlert({
         'active:bg-red-200',
         'text-red-800', 
         'text-red-500',
+        'border-red-100',
       ];
       break;
     case "warning":
@@ -42,6 +43,7 @@ function TypedAlert({
         'active:bg-yellow-200',
         'text-yellow-800', 
         'text-yellow-500',
+        'border-yellow-200',
       ];
       break;
     case "success":
@@ -52,6 +54,7 @@ function TypedAlert({
         'active:bg-green-200',
         'text-green-800', 
         'text-green-500',
+        'border-green-100',
       ];
       break;
     default: //case "info":
@@ -62,14 +65,15 @@ function TypedAlert({
         'active:bg-blue-200',
         'text-blue-800', 
         'text-blue-500',
+        'border-blue-100'
       ];
       break;
   }
 
   return (
-    <div className={`fixed bottom-3 left-3 md:left-[calc(50vw-(700px/2))] lg:left-[calc(50vw-((700px-8rem)/2))] ${closed ? "_-z-10" : "z-20"}`}>
+      <div className={`border-[1px] ${colorClasses[5]} border-solid fixed bottom-3 left-3 md:left-[calc(50vw-(700px/2))] lg:left-[calc(50vw-((700px-8rem)/2))] ${closed ? "_-z-10" : "z-20"}`}>
       <div className={`${closed ? "opacity-0" : "opacity-100"} transition-all rounded-md ${colorClasses[0]} p-4 w-[calc(100vw-1.5rem)] md:w-[700px] shadow-md hover:shadow-lg`}>
-        <div className="flex items-center">
+        <div className="flex items-center ">
           <div className="flex-shrink-0">
             {icon}
           </div>

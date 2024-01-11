@@ -9,46 +9,49 @@ import Clock from '@/app/_components/Clock';
 import Link from "@/app/_components/Link"
 import Page from "@/app/_components/Page";
 import useWorkouts from "@/app/_hooks/workouts";
+import useWorkoutSessions from "@/app/_hooks/workoutSessions";
 import useUser from "@/app/_hooks/user";
 import { Workout, WorkoutSession, WorkoutSet } from '@/types/Workout';
 import { Exercise } from '@/types/Exercise';
 import { byCreatedAtDesc } from '@/utils/sort';
 
-export default function Component({ params }: { params: { id: string, sessionId?: string } }) {
+export default function Component({ params }: { params: { id: string, sessionId: string } }) {
   // console.log('>> app.workout[id].session[sessionId].Page.render()', { id: params.id, sessionId: params.sessionId });
+  const router = useRouter();
+  const user = useUser((state: any) => state.user);
+
   const [
-    workouts,
-    loaded,
-    load,
-    deleteWorkout,
+    workout,
+    workoutLoaded,
+    loadWorkout,
+  ] = useWorkouts((state: any) => [
+    state.get(params.id),
+    state.loaded(params.id),
+    state.load,
+  ]);
+
+  const [
+    session,
     startSession,
-    sessions,
-    sessionsLoaded,
-    loadSessions,
+    sessionLoaded,
+    loadSession,
     startSet,
     completeSession,
     stopSession,
     resumeSession,
     deleteSession,
-  ] = useWorkouts((state: any) => [
-    state.workouts,
-    state.loaded,
-    state.load,
-    state.deleteWorkout,
+  ] = useWorkoutSessions((state: any) => [
+    state.get(params.sessionId),
     state.startSession,
-    state.sessions,
-    state.sessionsLoaded,
-    state.loadSessions,
+    state.loaded(params.sessionId),
+    state.load,
     state.startSet,
-    state.completeSession,
-    state.stopSession,
-    state.resumeSession,
-    state.deleteSession,
+    state.complete,
+    state.stop,
+    state.resume,
+    state.delete,
   ]);
-  const router = useRouter();
-  const [user] = useUser((state: any) => [state.user]);
-  const session = sessions && sessions.filter((session: WorkoutSession) => session.id == params.sessionId)[0];
-  const workout = session && session.workout || workouts && workouts.filter((workout: any) => workout.id == params.id)[0];
+
   const sessionStarted = ["stopped", "started"].includes(session?.status);
   const sessionPaused = ["stopped"].includes(session?.status);
   const sessionCompleted = session?.status == "completed";
@@ -59,13 +62,17 @@ export default function Component({ params }: { params: { id: string, sessionId?
   const [previousSet, setPreviousSet] = useState<WorkoutSet | undefined>(undefined);
   const [currentSetDuration, setCurrentSetDuration] = useState(0);
   let [timer, setTimer] = useState(0);
-  // console.log('>> app.workouts[id].session.Page.render()', { id: params.id, workout, sessions, session, currentSet });
+  // console.log('>> app.workouts[id].session.Page.render()', { id: params.id, workout, session, currentSet });
 
   useEffect(() => {
-    if (!sessionsLoaded || !sessionsLoaded.includes(params.sessionId) || session?.status != "creating") {
-      loadSessions(params.id, params.sessionId);
+    if (!workoutLoaded) {
+      loadWorkout(params.id);
     }
-  }, [params.sessionId]);
+
+    if (!sessionLoaded || session?.status != "creating") {
+      loadSession(params.id, params.sessionId);
+    }
+  }, [params.id, params.sessionId]);
 
   useEffect(() => {
     // console.log('>> app.workouts[id].session.Page useEffect(currentSet)', { currentSet, previousSet });
@@ -125,7 +132,7 @@ export default function Component({ params }: { params: { id: string, sessionId?
     // console.log('>> app.workout[id].session.handleDeleteSession()', { user, session });
     const response = confirm("Delete session?");
     if (response) {
-      deleteSession(user, session?.id);
+      deleteSession(session?.id);
       router.push(`/workouts/${session?.workout?.id}`);
     }
   }
@@ -163,7 +170,7 @@ export default function Component({ params }: { params: { id: string, sessionId?
     workout && user && sessionStarted && (currentSet.offset < workout.exercises.length - 1) && <Link key="next" onClick={() => handleStartSet(workout.exercises[currentSet.offset + 1], currentSet.offset + 1)}>Next</Link>,
   ];
 
-  if (!sessionsLoaded || !sessionsLoaded.includes(params.sessionId)) {
+  if (!sessionLoaded) {
     return (
       <Page
         bottomLinks={links}
@@ -172,7 +179,7 @@ export default function Component({ params }: { params: { id: string, sessionId?
     )
   }
 
-  if (!session && sessionsLoaded && !sessionsLoaded.includes(params.sessionId)) {
+  if (!session) {
     return (
       <Page
         title="Workout session not found"

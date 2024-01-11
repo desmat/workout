@@ -2,68 +2,12 @@ import { User } from 'firebase/auth';
 import moment from 'moment';
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
-import { Workout, WorkoutSession, WorkoutSet } from '@/types/Workout';
-import { Exercise } from '@/types/Exercise';
-import { arrayToObject, uuid } from '@/utils/misc';
+import { Workout } from '@/types/Workout';
+import { listToMap, mapToList, mapToSearchParams, uuid } from '@/utils/misc';
 import trackEvent from '@/utils/trackEvent';
-import { byCreatedAtDesc } from '@/utils/sort';
 import useAlert from "./alert";
-import useExercises from "./exercises";
-
-const stopSet = (session: WorkoutSession, status = "stopped") => {
-  const sets = session.sets && session.sets.filter((set: WorkoutSet) => set.status == "started");
-
-  // console.log(">> hooks.workout.stopSet", { sets });
-
-  sets && sets.forEach((set: WorkoutSet) => {
-    // console.log(">> hooks.workout.stopSet", { set });
-    set.stoppedAt = moment().valueOf();
-    set.duration = (set.duration || 0) + set.stoppedAt - (set?.startedAt || 0);
-    set.startedAt = 0;
-    set.status = status;
-  });
-
-  return session;
-}
-
-const fetchSession = (putOrPost: "PUT" | "POST", get: any, set: any, newSession: WorkoutSession, callback?: any) => {
-  const workoutId = newSession.workout.id;
-  const sessionId = newSession.id;
-  const url = putOrPost == "PUT"
-    ? `/api/workouts/${workoutId}/sessions/${sessionId}`
-    : `/api/workouts/${workoutId}/sessions`
-  const { sessions, session } = get();
-
-  // optimistic
-  set({
-    sessions: [...sessions, newSession],
-    sessionsLoaded: [...get().sessionsLoaded || [], newSession.id],
-  });
-
-  fetch(url, {
-    method: putOrPost,
-    body: JSON.stringify(newSession),
-  }).then(async (res) => {
-    if (res.status != 200) {
-      useAlert.getState().error(`Error ${putOrPost == "PUT" ? "saving" : "creating"} workout session set: ${res.status} (${res.statusText})`);
-
-      // revert optimistic 
-      const filteredSessions = sessions.filter((session: WorkoutSession) => session?.id != sessionId);
-      set({ sessions: [...filteredSessions, session] });
-      return;
-    }
-
-    const data = await res.json();
-    const savedSession = data.session;
-    // remove previous session and replace with saved session
-    const filteredSessions = sessions.filter((session: WorkoutSession) => session.id != sessionId);
-    set({ sessions: [...filteredSessions, savedSession] });
-
-    if (callback) {
-      callback(savedSession);
-    }
-  });
-}
+import { Exercise } from '@/types/Exercise';
+import useExercises from './exercises';
 
 // TODO deduplicate from exercise service
 const pickFromRange = (range: any, level?: "beginner" | "intermediate" | "advanced") => {
@@ -76,115 +20,165 @@ const pickFromRange = (range: any, level?: "beginner" | "intermediate" | "advanc
     : range;
 }
 
+type WorkoutMap = { [key: string]: Workout | undefined; };
+type StatusMap = { [key: string]: boolean };
+
 const useWorkouts: any = create(devtools((set: any, get: any) => ({
-  workouts: [],
-  deletedWorkouts: [], // to smooth out visual glitches when deleting
-  updatedWorkouts: [],
-  sessions: [],
-  deletedSessions: [], // to smooth out visual glitches when deleting
-  loaded: undefined,
-  sessionsLoaded: undefined,
 
-  load: async (query?: any) => {
-    const id = query?.id
-    // console.log(">> hooks.workout.load", { id });
+  // access via get(id) or find(query?)
+  _workouts: <WorkoutMap>{},
 
-    // rest api (optimistic: all or just the one)
+  _modified: <WorkoutMap>{},
+
+  // to smooth out UX when deleting,
+  _deleted: <StatusMap>{},
+
+  // access via loaded(queryOrId?),
+  // stored as id->bool or query->bool, 
+  // where id refers to the loaded workout 
+  // and query is stringyfied json from loaded
+  // list of workouts
+  _loaded: <StatusMap>{},
+
+  get: (id: string, modified: boolean = false) => {
+    // console.log(">> hooks.workouts.get", { id, modified });
+    return modified
+      ? get()._modified[id]
+      : get()._workouts[id];
+  },
+
+  find: (query?: object) => {
+    // console.log(">> hooks.workouts.find", { query });
+    const { _workouts, _deleted } = get();
+    const [k, v] = Object.entries(query || {})[0] || [];
+
+    return mapToList(_workouts)
+      .filter(Boolean)
+      .filter((e: any) => !_deleted[e?.id])
+      .filter((e: any) => !k || !v && !e[k] || v && e[k] == v);
+  },
+
+  loaded: (idOrQuery?: object | string) => {
+    // console.log(">> hooks.workouts.loaded", { idOrQuery });
+    const { _loaded } = get();
+
+    if (!idOrQuery) {
+      return _loaded[JSON.stringify({})];
+    }
+
+    if (typeof (idOrQuery) == "string") {
+      return _loaded[idOrQuery];
+    }
+
+    if (typeof (idOrQuery) == "object") {
+      return _loaded[JSON.stringify(idOrQuery || {})];
+    }
+  },
+
+  setLoaded: (entitiesOrQueryOrId: any, loaded: boolean = true) => {
+    const { _loaded } = get();
+
+    if (!entitiesOrQueryOrId) {
+      return set({
+        _loaded: {
+          ..._loaded,
+          [JSON.stringify({})]: loaded
+        }
+      });
+    }
+
+    if (Array.isArray(entitiesOrQueryOrId)) {
+      return set({
+        _loaded: {
+          ..._loaded,
+          ...listToMap(entitiesOrQueryOrId, { valFn: () => true })
+        }
+      });
+    }
+
+    if (typeof (entitiesOrQueryOrId) == "string") {
+      return set({
+        _loaded: {
+          ..._loaded,
+          [entitiesOrQueryOrId]: loaded,
+        }
+      });
+    }
+
+    if (typeof (entitiesOrQueryOrId) == "object") {
+      return set({
+        _loaded: {
+          ..._loaded,
+          [JSON.stringify(entitiesOrQueryOrId)]: loaded
+        }
+      });
+    }
+  },
+
+  load: async (queryOrId?: object | string) => {
+    const { setLoaded } = get();
+    const query = typeof (queryOrId) == "object" && queryOrId;
+    const id = typeof (queryOrId) == "string" && queryOrId;
+    // console.log(">> hooks.workouts.load", { id, query });
+
     if (id) {
       fetch(`/api/workouts/${id}`).then(async (res) => {
+        const { _workouts } = get();
+        setLoaded(id);
+
         if (res.status != 200) {
           useAlert.getState().error(`Error fetching workout ${id}: ${res.status} (${res.statusText})`);
-          set({ loaded: [...get().loaded || [], id] });
           return;
         }
 
         const data = await res.json();
-        // console.log(">> hooks.workout.get: RETURNED FROM FETCH, returning!");
         const workout = data.workout;
-        const workouts = get().workouts.filter((workout: Workout) => workout.id != id);
+
         set({
-          workouts: [...workouts, workout],
-          loaded: [...get().loaded || [], id]
+          _workouts: { ..._workouts, [workout.id]: workout },
         });
       });
     } else {
-      let [q, v] = query && Object.entries(query)[0] || [];
-      fetch(`/api/workouts${q ? `?${q}=${v}` : ""}`).then(async (res) => {
+      const params = query && mapToSearchParams(query);
+      fetch(`/api/workouts${params ? `?${params}` : ""}`).then(async (res) => {
+        const { _workouts } = get();
+        setLoaded(query);
+
         if (res.status != 200) {
           useAlert.getState().error(`Error fetching workouts: ${res.status} (${res.statusText})`);
-          set({ loaded: [...get().loaded || []] });
           return;
         }
 
         const data = await res.json();
-        const deleted = get().deletedWorkouts.map((workout: Workout) => workout.id);
-        const workouts = data.workouts.filter((workout: Workout) => !deleted.includes(workout.id));
+        const workouts = data.workouts;
+
+        setLoaded(workouts);
         set({
-          workouts,
-          loaded: [...get().loaded || [], ...workouts.map((workout: Workout) => workout.id)],
+          _workouts: { ..._workouts, ...listToMap(workouts) }
         });
       });
     }
   },
 
-  loadSessions: async (workoutId: string, sessionId?: string) => {
-    // console.log(">> hooks.workout.loadSessions", { workoutId, sessionId });
-
-    if (!workoutId) {
-      throw `Unable to load sessions with no workoutId`;
-    }
-
-    if (sessionId) {
-      fetch(`/api/workouts/${workoutId}/sessions/${sessionId}`).then(async (res) => {
-        if (res.status != 200) {
-          useAlert.getState().error(`Error fetching workout session ${sessionId}: ${res.status} (${res.statusText})`);
-          set({ sessionsLoaded: [...get().sessionsLoaded || [], sessionId] });
-          return;
-        }
-
-        const data = await res.json();
-        const session = data.session;
-        const sessions = get().sessions.filter((session: WorkoutSession) => session.id != sessionId);
-        set({
-          sessions: [...sessions, session],
-          sessionsLoaded: [...get().sessionsLoaded || [], session.id],
-        });
-      });
-    } else {
-      fetch(`/api/workouts/${workoutId}/sessions`).then(async (res) => {
-        if (res.status != 200) {
-          useAlert.getState().error(`Error fetching workout sessions: ${res.status} (${res.statusText})`);
-          return;
-        }
-
-        const data = await res.json();
-        const deleted = get().deletedSessions.map((session: WorkoutSession) => session.id);
-        const sessions = data.sessions.filter((session: WorkoutSession) => !deleted.includes(session.id));
-        set({
-          sessions,
-          sessionsLoaded: [...get().sessionsLoaded || [], ...sessions.map((s: WorkoutSession) => s.id)],
-        });
-      });
-    }
-  },
-
-  createWorkout: async (user: User, name: string, exerciseNames: string) => {
-    // console.log(">> hooks.workout.createWorkout", { name });
+  create: async (user: User, name: string, exerciseNames: string) => {
+    // console.log(">> hooks.workouts.create", { name });
+    const { _workouts, setLoaded } = get();
 
     // optimistic
-    const tempId = uuid();
-    const workout = {
-      id: tempId,
+    const creating = {
+      id: `interim-${uuid()}`,
       createdBy: user.uid,
       createdAt: moment().valueOf(),
       status: "creating",
       name,
       optimistic: true,
     }
+
+    setLoaded(creating.id);
     set({
-      workouts: [...get().workouts, workout],
-      loaded: [...get().workouts || [], workout.id],
+      _workouts: { ..._workouts, [creating.id]: creating },
     });
+
 
     // check if some of the exercises haven't been created yet: if so change status since we'll be generating those
 
@@ -205,59 +199,69 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
 
       // update optimistic 
       if (nonExistingExercisesNames.length > 0) {
-        workout.status = "generating";
-        const workouts = get().workouts.filter((workout: Workout) => workout.id != tempId);
-        set({ workouts: [...workouts, workout] });
+        const generating = {
+          ...creating,
+          status: "generating",
+        };
+        set({
+          _workouts: { ..._workouts, [creating.id]: generating },
+        });
       }
     });
 
     // create the workout
-
     return new Promise((resolve, reject) => {
       fetch('/api/workouts', {
         method: "POST",
         body: JSON.stringify({ name, exercises: exerciseNames }),
       }).then(async (res) => {
+        const { _workouts } = get();
+
         if (res.status != 200) {
           useAlert.getState().error(`Error adding workout: ${res.status} (${res.statusText})`);
-          const workouts = get().workouts.filter((workout: Workout) => workout.id != tempId);
-          set({ workouts });
+          set({
+            _workouts: { ..._workouts, [creating.id]: undefined },
+          });
           return reject(res.statusText);
         }
 
         const data = await res.json();
-        const workout = data.workout;
+        const created = data.workout;
 
         trackEvent("workout-created", {
-          id: workout.id,
-          name: workout.name,
-          createdBy: workout.createdBy,
+          id: created.id,
+          name: created.name,
+          createdBy: created.createdBy,
         });
 
-        // remove optimistic
-        const workouts = get().workouts.filter((workout: Workout) => workout.id != tempId);
-        set({ workouts: [...workouts, workout] });
-        return resolve(workout);
+        // replace optimistic 
+        setLoaded(creating.id, false);
+        setLoaded(created.id);
+        set({
+          _workouts: { ..._workouts, [creating.id]: undefined, [created.id]: created },
+        });
+        return resolve(created);
       });
     });
   },
 
-  generateWorkout: async (user: User, name: string, parameters: []) => {
-    // console.log(">> hooks.workout.generateWorkout", { name, parameters });
+  generate: async (user: User, name: string, parameters: []) => {
+    // console.log(">> hooks.workouts.generateWorkout", { name, parameters });
+    const { _workouts, setLoaded } = get();
 
     // optimistic
-    const tempId = uuid();
-    const workout = {
-      id: tempId,
+    const generating = {
+      id: `interim-${uuid()}`,
       createdBy: user.uid,
       createdAt: moment().valueOf(),
       status: "generating",
       name,
       optimistic: true,
     }
+
+    setLoaded(generating.id);
     set({
-      workouts: [...get().workouts, workout],
-      loaded: [...get().workouts || [], workout.id],
+      _workouts: { ..._workouts, [generating.id || ""]: generating },
     });
 
     return new Promise((resolve, reject) => {
@@ -265,33 +269,62 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
         method: "POST",
         body: JSON.stringify({ name, parameters }),
       }).then(async (res) => {
+        const { _workouts } = get();
+
         if (res.status != 200) {
           useAlert.getState().error(`Error generating workout: ${res.status} (${res.statusText})`);
-          const workouts = get().workouts.filter((workout: Workout) => workout.id != tempId);
-          set({ workouts });
+          // revert
+          set({
+            _workouts: { ..._workouts, [generating.id || ""]: undefined },
+          });
           return reject(res.statusText);
         }
 
         const data = await res.json();
         // console.log(">> hooks.workout.generateWorkout", { data });
-        const workout = data.workout;
+        const generated = data.workout;
 
         trackEvent("workout-generated", {
-          id: workout.id,
-          name: workout.name,
-          createdBy: workout.createdBy,
+          id: generated.id,
+          name: generated.name,
+          createdBy: generated.createdBy,
         });
 
-        // remove optimistic
-        const workouts = get().workouts.filter((workout: Workout) => workout.id != tempId);
-        set({ workouts: [...workouts, workout] });
-        return resolve(workout);
+        // replace optimistic 
+        set({
+          _workouts: { ..._workouts, [generated.id || ""]: generated },
+        });
+        return resolve(generated);
       });
     })
   },
 
-  updateWorkoutAddExercise: async (user: User, workout: Workout, exerciseNames: string) => {
-    // console.log(">> hooks.workout.addExercise", { workout, exerciseNames });
+  update: async (user: User, workout: Workout, remove?: boolean) => {
+    // console.log(">> hooks.workouts.update", { workout });
+    const { _modified } = get();
+
+    if (remove) {
+      set({
+        _modified: { ..._modified, [workout.id || ""]: undefined }
+      });
+    } else {
+      set({
+        _modified: { ..._modified, [workout.id || ""]: { ...workout, status: "updated" } }
+      });
+      return workout;
+    }
+  },
+
+  addExercise: async (user: User, workout: Workout, exerciseNames: string) => {
+    // console.log(">> hooks.workouts.addExercise", { workout, exerciseNames });
+    const { update } = get();
+    const {
+      loaded: exercisesLoaded,
+      load: loadExercises,
+      find: findExercises,
+      create: createExercise,
+      generate: generateExercise,
+    } = useExercises.getState();
 
     // start by adding a "loading" stub
 
@@ -305,31 +338,37 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
         }
       });
 
-    workout.exercises = [
-      ...workout.exercises || [],
-      ...exercises,
-    ];
+    const updating = {
+      ...workout,
+      exercises: [
+        ...workout.exercises || [],
+        ...exercises,
+      ]
+    };
 
-    get().updateWorkout(user, workout);
+    update(user, updating);
+
 
     // next resolve exercise with existing or create a new one
 
     return new Promise(async (resolve, reject) => {
       // console.debug("loading exercises", { exercises: workout.exercises })
-      if (!useExercises.getState().loadedAll) {
-        await useExercises.getState().load();
+      if (!exercisesLoaded()) {
+        await loadExercises();
       }
       // console.debug("loading exercises load completed", { exercises: useExercises.getState().exercises })
 
-      const exerciseMap = arrayToObject(useExercises.getState().exercises
-        .map((e: Exercise) => [e.name.toLowerCase(), e]));
+      const exerciseMap = listToMap(
+        findExercises(),
+        { keyFn: (e: Exercise) => e?.name?.toLowerCase() }
+      );
 
-      // console.debug("loading exercises", { exerciseMap })
+      // console.log("loading exercises", { exerciseMap });
 
-      (workout.exercises || [])
+      (updating.exercises || [])
         .filter((e: Exercise) => !e.id) // non-resolved should not have an id (id this one was not added just now)
         .forEach((e: Exercise) => {
-          // console.debug("loading exercises resolving exercises", { e })
+          console.debug("loading exercises resolving exercises", { e })
           const found = exerciseMap[e.name.toLowerCase()];
           // exists
           if (found) {
@@ -347,298 +386,109 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
           }
 
           // does not exist: create and update when done; return generating stub
-          // console.debug("loading exercises creating exercise", { e });
-          useExercises.getState().createExercise(user, e.name).then((created: Exercise) => {
+          console.debug("loading exercises creating exercise", { e });
+          createExercise(user, e.name).then((created: Exercise) => {
             e.id = created.id;
             e.name = created.name;
             e.status = "generating";
-            get().updateWorkout(user, workout);
+            update(user, updating);
 
-            useExercises.getState().generateExercise(user, e).then((generated: Exercise) => {
+            generateExercise(user, e).then((generated: Exercise) => {
               e.status = generated.status;
               e.directions = {
                 duration: pickFromRange(generated.directions?.duration),
                 sets: pickFromRange(generated.directions?.sets),
                 reps: pickFromRange(generated.directions?.reps),
               };
-              get().updateWorkout(user, workout);
+              update(user, updating);
             });
           });
 
           e.status = "creating";
         });
 
-      get().updateWorkout(user, workout);
-      return resolve(workout);
+      update(user, updating);
+      return resolve(updating);
     });
   },
 
-  updateWorkout: async (user: User, workout: Workout, remove?: boolean) => {
-    // console.log(">> hooks.workout.updateWorkout", { workout });
-
-    if (remove) {
-      set({
-        updatedWorkouts: get().updatedWorkouts.filter((w: Workout) => w.id != workout.id),
-      });
-    } else {
-      const workouts = get().updatedWorkouts.filter((w: Workout) => w.id != workout.id);
-      set({ updatedWorkouts: [...workouts, { ...workout, status: "updated" }] });
-      return workout;
-    }
-  },
-
-  saveWorkout: async (user: User, workout: Workout) => {
-    // console.log(">> hooks.workout.saveWorkout", { workout });
+  save: async (user: User, workout: Workout) => {
+    // console.log(">> hooks.workouts.save", { workout });
+    const { _workouts, _modified } = get();
 
     // optimistic
-    workout.status = "saving";
-    const workouts = get().workouts.filter((e: Workout) => e.id != workout.id);
-    set({ workouts: [...workouts, workout] });
+    const saving = {
+      ...workout,
+      status: "saving",
+    };
+
+    set({
+      _modified: { ..._modified, [workout.id || ""]: saving },
+    });
 
     return new Promise((resolve, reject) => {
       fetch(`/api/workouts/${workout.id}`, {
         method: "PUT",
         body: JSON.stringify({ workout }),
       }).then(async (res) => {
+        const { _workouts, _modified } = get();
+
         if (res.status != 200) {
           useAlert.getState().error(`Error saving workout: ${res.status} (${res.statusText})`);
-          const workouts = get().workouts.filter((w: Workout) => w.id != workout.id);
-          set({ workouts });
+          // revert
+          set({
+            _workouts: { ..._workouts, [workout.id || ""]: workout },
+            _modified: { ..._modified, [workout.id || ""]: workout },
+          });
           return reject(res.statusText);
         }
 
         const data = await res.json();
-        const workout = data.workout;
+        const saved = data.workout;
 
-        trackEvent("workout-saved", {
-          id: workout.id,
-          name: workout.name,
-          createdBy: workout.createdBy,
+        set({
+          _workouts: { ..._workouts, [saved.id || ""]: saved },
+          _modified: { ..._modified, [saved.id || ""]: undefined },
         });
-
-        // replace optimistic 
-        const workouts = get().workouts.filter((w: Workout) => w.id != workout.id);
-        set({ workouts: [...workouts, workout] });
-        return resolve(workout);
+        return resolve(saved);
       });
     });
   },
 
-  deleteWorkout: async (id: string) => {
-    // console.log(">> hooks.workout.deleteWorkout id:", id);
+  delete: async (id: string) => {
+    // console.log(">> hooks.workouts.delete id:", id);
 
     if (!id) {
       throw `Cannot delete workout with null id`;
     }
 
-    const { workouts, deletedWorkouts } = get();
+    const { _workouts, _deleted, get: _get } = get();
+    const deleting = _get(id);
+
+    if (!deleting) {
+      throw `Workout not found: ${id}`;
+    }
 
     // optimistic
     set({
-      workouts: workouts.filter((workout: Workout) => workout.id != id),
-      deletedWorkouts: [...deletedWorkouts, workouts.filter((workout: Workout) => workout.id == id)[0]],
+      _workouts: { ..._workouts, [id]: deleting },
+      _deleted: { ..._deleted, [id]: true },
     });
 
     fetch(`/api/workouts/${id}`, {
       method: "DELETE",
     }).then(async (res) => {
       if (res.status != 200) {
+        const { _workouts, _deleted } = get();
         useAlert.getState().error(`Error deleting workouts ${id}: ${res.status} (${res.statusText})`);
-        set({ workouts, deletedWorkouts });
+        // revert
+        set({
+          _workouts: { ..._workouts, [id]: deleting },
+          _deleted: { ..._deleted, [id]: false },
+        });
         return;
       }
-
-      set({ deletedWorkouts: deletedWorkouts.filter((workout: Workout) => workout.id == id) });
     });
-  },
-
-  startSession: async (user: User, id: string) => {
-    // console.log(">> hooks.workout.startSession", { user, id });
-
-    if (!id) {
-      throw `Cannot create workout session with null id`;
-    }
-
-    const { workouts } = get();
-    const workout = workouts.filter((workout: Workout) => workout.id == id)[0]
-    const session = {
-      id: uuid(),
-      createdBy: user.uid,
-      createdAt: moment().valueOf(),
-      status: "creating",
-      workout,
-      sets: [],
-    };
-
-    fetchSession("POST", get, set, session, (newSession: WorkoutSession) => {
-      // console.log(">> hooks.workout.startSession fetch callback", { newSession });
-
-      trackEvent("workout-session-started", {
-        id: newSession.id,
-        workoutId: workout.id,
-        workoutName: workout.name,
-        createdBy: newSession.createdBy,
-      });
-
-      const firstExercise = newSession.workout?.exercises && newSession.workout?.exercises[0];
-      get().startSet(user, id, newSession.id, firstExercise, 0);
-    });
-
-    return session;
-  },
-
-  completeSession: async (user: User, id: string) => {
-    // console.log(">> hooks.workout.stopSession", { user, id });
-
-    if (!id) {
-      throw `Cannot complete workout session with null id`;
-    }
-
-    const { sessions } = get();
-    let session = sessions.filter((session: WorkoutSession) => session.id == id)[0]
-
-    if (!session) {
-      throw `Session not found: ${id}`;
-    }
-
-    session = stopSet(session, "completed");
-    session.status = "completed";
-
-    fetchSession("PUT", get, set, session, (updatedSession: WorkoutSession) => {
-      trackEvent("workout-session-completed", {
-        id: updatedSession.id,
-        workoutId: updatedSession.workout?.id,
-        workoutName: updatedSession.workout?.name,
-        createdBy: updatedSession.createdBy,
-      });
-    });
-
-    return session;
-  },
-
-  stopSession: async (user: User, id: string) => {
-    // console.log(">> hooks.workout.stopSession", { user, id });
-
-    if (!id) {
-      throw `Cannot stop workout session with null id`;
-    }
-
-    const { sessions } = get();
-    let session = sessions.filter((session: WorkoutSession) => session.id == id)[0]
-
-    if (!session) {
-      throw `Session not found: ${id}`;
-    }
-
-    session = stopSet(session);
-    session.status = "stopped";
-
-    fetchSession("PUT", get, set, session);
-
-    return session;
-  },
-
-  resumeSession: async (user: User, id: string) => {
-    // console.log(">> hooks.workout.resumeSession", { user, id });
-
-    if (!id) {
-      throw `Cannot resume workout session with null id`;
-    }
-
-    const { sessions } = get();
-    let session = sessions.filter((session: WorkoutSession) => session.id == id)[0]
-
-    if (!session) {
-      throw `Session not found: ${id}`;
-    }
-
-    if (session.status != "stopped") {
-      throw `Unable to resume session: state was not "stopped": ${id}`;
-    }
-
-    const sessionSet = session.sets.sort(byCreatedAtDesc)[0];
-
-    if (!sessionSet) {
-      throw `Unable to resume session: no set found: ${id}`;
-    }
-
-    // console.log(">> hooks.workout.resumeSession", { sessionSet });
-
-    sessionSet.startedAt = moment().valueOf();
-    sessionSet.stoppedAt = 0;
-    sessionSet.status = "started";
-    session.status = "started";
-
-    // console.log(">> hooks.workout.resumeSession", { session });
-
-    fetchSession("PUT", get, set, session);
-
-    return session;
-  },
-
-  deleteSession: async (user: any, id: string) => {
-    // console.log(">> hooks.workout.deleteSession id:", id);
-
-    if (!id) {
-      throw `Cannot delete workout session with null id`;
-    }
-
-    const { sessions, deletedSessions } = get();
-    const session = sessions.filter((session: WorkoutSession) => session.id = id)[0];
-
-    // optimistic
-    set({
-      sessions: sessions.filter((session: WorkoutSession) => session.id != id),
-      deletedSessions: [...deletedSessions, session],
-    });
-
-    fetch(`/api/workouts/${session.workout.id}/sessions/${id}`, {
-      method: "DELETE",
-    }).then(async (res) => {
-      if (res.status != 200) {
-        useAlert.getState().error(`Error deleting workout session ${id}: ${res.status} (${res.statusText})`);
-        set({ sessions, deletedSessions });
-        return;
-      }
-
-      set({ deletedSessions: deletedSessions.filter((session: WorkoutSession) => session.id == id) });
-    });
-  },
-
-  startSet: async (user: User, workoutId: string, sessionId: string, exercise: Exercise, offset: number) => {
-    const exerciseId = exercise.id;
-    const exerciseName = exercise.name;
-    // console.log(">> hooks.workout.startSet", { user, workoutId, sessionId, exerciseId, offset });
-
-    if (!workoutId || !sessionId || !exerciseId) {
-      throw `Cannot create workout set with null id`;
-    }
-
-    const { sessions } = get();
-    let session = sessions.filter((session: WorkoutSession) => session?.id == sessionId)[0]
-
-    if (!session) {
-      throw `Workout Session not found: ${sessionId}`;
-    }
-
-    session = stopSet(session, "completed");
-
-    const sessionSet = {
-      id: uuid(),
-      createdBy: user.uid,
-      createdAt: moment().valueOf(),
-      startedAt: moment().valueOf(),
-      status: "started",
-      exercise: { id: exerciseId, name: exerciseName },
-      offset,
-    };
-
-    session.status = "started";
-    session.sets.push(sessionSet);
-
-    fetchSession("PUT", get, set, session);
-
-    return session;
   },
 })));
 

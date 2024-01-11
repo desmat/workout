@@ -71,7 +71,6 @@ export default function Component() {
     </div>,
     uidFilter && <Link key="showall" href={`/exercises`}>Show All</Link>,
     !uidFilter && <Link key="filter" href={`/exercises?uid=${user?.uid || ""}`}>Filter</Link>,
-    //TODO REMOVE:  !uidFilter && <Link key="filter" href={`/exercises?uid=${"pmb7AM3SFsdKixaM3eJ4Vj3uCig2"}`}>Filter</Link>,
   ];
 
   if (!loaded) {

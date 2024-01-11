@@ -3,16 +3,59 @@ import moment from 'moment';
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import { Exercise } from '@/types/Exercise';
-import { arrayToObject, uuid } from '@/utils/misc';
+import { listToMap, mapToList, mapToSearchParams, uuid } from '@/utils/misc';
 import trackEvent from '@/utils/trackEvent';
 import useAlert from "./alert";
 
-const useExercises: any = create(devtools((set: any, get: any) => ({
-  _exercises: {}, // access via get(id) or find(query?)
-  _deleted: {}, // to smooth out UX when deleting
-  _loaded: {}, // access via loaded(queryOrId?); stored as id->bool or query->bool
+type ExerciseMap = { [key: string]: Exercise | undefined; };
+type StatusMap = { [key: string]: boolean };
 
-  _setLoaded: (entitiesOrQueryOrId: any, loaded: boolean = true) => {
+const useExercises: any = create(devtools((set: any, get: any) => ({
+
+  // access via get(id) or find(query?)
+  _exercises: <ExerciseMap>{},
+
+  // to smooth out UX when deleting,
+  _deleted: <StatusMap>{},
+
+  // access via loaded(queryOrId?),
+  // stored as id->bool or query->bool, 
+  // where id refers to the loaded exercise 
+  // and query is stringyfied json from loaded
+  // list of exercises
+  _loaded: <StatusMap>{},
+
+  get: (id: string) => {
+    return get()._exercises[id];
+  },
+
+  find: (query?: object) => {
+    const { _exercises, _deleted } = get();
+    const [k, v] = Object.entries(query || {})[0] || [];
+
+    return mapToList(_exercises)
+      .filter(Boolean)
+      .filter((e: any) => !_deleted[e?.id])
+      .filter((e: any) => !k || !v && !e[k] || v && e[k] == v);
+  },
+
+  loaded: (idOrQuery?: object | string) => {
+    const { _loaded } = get();
+
+    if (!idOrQuery) {
+      return _loaded[JSON.stringify({})];
+    }
+
+    if (typeof (idOrQuery) == "string") {
+      return _loaded[idOrQuery];
+    }
+
+    if (typeof (idOrQuery) == "object") {
+      return _loaded[JSON.stringify(idOrQuery || {})];
+    }
+  },
+
+  setLoaded: (entitiesOrQueryOrId: any, loaded: boolean = true) => {
     const { _loaded } = get();
 
     if (!entitiesOrQueryOrId) {
@@ -28,9 +71,7 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
       return set({
         _loaded: {
           ..._loaded,
-          ...arrayToObject(
-            entitiesOrQueryOrId
-              .map((e: any) => [e.id, loaded]))
+          ...listToMap(entitiesOrQueryOrId, { valFn: () => true })
         }
       });
     }
@@ -54,63 +95,34 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
     }
   },
 
-  get: (id: string) => {
-    return get()._exercises[id];
-  },
-
-  find: (query?: object) => {
-    const { _exercises, _deleted } = get();
-    const [k, v] = Object.entries(query || {})[0] || [];
-    return Object.values(_exercises)
-      .filter((e: any) => !_deleted[e.id])
-      .filter((e: any) => !k || e[k] == v)
-      .filter(Boolean);
-  },
-
-  loaded: (idOrQuery?: any) => {
-    const { _loaded } = get();
-
-    if (!idOrQuery) {
-      return _loaded[JSON.stringify({})];
-    }
-
-    if (typeof (idOrQuery) == "string") {
-      return _loaded[idOrQuery];
-    }
-
-    if (typeof (idOrQuery) == "object") {
-      return _loaded[JSON.stringify(idOrQuery || {})];
-    }
-  },
-
   load: async (queryOrId?: object | string) => {
+    const { setLoaded } = get();
     const query = typeof (queryOrId) == "object" && queryOrId;
     const id = typeof (queryOrId) == "string" && queryOrId;
-    // console.log(">> hooks.exercise.load", { id });
+    // console.log(">> hooks.exercise.load", { id, query });
 
     if (id) {
       fetch(`/api/exercises/${id}`).then(async (res) => {
-        get()._setLoaded(id);
+        const { _exercises } = get();
+        setLoaded(id);
 
         if (res.status != 200) {
           useAlert.getState().error(`Error fetching exercise ${id}: ${res.status} (${res.statusText})`);
-          set({
-            loaded: [...(get().loaded || []), id],
-          });
           return;
         }
 
         const data = await res.json();
-        // console.log(">> hooks.exercise.get: RETURNED FROM FETCH, returning!");
         const exercise = data.exercise;
+
         set({
-          _exercises: { ...get()._exercises, [exercise.id]: exercise },
+          _exercises: { _exercises, [exercise.id]: exercise },
         });
       });
     } else {
-      let [q, v] = query && Object.entries(query)[0] || [];
-      fetch(`/api/exercises${q ? `?${q}=${v}` : ""}`).then(async (res) => {
-        get()._setLoaded(query);
+      const params = query && mapToSearchParams(query);
+      fetch(`/api/exercises${params ? `?${params}` : ""}`).then(async (res) => {
+        const { _exercises } = get();
+        setLoaded(query);
 
         if (res.status != 200) {
           useAlert.getState().error(`Error fetching exercises: ${res.status} (${res.statusText})`);
@@ -118,10 +130,11 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
         }
 
         const data = await res.json();
+        const exercises = data.exercises;
 
-        get()._setLoaded(data.exercises);
+        setLoaded(exercises);
         set({
-          _exercises: { ...get()._exercises, ...arrayToObject(data.exercises.map((e: Exercise) => [e.id, e])) }
+          _exercises: { ..._exercises, ...listToMap(exercises) }
         });
       });
     }
@@ -129,11 +142,11 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
 
   create: async (user: User, name: string) => {
     // console.log(">> hooks.exercise.create", { name });
+    const { _exercises, setLoaded } = get();
 
     // optimistic
-    const tempId = uuid();
-    const exercise = {
-      id: tempId,
+    const creating = {
+      id: `interim-${uuid()}`,
       createdBy: user.uid,
       createdAt: moment().valueOf(),
       status: "creating",
@@ -141,10 +154,9 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
       optimistic: true,
     }
 
-    get()._setLoaded(exercise.id);
+    setLoaded(creating.id);
     set({
-      exercises: [...get().exercises, exercise],
-      _exercises: { ...get().exercises, [exercise.id]: exercise },
+      _exercises: { ..._exercises, [creating.id]: creating },
     });
 
     return new Promise((resolve, reject) => {
@@ -152,13 +164,12 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
         method: "POST",
         body: JSON.stringify({ name }),
       }).then(async (res) => {
+        const { _exercises } = get();
+
         if (res.status != 200) {
           useAlert.getState().error(`Error adding exercise: ${res.status} (${res.statusText})`);
-          const exercises = get().exercises.filter((exercise: Exercise) => exercise.id != tempId);
-          // get()._setLoaded(tempId, false); // maybe not?
           set({
-            exercises,
-            _exercises: { ...get()._exercises, tempId: undefined },
+            _exercises: { ..._exercises, [creating.id]: undefined },
           });
           return reject(res.statusText);
         }
@@ -173,27 +184,28 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
         });
 
         // replace optimistic 
-        const exercises = get().exercises.filter((exercise: Exercise) => created.id != tempId);
+        setLoaded(creating.id, false);
+        setLoaded(created.id);
         set({
-          exercises: [...exercises, created],
-          _exercises: { ...get()._exercises, tempId: undefined, [created.id]: created },
+          _exercises: { ..._exercises, [creating.id]: undefined, [created.id]: created },
         });
-        return resolve(exercise);
+        return resolve(created);
       });
     });
   },
 
   save: async (user: User, exercise: Exercise) => {
-    console.log(">> hooks.exercise.save", { exercise });
-
-    const { exercises, _exercises } = get()
+    // console.log(">> hooks.exercise.save", { exercise });
+    const { _exercises } = get();
 
     // optimistic
-    exercise.status = "saving";
-    const saving = exercises.filter((e: Exercise) => e.id != exercise.id);
+    const saving = {
+      ...exercise,
+      status: "saving",
+    };
+
     set({
-      exercises: [...saving, exercise],
-      _exercises: { ..._exercises, [exercise.id || ""]: exercise }, // TODO: update type to make id mandatory
+      _exercises: { ..._exercises, [exercise.id || ""]: saving }, // TODO: update type to make id mandatory
     });
 
     return new Promise((resolve, reject) => {
@@ -201,42 +213,42 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
         method: "PUT",
         body: JSON.stringify({ exercise }),
       }).then(async (res) => {
+        const { _exercises } = get();
+
         if (res.status != 200) {
           useAlert.getState().error(`Error saving exercise: ${res.status} (${res.statusText})`);
           // revert
-          set({ exercises, _exercises });
+          set({
+            _exercises: { ..._exercises, [exercise.id || ""]: exercise }, // TODO: update type to make id mandatory
+          });
           return reject(res.statusText);
         }
 
         const data = await res.json();
         const saved = data.exercise;
-        // replace optimistic 
-        const others = get().exercises.filter((e: Exercise) => e.id != saved.id);
+
         set({
-          exercises: [...others, saved],
-          _exercises: { ...get()._exercises, [saved.id || ""]: saved },
+          _exercises: { ..._exercises, [saved.id || ""]: saved },
         });
-        return resolve(exercise);
+        return resolve(saved);
       });
     });
   },
 
   generate: async (user: User, exercise: Exercise) => {
-    console.log(">> hooks.exercise.generate", { exercise });
-
-    const { exercises, _exercises } = get()
+    // console.log(">> hooks.exercise.generate", { exercise });
+    const { _exercises } = get();
 
     // optimistic
-    exercise = {
+    const generating = {
       id: exercise.id,
       name: exercise.name,
       createdBy: exercise.createdBy,
       status: "generating",
     };
-    const generating = get().exercises.filter((e: Exercise) => e.id != exercise.id);
+
     set({
-      exercises: [...generating, exercise],
-      _exercises: { ...get()._exercises, [exercise.id || ""]: exercise },
+      _exercises: { ..._exercises, [exercise.id || ""]: generating },
     });
 
     return new Promise((resolve, reject) => {
@@ -244,55 +256,66 @@ const useExercises: any = create(devtools((set: any, get: any) => ({
         method: "POST",
         body: JSON.stringify({ exercise }),
       }).then(async (res) => {
+        const { _exercises } = get();
+
         if (res.status != 200) {
           useAlert.getState().error(`Error generating exercise: ${res.status} (${res.statusText})`);
-          // reverted
-          set({ exercises, _exercises });
+          // revert
+          set({
+            _exercises: { ..._exercises, [exercise.id || ""]: exercise },
+          });
           return reject(res.statusText);
         }
 
         const data = await res.json();
-        const updated = data.exercise as Exercise;
+        const generated = data.exercise;
 
         trackEvent("exercise-generated", {
-          id: updated.id,
-          name: updated.name,
-          createdBy: updated.createdBy,
+          id: generated.id,
+          name: generated.name,
+          createdBy: generated.createdBy,
         });
 
         // replace optimistic 
-        const others = get().exercises.filter((e: Exercise) => e.id != exercise.id);
         set({
-          exercises: [...others, updated],
-          _exercises: { ...get()._exercises, [updated.id || ""]: updated },
+          _exercises: { ..._exercises, [generated.id || ""]: generated },
         });
-        return resolve(updated);
+        return resolve(generated);
       });
     });
   },
 
   delete: async (id: string) => {
-    console.log(">> hooks.exercise.delete id:", id);
+    // console.log(">> hooks.exercise.delete id:", id);
 
     if (!id) {
       throw `Cannot delete exercise with null id`;
     }
 
-    const { _exercises, _deleted } = get();
+    const { _exercises, _deleted, get: _get } = get();
+    const deleting = _get(id);
+
+    if (!deleting) {
+      throw `Exercise not found: ${id}`;
+    }
 
     // optimistic
     set({
-      _exercises: { ...get()._exercises, [id]: undefined },
-      _deleted: { ...get()._deleted, [id]: true },
+      _exercises: { ..._exercises, [id]: undefined },
+      _deleted: { ..._deleted, [id]: true },
     });
 
     fetch(`/api/exercises/${id}`, {
       method: "DELETE",
     }).then(async (res) => {
       if (res.status != 200) {
+        const { _exercises, _deleted } = get();
         useAlert.getState().error(`Error deleting exercises ${id}: ${res.status} (${res.statusText})`);
         // revert
-        set({ _exercises, _deleted });
+        set({
+          _exercises: { ..._exercises, [id]: deleting },
+          _deleted: { ..._deleted, [id]: false },
+        });
         return;
       }
     });

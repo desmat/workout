@@ -4,10 +4,10 @@ export const maxDuration = 300;
 import { NextRequest, NextResponse } from 'next/server'
 import { getWorkouts, createWorkout } from '@/services/workout';
 import { validateUserSession } from '@/services/users';
-import { searchParamsToObject } from '@/utils/misc';
+import { searchParamsToMap } from '@/utils/misc';
 
 export async function GET(request: NextRequest) {
-  const query = searchParamsToObject(request.nextUrl.searchParams.toString());
+  const query = searchParamsToMap(request.nextUrl.searchParams.toString());
   console.log('>> app.api.workouts.GET', { query });
   
   const workouts = await getWorkouts(query);

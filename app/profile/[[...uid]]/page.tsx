@@ -57,19 +57,15 @@ export default function Component({ params }: { params: { uid?: string } }) {
 
   const links = [
     user && !user.isAnonymous && <Link key="logout" href="/" style="warning" onClick={doLogout}>Logout</Link>,
-    user && myWorkouts?.length > 0 && <Link key="workouts" href={`/workouts?uid=${user.uid}`}>Workouts ({myWorkouts.length})</Link>,
-    user && myExercises?.length > 0 && <Link key="exercises" href={`/exercises?uid=${user.uid}`}>Exercises ({myExercises.length})</Link>,
     (!user || user.isAnonymous) && <Link key="login" href="/auth?method=login-email">Login</Link>,
     (!user || user.isAnonymous) && <Link key="signuo" href="/auth?method=signup-email">Signup</Link>,
     (!user || user.isAnonymous) &&
     <Link key="google" className="flex flex-row gap-1 items-center" onClick={doSigninWithGoogle}>
-      <BsGoogle />
-      Signin
+      <BsGoogle />Signin
     </Link>,
     (!user || user.isAnonymous) &&
     <Link key="github" className="flex flex-row gap-1 items-center" onClick={doSigninWithGithub}>
-      <BsGithub />
-      Signin
+      <BsGithub />Signin
     </Link>,
     // TODO CRIPPLE
     // user && user.isAnonymous && <Link key="" href="/" onClick={(e) => doLogout(e, logout)}>Logout</Link>,
@@ -125,6 +121,18 @@ export default function Component({ params }: { params: { uid?: string } }) {
               <tr>
                 <td className="text-right pr-2 opacity-40 font-semibold">Provider</td>
                 <td>{users.getProviderType(user)}</td>
+              </tr>
+            }
+            {user &&
+              <tr>
+                <td className="text-right pr-2 opacity-40 font-semibold">Workouts</td>
+                <td><Link key="workouts" href={`/workouts?uid=${user.uid}`}>{myWorkouts.length}</Link></td>
+              </tr>
+            }
+            {user &&
+              <tr className={myExercises.length == 0 ? "cursor-pointer hover:underline" : ""}>
+                <td className="text-right pr-2 opacity-40 font-semibold">Exercises</td>
+                <td><Link href={`/exercises?uid=${user.uid}`}>{myExercises.length}</Link></td>
               </tr>
             }
           </tbody>

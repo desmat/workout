@@ -4,7 +4,7 @@ import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import { Workout, WorkoutSession, WorkoutSet } from '@/types/Workout';
 import { Exercise } from '@/types/Exercise';
-import { arrayToObject, uuid } from '@/utils/misc';
+import { listToMap, uuid } from '@/utils/misc';
 import trackEvent from '@/utils/trackEvent';
 import { byCreatedAtDesc } from '@/utils/sort';
 import useAlert from "./alert";
@@ -321,8 +321,10 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
       }
       // console.debug("loading exercises load completed", { exercises: useExercises.getState().exercises })
 
-      const exerciseMap = arrayToObject(useExercises.getState().exercises
-        .map((e: Exercise) => [e.name.toLowerCase(), e]));
+      const exerciseMap = listToMap(
+        useExercises.getState().exercises,
+        { keyFn: (e: Exercise) => e.name.toLowerCase() }
+      );
 
       // console.debug("loading exercises", { exerciseMap })
 

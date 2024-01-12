@@ -4,7 +4,9 @@ import { User } from 'firebase/auth';
 import moment from 'moment';
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from "react";
+import { FaRepeat, FaShuffle } from "react-icons/fa6";
 import { IoPause, IoPlay, IoPlayBack, IoPlayForward } from "react-icons/io5";
+import { TbClockPlay, TbClock } from "react-icons/tb";
 import Clock from '@/app/_components/Clock';
 import Link from "@/app/_components/Link"
 import Page from "@/app/_components/Page";
@@ -62,7 +64,18 @@ export default function Component({ params }: { params: { id: string, sessionId:
   const [previousSet, setPreviousSet] = useState<WorkoutSet | undefined>(undefined);
   const [currentSetDuration, setCurrentSetDuration] = useState(0);
   let [timer, setTimer] = useState(0);
-  // console.log('>> app.workouts[id].session.Page.render()', { id: params.id, workout, session, currentSet });
+  const [mode, setMode] = useState<"normal" | "countdown">("normal");
+  const [playMode, setPlayMode] = useState({ shuffle: false, repeat: false })
+  const [previousMode, setPreviousMode] = useState<"normal" | "countdown">("normal");
+  const targetDuration = workout && currentSet && workout.exercises[currentSet.offset]?.directions?.duration;
+  const canNext = sessionStarted && currentSet && workout?.exercises?.length > 0 && (
+    playMode.repeat
+    || (playMode.shuffle && session.sets.length < workout.exercises.length)
+    || (!playMode.shuffle && currentSet.offset < workout.exercises.length - 1));
+  const canPrev = sessionStarted && currentSet && workout?.exercises?.length > 0 && (
+    playMode.shuffle && session.sets.length > 1 || !playMode.shuffle && currentSet?.offset > 0);
+
+  console.log('>> app.workouts[id].session.Page.render()', { id: params.id, workout, session, currentSet, playMode, sets: session?.sets?.length, exercises: workout?.exercises?.length });
 
   useEffect(() => {
     if (!workoutLoaded) {
@@ -76,7 +89,7 @@ export default function Component({ params }: { params: { id: string, sessionId:
 
   useEffect(() => {
     // console.log('>> app.workouts[id].session.Page useEffect(currentSet)', { currentSet, previousSet });
-    if (currentSet && (currentSet.id != previousSet?.id || currentSet.status != previousSet?.status)) {
+    if (currentSet && (currentSet.id != previousSet?.id || currentSet.status != previousSet?.status || mode != previousMode)) {
       // console.log('>> app.workouts[id].session.Page useEffect(currentSet) KICKOFF TIMER!', { currentSet, timer });
 
       if (timer) {
@@ -87,15 +100,34 @@ export default function Component({ params }: { params: { id: string, sessionId:
       timer = setInterval(() => {
         if (currentSet && currentSet.startedAt) {
           // console.log('>> app.workouts[id].session.Page useEffect(currentSet) TIC TOK!', { currentSet, timer });
-          setCurrentSetDuration((currentSet.duration || 0) + moment().valueOf() - currentSet.startedAt);
+          const duration = (currentSet.duration || 0) + moment().valueOf() - currentSet.startedAt;
+
+          // console.log('>> app.workouts[id].session.Page useEffect(currentSet) TIC TOK!', { currentSet, timer, duration, targetDuration });
+
+          if (mode == "countdown" && targetDuration) {
+            setCurrentSetDuration(Math.max(targetDuration - duration + 1000, 1400));
+          } else {
+            setCurrentSetDuration(duration);
+          }
+
+          if (mode == "countdown" && duration >= targetDuration) {
+            // console.log('>> app.workouts[id].session.Page useEffect(currentSet) NEXT!', { currentSet, timer, duration, targetDuration });
+
+            if (canNext) {
+              handleNext();
+            } else {
+              handleStopSession();
+            }
+          }
         }
-      }, 500) as any;
+      }, 50) as any;
 
       // console.log('>> app.workouts[id].session.Page useEffect(currentSet) timer kicked off', { currentSet, timer });
 
       setTimer(timer);
       setPreviousSet(currentSet);
       setCurrentSetDuration(currentSet.duration);
+      setPreviousMode(mode);
     }
 
     return () => {
@@ -106,7 +138,7 @@ export default function Component({ params }: { params: { id: string, sessionId:
         setPreviousSet(undefined);
       }
     }
-  }, [currentSet?.id, session?.id, session?.status]);
+  }, [currentSet?.id, session?.id, session?.status, mode]);
 
   async function handleStartSession() {
     // console.log('>> app.workout[id].session.handleStartSession()', { user, workout });
@@ -137,37 +169,69 @@ export default function Component({ params }: { params: { id: string, sessionId:
     }
   }
 
-  async function handleStartSet(exercise: Exercise, offset: number) {
-    console.log('>> app.workout[id].session.handleStartSet()', { user, workout, session, exercise, offset });
+  async function handleStartSet(offset: number) {
+    // console.log('>> app.workout[id].session.handleStartSet()', { user, workout, session, offset });
 
     let _session = session;
     if (!_session) {
       _session = await startSession(user, workout.id);
     }
 
-    return startSet(user, workout.id, _session.id, exercise, offset);
+    return startSet(user, workout.id, _session.id, workout.exercises[offset], offset);
   }
 
-  async function handleNext(sessionStarted: boolean, currentSet: WorkoutSet) {
-    if (workout && user && workout.exercises && sessionStarted && (currentSet.offset < workout.exercises.length - 1)) {
-      return handleStartSet(workout.exercises[currentSet.offset + 1], currentSet.offset + 1);
+  async function handleNext() {
+    if (canNext) {
+      let offset = currentSet.offset;
+      if (playMode.shuffle) {
+        let nextOffsets = Array.from({length: workout.exercises.length}, (v, i) => i)
+          .filter((o) => o != currentSet.offset);
+
+        if (!playMode.repeat) {
+          // don't repeat exercises
+          const previousOffsets = new Set(session.sets.map((s: WorkoutSet) => s.offset));
+          nextOffsets = nextOffsets.filter((i: number) => !previousOffsets.has(i));
+        }
+        
+        offset = nextOffsets[Math.round(Math.random() * (nextOffsets.length - 1))];
+      } else {
+        offset++;
+        if (playMode.repeat && offset > workout.exercises.length - 1) {
+          offset = 0;
+        }
+      }
+
+      return handleStartSet(offset);
     }
   }
 
-  async function handlePrevious(sessionStarted: boolean, currentSet: WorkoutSet) {
-    if (workout && user && workout.exercises && sessionStarted && (currentSet.offset > 0)) {
-      return handleStartSet(workout.exercises[currentSet.offset - 1], currentSet.offset - 1);
+  async function handlePrevious() {
+    if (canPrev) {
+      let offset = currentSet.offset - 1;
+      if (playMode.shuffle) {
+        offset = session.sets[offset].offset;
+      }
+
+      return handleStartSet(offset);
+    }
+  }
+
+  async function handleChangeMode() {
+    if (workout && user && workout.exercises && session) {
+      setMode(mode == "normal" ? "countdown" : "normal");
     }
   }
 
   const links = [
     workout && <Link key="back" href={`/workouts/${workout.id}`}>Back</Link>,
     workout && user && !sessionStarted && (user.uid == workout.createdBy || user.admin) && <Link key="delete" style="warning" onClick={handleDeleteSession}>Delete</Link>,
+    // workout && user && session && mode == "normal" && <Link onClick={handleChangeMode}>Manual</Link>,
+    // workout && user && session && mode == "countdown" && <Link onClick={handleChangeMode}>Countdown</Link>,
     workout && user && !session && <Link key="start" onClick={handleStartSession}>Start</Link>,
     workout && user && sessionStarted && <Link key="complete" onClick={handleCompleteSession}>Complete</Link>,
     workout && user && sessionStarted && !sessionPaused && <Link key="pause" onClick={handleStopSession}>Pause</Link>,
     workout && user && session?.status == "stopped" && <Link key="resume" onClick={handleResumeSession}>Resume</Link>,
-    workout && user && sessionStarted && (currentSet.offset < workout.exercises.length - 1) && <Link key="next" onClick={() => handleStartSet(workout.exercises[currentSet.offset + 1], currentSet.offset + 1)}>Next</Link>,
+    canNext && <Link key="next" onClick={handleNext}>Next</Link>,
   ];
 
   if (!sessionLoaded) {
@@ -230,40 +294,66 @@ export default function Component({ params }: { params: { id: string, sessionId:
                 : null;
           }}
         >
-          <Clock ms={sessionCompleted && sessionTotal || sessionPaused && currentSet && currentSet.duration || currentSetDuration || 0} />
+          <Clock ms={
+            sessionCompleted && sessionTotal
+            || sessionPaused && currentSet && mode == "normal" && currentSet.duration
+            || sessionPaused && currentSet && mode == "countdown" && targetDuration - currentSet.duration + 1000
+            || currentSetDuration
+            || 0
+          } />
         </span>
 
         {workout && user && session?.status != "completed" &&
-          <div className="flex flex-row justify-center items-center gap-2 text-5xl _bg-pink-100">
-            {sessionStarted && currentSet?.offset > 0 &&
-              <Link onClick={() => handlePrevious(sessionStarted, currentSet)}>
-                <IoPlayBack className="text-dark-2 hover:text-dark-1 active:text-light-1" />
+          <div className="flex flex-col gap-1">
+            <div className="flex flex-row relative justify-center items-center gap-2 text-5xl _bg-pink-100">
+              {canPrev &&
+                <Link onClick={handlePrevious}>
+                  <IoPlayBack className="text-dark-2 hover:text-dark-1 active:text-light-1" />
+                </Link>
+              }
+              {!canPrev &&
+                <IoPlayBack className="text-dark-2" />
+              }
+              {workout && user && sessionStarted && !sessionPaused &&
+                <Link onClick={handleStopSession}>
+                  <IoPause className="text-6xl text-dark-2 hover:text-dark-1 active:text-light-1" />
+                </Link>
+              }
+              {workout && user && sessionStarted && sessionPaused &&
+                <Link onClick={handleResumeSession}>
+                  <IoPlay className="text-6xl text-dark-2 hover:text-dark-1 active:text-light-1" />
+                </Link>
+              }
+              {!(workout && user && sessionStarted) &&
+                <IoPlay className="text-6xl text-dark-2 " />
+              }
+              {sessionStarted && canNext &&
+                <Link onClick={handleNext} >
+                  <IoPlayForward className="text-dark-2 hover:text-dark-1 active:text-light-1" />
+                </Link>
+              }
+              {!(sessionStarted && canNext) &&
+                <IoPlayForward className="text-dark-2" />
+              }
+            </div>
+            <div className="flex flex-row relative justify-center items-center gap-2 text-[1.2rem] _bg-pink-100">
+              {mode == 'countdown' &&
+                <Link onClick={handleChangeMode} title="Countdown mode activated">
+                  <TbClockPlay className="text-dark-1 hover:text-dark-1 active:text-light-1" />
+                </Link>
+              }
+              {mode == 'normal' &&
+                <Link onClick={handleChangeMode} title="Activate countdown mode">
+                  <TbClockPlay className="text-dark-2 hover:text-dark-1 active:text-light-1" />
+                </Link>
+              }
+              <Link onClick={() => setPlayMode({ ...playMode, shuffle: !playMode.shuffle })} title="Activate shuffle mode">
+                <FaShuffle className={`${playMode.shuffle ? "text-dark-1" : "text-dark-2"} hover:text-dark-1 active:text-light-1`} />
               </Link>
-            }
-            {!(sessionStarted && currentSet?.offset > 0) &&
-              <IoPlayBack className="text-dark-2" />
-            }
-            {workout && user && sessionStarted && !sessionPaused &&
-              <Link onClick={handleStopSession}>
-                <IoPause className="text-6xl text-dark-2 hover:text-dark-1 active:text-light-1" />
+              <Link onClick={() => setPlayMode({ ...playMode, repeat: !playMode.repeat })} title="Activate repeat mode">
+                <FaRepeat className={`${playMode.repeat ? "text-dark-1" : "text-dark-2"} hover:text-dark-1 active:text-light-1`} />
               </Link>
-            }
-            {workout && user && sessionStarted && sessionPaused &&
-              <Link onClick={handleResumeSession}>
-                <IoPlay className="text-6xl text-dark-2 hover:text-dark-1 active:text-light-1" />
-              </Link>
-            }
-            {!(workout && user && sessionStarted) &&
-              <IoPlay className="text-6xl text-dark-2 " />
-            }
-            {sessionStarted && currentSet.offset < workout.exercises.length - 1 &&
-              <Link onClick={() => handleNext(sessionStarted, currentSet)} >
-                <IoPlayForward className="text-dark-2 hover:text-dark-1 active:text-light-1" />
-              </Link>
-            }
-            {!(sessionStarted && currentSet.offset < workout.exercises.length - 1) &&
-              <IoPlayForward className="text-dark-2" />
-            }
+            </div>
           </div>
         }
       </div>

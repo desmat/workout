@@ -32,6 +32,6 @@ export async function POST(request: Request) {
 
   const data: any = await request.json();
   // console.log('>> app.api.workouts.[id].session.POST', { data });
-  const session = await createSession(user, data);
+  const session = await createSession(user, data.session);
   return NextResponse.json({ session });
 }

@@ -12,6 +12,7 @@ export type Workout = {
   status?: string,
   name: string,
   exercises?: Exercise[],
+  defaultMode?: SessionMode,
 };
 
 export type WorkoutSession = {
@@ -23,6 +24,7 @@ export type WorkoutSession = {
   status?: string,
   workout: Workout,
   sets: WorkoutSet[],
+  mode?: SessionMode,
 };
 
 export type WorkoutSet = {
@@ -36,4 +38,10 @@ export type WorkoutSet = {
   reps?: number,
   exercise: Exercise,
   offset: number,
-}
+};
+
+export type SessionMode = {
+  countdown: boolean, 
+  shuffle: boolean,
+  repeat: boolean,
+};

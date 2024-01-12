@@ -14,7 +14,7 @@ import(`@/services/stores/${process.env.STORE_TYPE}`)
     store = new s.create();
   });
 
-function summarizeWorkout(workout: Workout, include?: any): Workout {
+export function summarizeWorkout(workout: Workout, include?: any): Workout {
   console.log(`>> services.workout.summarizeWorkout`, { workout });
 
   return {
@@ -26,7 +26,7 @@ function summarizeWorkout(workout: Workout, include?: any): Workout {
   }
 }
 
-function summarizeWorkoutSession(session: WorkoutSession): WorkoutSession {
+export function summarizeWorkoutSession(session: WorkoutSession): WorkoutSession {
   console.log(`>> services.workout.summarizeWorkoutSession`, { session });
   return {
     ...session,
@@ -268,6 +268,7 @@ export async function createSession(user: User, data: any): Promise<WorkoutSessi
     createdAt: moment().valueOf(),
     status: "created",
     workout: data.workout,
+    mode: data.mode,
     sets: [] as WorkoutSet[],
   } as WorkoutSession;
 

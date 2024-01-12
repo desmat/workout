@@ -2,7 +2,7 @@ import { User } from 'firebase/auth';
 import moment from 'moment';
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
-import { WorkoutSession, WorkoutSet } from '@/types/Workout';
+import { Workout, WorkoutSession, WorkoutSet } from '@/types/Workout';
 import { listToMap, mapToList, mapToSearchParams, uuid } from '@/utils/misc';
 import trackEvent from '@/utils/trackEvent';
 import useAlert from "./alert";
@@ -32,7 +32,6 @@ const fetchSession = (putOrPost: "PUT" | "POST", get: any, set: any, newSession:
   const url = putOrPost == "PUT"
     ? `/api/workouts/${workoutId}/sessions/${sessionId}`
     : `/api/workouts/${workoutId}/sessions`
-  const { sessions, session } = get();
 
   // optimistic
   setLoaded(newSession.id);
@@ -42,7 +41,7 @@ const fetchSession = (putOrPost: "PUT" | "POST", get: any, set: any, newSession:
 
   fetch(url, {
     method: putOrPost,
-    body: JSON.stringify(newSession),
+    body: JSON.stringify({ session: newSession }),
   }).then(async (res) => {
     const { _workoutSessions } = get();
 
@@ -207,7 +206,7 @@ const useWorkoutSessions: any = create(devtools((set: any, get: any) => ({
     }
   },
 
-  create: async (user: User, name: string) => {
+  create: async (user: User, workout: Workout) => {
     // console.log(">> hooks.workoutSession.create", { name });
     const { _workoutSessions, setLoaded } = get();
 
@@ -218,6 +217,7 @@ const useWorkoutSessions: any = create(devtools((set: any, get: any) => ({
       createdAt: moment().valueOf(),
       status: "creating",
       name,
+      workout: { id: workout.id, name: workout.name },
       optimistic: true,
     }
 
@@ -227,7 +227,7 @@ const useWorkoutSessions: any = create(devtools((set: any, get: any) => ({
     });
 
     return new Promise((resolve, reject) => {
-      fetch('/api/workoutSessions', {
+      fetch(`/api/workouts/${workout.id}/sessions`, {
         method: "POST",
         body: JSON.stringify({ name }),
       }).then(async (res) => {
@@ -278,7 +278,7 @@ const useWorkoutSessions: any = create(devtools((set: any, get: any) => ({
   },
 
   save: async (user: User, workoutSession: WorkoutSession) => {
-    console.log(">> hooks.workoutSessionsSessions.save", { workoutSession });
+    // console.log(">> hooks.workoutSessionsSessions.save", { workoutSession });
     const { _workoutSessions, _modified } = get();
 
     // optimistic
@@ -292,14 +292,14 @@ const useWorkoutSessions: any = create(devtools((set: any, get: any) => ({
     });
 
     return new Promise((resolve, reject) => {
-      fetch(`/api/workoutSessions/${workoutSession.id}`, {
+      fetch(`/api/workouts/${workoutSession.workout.id}/sessions/${workoutSession.id}`, {
         method: "PUT",
-        body: JSON.stringify({ workoutSession }),
+        body: JSON.stringify({ session: workoutSession }),
       }).then(async (res) => {
         const { _workoutSessions, _modified } = get();
 
         if (res.status != 200) {
-          useAlert.getState().error(`Error saving workoutSession: ${res.status} (${res.statusText})`);
+          useAlert.getState().error(`Error saving workout session: ${res.status} (${res.statusText})`);
           // revert
           set({
             _workoutSessions: { ..._workoutSessions, [workoutSession.id || ""]: workoutSession },
@@ -309,7 +309,7 @@ const useWorkoutSessions: any = create(devtools((set: any, get: any) => ({
         }
 
         const data = await res.json();
-        const saved = data.workoutSession;
+        const saved = data.session;
 
         set({
           _workoutSessions: { ..._workoutSessions, [saved.id || ""]: saved },
@@ -376,6 +376,7 @@ const useWorkoutSessions: any = create(devtools((set: any, get: any) => ({
       createdAt: moment().valueOf(),
       status: "creating",
       workout,
+      mode: workout.defaultMode,
       sets: [],
     };
 

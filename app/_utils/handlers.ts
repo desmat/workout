@@ -20,7 +20,7 @@ export async function handleCreateWorkout(createWorkout: any, router: any, user:
 
   const name = window.prompt("Name?", workoutName);
   if (name) {
-    const exercises = window.prompt("Exercises?", SuggestedExerciseTypes.join(", "));
+    const exercises = window.prompt(`Exercises? (Example ${SuggestedExerciseTypes.join(", ")}`);
     if (exercises) {
       const created = await createWorkout(user, name, exercises);
 
@@ -75,7 +75,7 @@ export async function handleGenerateWorkout(generateWorkout: any, router: any, u
   ]);
 
   if (parameters && parameters.length > 0) {
-    const additionally = window.prompt("Anything else? (examples age, gender, specific disability, or more specifically 'Tai Chi', 'Mix of cardio and strength', 'Outside at the park', or leave empty to skip)");
+    const additionally = window.prompt("Anything else? (Examples: age, gender, specific disability, or more specifically 'Tai Chi', 'Mix of cardio and strength', 'Outside at the park', or leave empty to skip)");
     if (additionally) {
       parameters.push(["Additionally", additionally]);
     }

@@ -34,7 +34,7 @@ function ExerciseEntry({ user, workout, exercise, offset }: any) {
 
   async function handleUpdateDuration() {
     // console.log('>> app.workout[id].edit.handleUpdateDuration()', { user, workout, exercise, duration });
-    const val = window.prompt("Duration? (Ex: 10 minutes, 90s, etc. or blank)", `${formatTime(duration || 0)}`);
+    const val = window.prompt("Duration? (Example: 10 minutes, 90s, etc. or blank)", `${formatTime(duration || 0)}`);
     if (exercise && typeof (val) != "undefined") {
       if ([null, "", "0"].includes(val)) {
         exercise.directions = { ...exercise.directions, duration: 0 }
@@ -241,7 +241,7 @@ export default function Component({ params }: { params: { id: string } }) {
 
   async function handleAddExercise() {
     // console.log('>> app.workout[id].edit.handleAddExercise()', { user, workout });
-    const val = window.prompt("Exercise name (or names)?", "Plank");
+    const val = window.prompt("Exercise name (or names)?");
     if (val) {
       addExercise(user, workout, val);
     }

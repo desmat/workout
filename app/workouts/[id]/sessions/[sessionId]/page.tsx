@@ -4,7 +4,7 @@ import { User } from 'firebase/auth';
 import moment from 'moment';
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from "react";
-import { FaRepeat, FaShuffle } from "react-icons/fa6";
+import { FaRepeat, FaShuffle, FaCirclePlay, FaRegCirclePlay } from "react-icons/fa6";
 import { IoPause, IoPlay, IoPlayBack, IoPlayForward } from "react-icons/io5";
 import { TbClockPlay, TbClock } from "react-icons/tb";
 import Clock from '@/app/_components/Clock';
@@ -82,7 +82,7 @@ export default function Component({ params }: { params: { id: string, sessionId:
   const canPrev = sessionStarted && currentSet && workout?.exercises?.length > 0 && (
     session?.mode?.shuffle && session.sets.length > 1 || !session?.mode?.shuffle && currentSet?.offset > 0);
 
-  console.log('>> app.workouts[id].session.Page.render()', { id: params.id, workout, session, currentSet, mode: session?.mode, sets: session?.sets?.length, exercises: workout?.exercises?.length });
+  // console.log('>> app.workouts[id].session.Page.render()', { id: params.id, workout, session, currentSet, mode: session?.mode, sets: session?.sets?.length, exercises: workout?.exercises?.length });
 
   useEffect(() => {
     if (!workoutLoaded) {
@@ -158,8 +158,12 @@ export default function Component({ params }: { params: { id: string, sessionId:
   }
 
   async function handleResumeSession() {
-    // console.log('>> app.workout[id].session.handleResumeSession()', { user, session });
-    resumeSession(user, session?.id);
+    // console.log('>> app.workout[id].session.handleResumeSession()', { user, session, targetDuration, currentSet_duration: currentSet.duration });
+    if (session?.mode?.countdown && currentSet.duration >= targetDuration) {
+      handleStartSet(currentSet.offset);
+    } else {
+      resumeSession(user, session?.id);
+    }
   }
 
   async function handleCompleteSession() {
@@ -177,7 +181,7 @@ export default function Component({ params }: { params: { id: string, sessionId:
   }
 
   async function handleStartSet(offset: number) {
-    console.log('>> app.workout[id].session.handleStartSet()', { user, workout, session, offset });
+    // console.log('>> app.workout[id].session.handleStartSet()', { user, workout, session, offset });
 
     let _session = session;
     if (!_session) {
@@ -213,10 +217,12 @@ export default function Component({ params }: { params: { id: string, sessionId:
   }
 
   async function handlePrevious() {
+    // console.log('>> app.workout[id].session.handlePrevious()', { user, session, currentSet, targetDuration, currentSet_duration: currentSet.duration });
     if (canPrev) {
       let offset = currentSet.offset - 1;
+      console.log('>> app.workout[id].session.handlePrevious()', { offset });
       if (session?.mode?.shuffle) {
-        offset = session.sets[offset].offset;
+        offset = session.sets[session.sets.length - 2].offset;
       }
 
       return handleStartSet(offset);
@@ -346,22 +352,22 @@ export default function Component({ params }: { params: { id: string, sessionId:
             </div>
             <div className="flex flex-row relative justify-center items-center gap-2 text-[1.2rem] _bg-pink-100">
               <Link
-                title="Countdown mode"
-                style={session?.mode?.countdown ? "" : "light"}
+                title="Auto mode"
+                style={session?.mode?.countdown && sessionStarted && !sessionPaused? "" : "light"}
                 onClick={() => handleChangeMode({ ...session?.mode, countdown: !session?.mode?.countdown })}
               >
-                <TbClockPlay className={`${session?.mode?.countdown ? "text-dark-1" : "text-dark-2"} hover:text-dark-1 active:text-light-1`} />
+                <FaRegCirclePlay className={`${session?.mode?.countdown ? "text-dark-1" : "text-dark-2"} hover:text-dark-1 active:text-light-1`} />
               </Link>
               <Link
                 title="Shuffle mode"
-                style={session?.mode?.shuffle ? "" : "light"}
+                style={session?.mode?.shuffle && sessionStarted && !sessionPaused ? "" : "light"}
                 onClick={() => handleChangeMode({ ...session?.mode, shuffle: !session?.mode?.shuffle })}
               >
                 <FaShuffle className={`${session?.mode?.shuffle ? "text-dark-1" : "text-dark-2"} hover:text-dark-1 active:text-light-1`} />
               </Link>
               <Link
                 title="Repeat mode"
-                style={session?.mode?.repeat ? "" : "light"}
+                style={session?.mode?.repeat && sessionStarted && !sessionPaused ? "" : "light"}
                 onClick={() => handleChangeMode({ ...session?.mode, repeat: !session?.mode?.repeat })}
               >
                 <FaRepeat className={`${session?.mode?.repeat ? "text-dark-1" : "text-dark-2"} hover:text-dark-1 active:text-light-1`} />

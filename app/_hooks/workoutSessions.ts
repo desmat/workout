@@ -278,7 +278,7 @@ const useWorkoutSessions: any = create(devtools((set: any, get: any) => ({
   },
 
   save: async (user: User, workoutSession: WorkoutSession) => {
-    console.log(">> hooks.workoutSessionsSessions.save", { workoutSession });
+    // console.log(">> hooks.workoutSessionsSessions.save", { workoutSession });
     const { _workoutSessions, _modified } = get();
 
     // optimistic

@@ -3,12 +3,12 @@ import moment from 'moment';
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import { Workout, WorkoutSession, WorkoutSet } from '@/types/Workout';
-import { listToMap, mapToList, mapToSearchParams, uuid } from '@/utils/misc';
+import { listToMap, mapToList, uuid } from '@/utils/misc';
 import trackEvent from '@/utils/trackEvent';
-import useAlert from "./alert";
 import { Exercise } from '@/types/Exercise';
-import useWorkouts from './workouts';
 import { byCreatedAtDesc } from '@/utils/sort';
+import useAlert from "./alert";
+import useWorkouts from './workouts';
 
 const stopSet = (session: WorkoutSession, status = "stopped") => {
   const sets = session.sets && session.sets.filter((set: WorkoutSet) => set.status == "started");
@@ -25,53 +25,6 @@ const stopSet = (session: WorkoutSession, status = "stopped") => {
   return session;
 }
 
-const fetchSession = (putOrPost: "PUT" | "POST", get: any, set: any, newSession: WorkoutSession, callback?: any) => {
-  const { setLoaded, _workoutSessions } = get();
-  const workoutId = newSession.workout.id;
-  const sessionId = newSession.id;
-  const url = putOrPost == "PUT"
-    ? `/api/workouts/${workoutId}/sessions/${sessionId}`
-    : `/api/workouts/${workoutId}/sessions`
-
-  // optimistic
-  setLoaded(newSession.id);
-  set({
-    _workoutSessions: { ..._workoutSessions, [newSession.id || ""]: newSession }
-  });
-
-  fetch(url, {
-    method: putOrPost,
-    body: JSON.stringify({ session: newSession }),
-  }).then(async (res) => {
-    const { _workoutSessions } = get();
-
-    if (res.status != 200) {
-      useAlert.getState().error(`Error ${putOrPost == "PUT" ? "saving" : "creating"} workout session set: ${res.status} (${res.statusText})`);
-
-      // revert optimistic 
-      set({
-        _workoutSessions: { ..._workoutSessions, [newSession.id || ""]: undefined }
-      });
-      return;
-    }
-
-    const data = await res.json();
-    const savedSession = data.session;
-    // remove previous session and replace with saved session
-    set({
-      _workoutSessions: {
-        ..._workoutSessions,
-        [newSession.id || ""]: undefined,
-        [savedSession.id || ""]: savedSession
-      },
-    });
-
-    if (callback) {
-      callback(savedSession);
-    }
-  });
-}
-
 type WorkoutSessionMap = { [key: string]: WorkoutSession | undefined; };
 type StatusMap = { [key: string]: boolean };
 
@@ -79,8 +32,6 @@ const useWorkoutSessions: any = create(devtools((set: any, get: any) => ({
 
   // access via get(id) or find(query?)
   _workoutSessions: <WorkoutSessionMap>{},
-
-  _modified: <WorkoutSessionMap>{},
 
   // to smooth out UX when deleting,
   _deleted: <StatusMap>{},
@@ -92,10 +43,54 @@ const useWorkoutSessions: any = create(devtools((set: any, get: any) => ({
   // list of workoutSessions
   _loaded: <StatusMap>{},
 
-  get: (id: string, modified: boolean = false) => {
-    return modified
-      ? get()._modified[id]
-      : get()._workoutSessions[id];
+  _fetchSession: (method: "PUT" | "POST", newSession: WorkoutSession) => {
+    const { setLoaded, _workoutSessions } = get();
+    const workoutId = newSession.workout.id;
+    const sessionId = newSession.id;
+    const url = method == "PUT"
+      ? `/api/workouts/${workoutId}/sessions/${sessionId}`
+      : `/api/workouts/${workoutId}/sessions`
+
+    // optimistic
+    setLoaded(newSession.id);
+    set({
+      _workoutSessions: { ..._workoutSessions, [newSession.id || ""]: newSession }
+    });
+
+    return new Promise((resolve, reject) => {
+      fetch(url, {
+        method,
+        body: JSON.stringify({ session: newSession }),
+      }).then(async (res) => {
+        const { _workoutSessions } = get();
+
+        if (res.status != 200) {
+          useAlert.getState().error(`Error ${method == "PUT" ? "saving" : "creating"} workout session set: ${res.status} (${res.statusText})`);
+          // revert optimistic 
+          set({
+            _workoutSessions: { ..._workoutSessions, [newSession.id || ""]: undefined }
+          });
+          return reject(res.statusText);
+        }
+
+        const data = await res.json();
+        const savedSession = data.session;
+        // remove previous session and replace with saved session
+        set({
+          _workoutSessions: {
+            ..._workoutSessions,
+            [newSession.id || ""]: undefined,
+            [savedSession.id || ""]: savedSession
+          },
+        });
+
+        return resolve(savedSession);
+      });
+    });
+  },
+
+  get: (id: string) => {
+    return get()._workoutSessions[id];
   },
 
   find: (query?: object) => {
@@ -166,7 +161,7 @@ const useWorkoutSessions: any = create(devtools((set: any, get: any) => ({
 
   load: async (workoutId: string, sessionId?: string) => {
     const { setLoaded } = get();
-    console.log(">> hooks.workoutSessionsSessions.load", { workoutId, sessionId });
+    // console.log(">> hooks.workoutSessionsSessions.load", { workoutId, sessionId });
 
     if (sessionId) {
       fetch(`/api/workouts/${workoutId}/sessions/${sessionId}`).then(async (res) => {
@@ -208,7 +203,7 @@ const useWorkoutSessions: any = create(devtools((set: any, get: any) => ({
 
   create: async (user: User, workout: Workout) => {
     // console.log(">> hooks.workoutSession.create", { name });
-    const { _workoutSessions, setLoaded } = get();
+    const { _workoutSessions, setLoaded, _fetchSession } = get();
 
     // optimistic
     const creating = {
@@ -216,8 +211,8 @@ const useWorkoutSessions: any = create(devtools((set: any, get: any) => ({
       createdBy: user.uid,
       createdAt: moment().valueOf(),
       status: "creating",
-      name,
       workout: { id: workout.id, name: workout.name },
+      sets: [],
       optimistic: true,
     }
 
@@ -226,98 +221,24 @@ const useWorkoutSessions: any = create(devtools((set: any, get: any) => ({
       _workoutSessions: { ..._workoutSessions, [creating.id]: creating },
     });
 
-    return new Promise((resolve, reject) => {
-      fetch(`/api/workouts/${workout.id}/sessions`, {
-        method: "POST",
-        body: JSON.stringify({ name }),
-      }).then(async (res) => {
-        const { _workoutSessions } = get();
+    const created = await _fetchSession("POST", creating);
 
-        if (res.status != 200) {
-          useAlert.getState().error(`Error adding workoutSession: ${res.status} (${res.statusText})`);
-          set({
-            _workoutSessions: { ..._workoutSessions, [creating.id]: undefined },
-          });
-          return reject(res.statusText);
-        }
-
-        const data = await res.json();
-        const created = data.workoutSession;
-
-        trackEvent("workout-session-created", {
-          id: created.id,
-          name: created.name,
-          createdBy: created.createdBy,
-        });
-
-        // replace optimistic 
-        setLoaded(creating.id, false);
-        setLoaded(created.id);
-        set({
-          _workoutSessions: { ..._workoutSessions, [creating.id]: undefined, [created.id]: created },
-        });
-        return resolve(created);
-      });
+    trackEvent("workout-session-created", {
+      id: created.id,
+      createdBy: created.createdBy,
     });
-  },
 
-  update: async (user: User, workoutSession: WorkoutSession, remove?: boolean) => {
-    console.log(">> hooks.workoutSessionsSessions.update", { workoutSession });
-    const { _modified } = get();
-
-    if (remove) {
-      set({
-        _modified: { ..._modified, [workoutSession.id || ""]: undefined }
-      });
-    } else {
-      set({
-        _modified: { ..._modified, [workoutSession.id || ""]: { ...workoutSession, status: "updated" } }
-      });
-      return workoutSession;
-    }
+    // replace optimistic 
+    setLoaded(creating.id, false);
+    setLoaded(created.id);
+    return created;
   },
 
   save: async (user: User, workoutSession: WorkoutSession) => {
     // console.log(">> hooks.workoutSessionsSessions.save", { workoutSession });
-    const { _workoutSessions, _modified } = get();
+    const { _fetchSession } = get();
 
-    // optimistic
-    const saving = {
-      ...workoutSession,
-      status: "saving",
-    };
-
-    set({
-      _modified: { ..._modified, [workoutSession.id || ""]: saving },
-    });
-
-    return new Promise((resolve, reject) => {
-      fetch(`/api/workouts/${workoutSession.workout.id}/sessions/${workoutSession.id}`, {
-        method: "PUT",
-        body: JSON.stringify({ session: workoutSession }),
-      }).then(async (res) => {
-        const { _workoutSessions, _modified } = get();
-
-        if (res.status != 200) {
-          useAlert.getState().error(`Error saving workout session: ${res.status} (${res.statusText})`);
-          // revert
-          set({
-            _workoutSessions: { ..._workoutSessions, [workoutSession.id || ""]: workoutSession },
-            _modified: { ..._modified, [workoutSession.id || ""]: workoutSession },
-          });
-          return reject(res.statusText);
-        }
-
-        const data = await res.json();
-        const saved = data.session;
-
-        set({
-          _workoutSessions: { ..._workoutSessions, [saved.id || ""]: saved },
-          _modified: { ..._modified, [saved.id || ""]: undefined },
-        });
-        return resolve(saved);
-      });
-    });
+    return _fetchSession("PUT", workoutSession);
   },
 
   delete: async (id: string) => {
@@ -359,9 +280,9 @@ const useWorkoutSessions: any = create(devtools((set: any, get: any) => ({
   },
 
   start: async (user: User, workoutId: string) => {
-    // console.log(">> hooks.workoutSessions.start", { user, id });
+    // console.log(">> hooks.workoutSessions.start", { user, workoutId });
     const { get: getWorkout } = useWorkouts.getState();
-    const { startSet } = get();
+    const { startSet, _fetchSession } = get();
 
     if (!workoutId) {
       throw `Cannot create workout session with null id`;
@@ -380,26 +301,24 @@ const useWorkoutSessions: any = create(devtools((set: any, get: any) => ({
       sets: [],
     };
 
-    fetchSession("POST", get, set, session, (newSession: WorkoutSession) => {
-      // console.log(">> hooks.workoutSessions.startSession fetch callback", { newSession });
+    const newSession = await _fetchSession("POST", session);
 
-      trackEvent("workout-session-started", {
-        id: newSession.id,
-        workoutId: workout.id,
-        workoutName: workout.name,
-        createdBy: newSession.createdBy,
-      });
-
-      const firstExercise = newSession.workout?.exercises && newSession.workout?.exercises[0];
-      startSet(user, workoutId, newSession.id, firstExercise, 0);
+    trackEvent("workout-session-started", {
+      id: newSession.id,
+      workoutId: workout.id,
+      workoutName: workout.name,
+      createdBy: newSession.createdBy,
     });
+
+    const firstExercise = newSession.workout?.exercises && newSession.workout?.exercises[0];
+    startSet(user, workoutId, newSession.id, firstExercise, 0);
 
     return session;
   },
 
   complete: async (user: User, id: string) => {
     // console.log(">> hooks.workoutSessions.complete", { user, id });
-    const { get: getSession } = get();
+    const { get: getSession, _fetchSession } = get();
 
     if (!id) {
       throw `Cannot complete workout session with null id`;
@@ -414,13 +333,13 @@ const useWorkoutSessions: any = create(devtools((set: any, get: any) => ({
     session = stopSet(session, "completed");
     session.status = "completed";
 
-    fetchSession("PUT", get, set, session, (updatedSession: WorkoutSession) => {
-      trackEvent("workout-session-completed", {
-        id: updatedSession.id,
-        workoutId: updatedSession.workout?.id,
-        workoutName: updatedSession.workout?.name,
-        createdBy: updatedSession.createdBy,
-      });
+    const updated = await _fetchSession("PUT", session);
+
+    trackEvent("workout-session-completed", {
+      id: updated.id,
+      workoutId: updated.workout?.id,
+      workoutName: updated.workout?.name,
+      createdBy: updated.createdBy,
     });
 
     return session;
@@ -428,7 +347,7 @@ const useWorkoutSessions: any = create(devtools((set: any, get: any) => ({
 
   stop: async (user: User, id: string) => {
     // console.log(">> hooks.workoutSessions.stopSession", { user, id });
-    const { get: getSession } = get();
+    const { get: getSession, _fetchSession } = get();
 
     if (!id) {
       throw `Cannot stop workout session with null id`;
@@ -443,14 +362,12 @@ const useWorkoutSessions: any = create(devtools((set: any, get: any) => ({
     session = stopSet(session);
     session.status = "stopped";
 
-    fetchSession("PUT", get, set, session);
-
-    return session;
+    return _fetchSession("PUT", session);
   },
 
   resume: async (user: User, id: string) => {
     // console.log(">> hooks.workoutSessions.resume", { user, id });
-    const { get: getSession } = get();
+    const { get: getSession, _fetchSession } = get();
 
     if (!id) {
       throw `Cannot resume workout session with null id`;
@@ -472,22 +389,16 @@ const useWorkoutSessions: any = create(devtools((set: any, get: any) => ({
       throw `Unable to resume session: no set found: ${id}`;
     }
 
-    // console.log(">> hooks.workoutSessions.resumeSession", { sessionSet });
-
     sessionSet.startedAt = moment().valueOf();
     sessionSet.stoppedAt = 0;
     sessionSet.status = "started";
     session.status = "started";
 
-    // console.log(">> hooks.workoutSessions.resumeSession", { session });
-
-    fetchSession("PUT", get, set, session);
-
-    return session;
+    return _fetchSession("PUT", session);
   },
 
   startSet: async (user: User, workoutId: string, sessionId: string, exercise: Exercise, offset: number) => {
-    const { get: getSession } = get();
+    const { get: getSession, _fetchSession } = get();
     const exerciseId = exercise.id;
     const exerciseName = exercise.name;
     // console.log(">> hooks.workoutSessions.startSet", { user, workoutId, sessionId, exerciseId, offset });
@@ -517,9 +428,7 @@ const useWorkoutSessions: any = create(devtools((set: any, get: any) => ({
     session.status = "started";
     session.sets.push(sessionSet);
 
-    fetchSession("PUT", get, set, session);
-
-    return session;
+    return _fetchSession("PUT", session);
   },
 })));
 

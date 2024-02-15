@@ -12,7 +12,7 @@ const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Workout',
-  description: 'AI-Powered Personal Trainer',
+  description: 'AI-powered personal trainer',
 }
 
 export default function RootLayout({
@@ -24,7 +24,7 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <link rel="icon" href="/favicon.ico" sizes="any" />
-        <meta property="og:title" content="Workout: AI-Powered Personal Trainer" />
+        <meta property="og:title" content="Workout: AI-powered personal trainer" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://workout.desmat.ca/" />
         {/* <meta property="og:image" content="https://workout.desmat.ca/social_img.png" /> */}

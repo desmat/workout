@@ -22,6 +22,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <meta property="og:title" content="Workout: AI-Powered Personal Trainer" />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://workout.desmat.ca/" />
+        {/* <meta property="og:image" content="https://workout.desmat.ca/social_img.png" /> */}
+      </head>
       <body className={inter.className}>
         <div className="flex flex-col lg:flex-row">
           <Nav />

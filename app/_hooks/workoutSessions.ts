@@ -290,6 +290,7 @@ const useWorkoutSessions: any = create(devtools((set: any, get: any) => ({
 
 
     const workout = getWorkout(workoutId); // TODO summarize
+    // console.log(">> hooks.workoutSessions.start", { workout });
 
     const session = {
       id: uuid(),
@@ -325,6 +326,7 @@ const useWorkoutSessions: any = create(devtools((set: any, get: any) => ({
     }
 
     let session = getSession(id);
+    // console.log(">> hooks.workoutSessions.complete", { session });
 
     if (!session) {
       throw `Session not found: ${id}`;
@@ -402,6 +404,8 @@ const useWorkoutSessions: any = create(devtools((set: any, get: any) => ({
     const exerciseId = exercise.id;
     const exerciseName = exercise.name;
     // console.log(">> hooks.workoutSessions.startSet", { user, workoutId, sessionId, exerciseId, offset });
+    // console.log(">> hooks.workoutSessions.startSet", { exercise });
+    
 
     if (!workoutId || !sessionId || !exerciseId) {
       throw `Cannot create workout set with null id`;
@@ -421,7 +425,7 @@ const useWorkoutSessions: any = create(devtools((set: any, get: any) => ({
       createdAt: moment().valueOf(),
       startedAt: moment().valueOf(),
       status: "started",
-      exercise: { id: exerciseId, name: exerciseName },
+      exercise: { id: exerciseId, name: exerciseName, directions: exercise.directions },
       offset,
     };
 

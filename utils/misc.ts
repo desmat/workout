@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
+import groupby from 'object.groupby';
 
 export function uuid(): string {
   return uuidv4().substring(0, 8);
@@ -62,4 +63,8 @@ export function mapToList(
 export function round(n: number, digits?: any) {
   const exp = 10 ** digits || 10;
   return Math.round(n * exp) / exp;
+}
+
+export function groupBy(arr: any[], fn: (e: any) => any): any {
+  return groupby(arr, fn);
 }

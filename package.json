@@ -24,6 +24,7 @@
     "moment": "^2.29.4",
     "next": "^14.0.4",
     "next-firebase-auth-edge": "git+https://github.com/desmat/next-firebase-auth-edge.git",
+    "object.groupby": "^1.0.3",
     "openai": "^4.19.1",
     "postcss": "8.4.26",
     "react": "18.2.0",
@@ -36,6 +37,7 @@
     "zustand": "^4.4.0"
   },
   "devDependencies": {
+    "@types/object.groupby": "^1.0.4",
     "@types/uuid": "^9.0.7",
     "encoding": "^0.1.13"
   }

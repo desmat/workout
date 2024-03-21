@@ -20,7 +20,7 @@ export async function handleCreateWorkout(createWorkout: any, router: any, user:
 
   const name = window.prompt("Name?", workoutName);
   if (name) {
-    const exercises = window.prompt(`Exercises? (Example ${SuggestedExerciseTypes.join(", ")}`);
+    const exercises = window.prompt(`Exercises? (Example ${SuggestedExerciseTypes.join(", ")})`);
     if (exercises) {
       const created = await createWorkout(user, name, exercises);
 

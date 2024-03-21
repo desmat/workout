@@ -21,6 +21,8 @@ export async function middleware(request: NextRequest) {
 
   const { user } = await validateUserSession(request);
 
+  // console.log("*** middleware", { user });
+  
   if (user) {
     return NextResponse.next();
   }

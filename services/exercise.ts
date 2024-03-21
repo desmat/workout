@@ -13,7 +13,7 @@ import(`@/services/stores/${process.env.STORE_TYPE}`)
   });
 
 export function summarizeExercise(exercise: Exercise, include?: any): Exercise {
-  console.log(`>> services.workout.summarizeExercise`, { exercise });
+  // console.log(`>> services.workout.summarizeExercise`, { exercise, include });
   const included: any = {};
   if (include?.description) included.description = exercise.description;
   if (include?.directions) included.directions = exercise.directions;

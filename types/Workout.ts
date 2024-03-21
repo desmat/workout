@@ -34,8 +34,9 @@ export type WorkoutSet = {
   startedAt?: number,
   stoppedAt?: number,
   status?: string,
-  duration?: number,
+  sets?: number,
   reps?: number,
+  duration?: number,
   exercise: Exercise,
   offset: number,
 };

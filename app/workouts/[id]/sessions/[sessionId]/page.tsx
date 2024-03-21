@@ -15,6 +15,7 @@ import useWorkoutSessions from "@/app/_hooks/workoutSessions";
 import useUser from "@/app/_hooks/user";
 import { SessionMode, Workout, WorkoutSession, WorkoutSet } from '@/types/Workout';
 import { Exercise } from '@/types/Exercise';
+import { groupBy } from '@/utils/misc';
 import { byCreatedAtDesc } from '@/utils/sort';
 
 export default function Component({ params }: { params: { id: string, sessionId: string } }) {
@@ -353,7 +354,7 @@ export default function Component({ params }: { params: { id: string, sessionId:
             <div className="flex flex-row relative justify-center items-center gap-2 text-[1.2rem] _bg-pink-100">
               <Link
                 title="Auto mode"
-                style={session?.mode?.countdown && sessionStarted && !sessionPaused? "" : "light"}
+                style={session?.mode?.countdown && sessionStarted && !sessionPaused ? "" : "light"}
                 onClick={() => handleChangeMode({ ...session?.mode, countdown: !session?.mode?.countdown })}
               >
                 <FaRegCirclePlay className={`${session?.mode?.countdown ? "text-dark-1" : "text-dark-2"} hover:text-dark-1 active:text-light-1`} />
@@ -417,20 +418,37 @@ export default function Component({ params }: { params: { id: string, sessionId:
             <div className="self-center _font-bold">Previous sets</div>
           }
           {
-            session.sets
-              .sort(byCreatedAtDesc)
-              .map((set: WorkoutSet, i: number) => {
+            // session.sets
+            Object.entries(
+              groupBy(session.sets, (set: WorkoutSet) => set.exercise.name))
+              .sort()
+              .map((e: any, i: number) => {
+                const exercise = e[0] || "";
+                const sets: WorkoutSet[] = e[1];
+                // console.log("***", { exercise, sets });
+                const totalDuration = sets
+                  .map((set: WorkoutSet) => set.status == "started"
+                    ? (set?.duration || 0) + moment().valueOf() - (set?.startedAt || 0)
+                    : (set?.duration || 0))
+                  .reduce((t: number, v: number) => t + v, 0)
+                const totalReps = sets
+                  .map((set: WorkoutSet) => (set.exercise?.directions?.sets as number || 1) * (set.exercise?.directions?.reps as number || 0))
+                  .reduce((t: number, v: number) => t + v, 0)
+                // console.log("***", { totalDuration, totalReps });
+
                 return (
                   <div className="flex flex-row _bg-pink-300" key={i}>
-                    <div className="flex flex-row flex-grow _bg-yellow-100 text-dark-0 capitalize _font-semibold mr-2">
-                      {set.exercise?.name}
-                    </div>
-                    <Clock
-                      ms={
-                        set.status == "started"
-                          ? (set?.duration || 0) + moment().valueOf() - (set?.startedAt || 0)
-                          : (set?.duration || 0)
+                    <div className="flex flex-row flex-grow _bg-yellow-100 text-dark-0 _font-semibold mr-2">
+                      <span className="capitalize">{exercise}</span>
+                      {totalReps > 0 &&
+                        <div className="pl-1 _ml-auto">
+                          {` (${totalReps} reps)`}
+                        </div>
                       }
+                    </div>
+
+                    <Clock
+                      ms={totalDuration}
                     />
                   </div>
                 )

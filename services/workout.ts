@@ -15,7 +15,7 @@ import(`@/services/stores/${process.env.STORE_TYPE}`)
   });
 
 export function summarizeWorkout(workout: Workout, include?: any): Workout {
-  console.log(`>> services.workout.summarizeWorkout`, { workout });
+  console.log(`>> services.workout.summarizeWorkout`, { workout, include });
 
   return {
     ...workout,
@@ -30,7 +30,11 @@ export function summarizeWorkoutSession(session: WorkoutSession): WorkoutSession
   console.log(`>> services.workout.summarizeWorkoutSession`, { session });
   return {
     ...session,
-    workout: summarizeWorkout(session.workout),
+    workout: summarizeWorkout(session.workout, {
+      exercises: {
+        directions: true,
+      }
+    }),
     sets: session.sets ? session.sets.map(summarizeWorkoutSet) : [],
   }
 }
@@ -39,7 +43,7 @@ function summarizeWorkoutSet(set: WorkoutSet): WorkoutSet {
   console.log(`>> services.workout.summarizeWorkoutSet`, { set });
   return {
     ...set,
-    exercise: summarizeExercise(set.exercise),
+    exercise: summarizeExercise(set.exercise, { directions: true }),
   }
 }
 

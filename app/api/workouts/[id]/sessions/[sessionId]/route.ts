@@ -51,6 +51,8 @@ export async function PUT(
   // TODO more validation here? createdBy and such?
 
   const data: any = await request.json();
+  // console.log('>> app.api.workout.[0].session.[id].PUT', { data });
+
   const updatedSession = await saveSession(user, data.session as WorkoutSession);
 
   return NextResponse.json({ session: updatedSession });

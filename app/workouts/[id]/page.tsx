@@ -1,10 +1,11 @@
 'use client'
 
-import { capitalize } from '@desmat/utils/format';
 import { byCreatedAtDesc } from '@desmat/utils/sort';
+import { capitalize } from '@desmat/utils/format';
 import moment from 'moment';
 import { useRouter } from 'next/navigation'
 import { useEffect } from "react";
+import DailySummaryChart from '@/app/_components/charts/HistoricalWorkoutSessionsHeatmap';
 import Clock from '@/app/_components/Clock';
 import { ExerciseEntry } from '@/app/_components/Exercise';
 import Link from "@/app/_components/Link"
@@ -50,18 +51,18 @@ function SessionSummary({ session, workout }: any) {
   )
 }
 
-// function Graph({ id, prompt, exercises, sessions, showDetails, user }: any) {
-//   console.log('>> app.workouts[id].Graph.render()', { id, exercises, sessions });
+function Graph({ id, prompt, exercises, sessions, showDetails, user }: any) {
+  console.log('>> app.workouts[id].Graph.render()', { id, exercises, sessions });
 
-//   return (
-//       <div className="flex flex-col items-center gap-3 lg:w-[calc(100vw-12rem)] w-[calc(100vw-4rem)]">
-//       <div className="text-dark-0 opacity-40">Historical</div>
-//       <div className="flex flex-col gap-0 w-full mb-[-1rem]">
-//         <DailySummaryChart sessions={sessions}/>
-//       </div>
-//     </div>
-//   );
-// }
+  return (
+      <div className="flex flex-col items-center gap-3 lg:w-[calc(100vw-12rem)] w-[calc(100vw-4rem)]">
+      <div className="text-dark-0 opacity-40">Historical</div>
+      <div className="flex flex-col gap-0 w-full mb-[-1rem]">
+        <DailySummaryChart sessions={sessions}/>
+      </div>
+    </div>
+  );
+}
 
 function Exercises({ id, prompt, exercises, sessions, showDetails, user }: any) {
   // console.log('>> app.workouts[id].WorkoutDetails.render()', { id, exercises, sessions });
@@ -238,9 +239,9 @@ export default function Component({ params }: { params: { id: string } }) {
       {workout &&
         <div className="flex flex-col items-center gap-4">
           {/* <WorkoutDetails {...{ ...workout, sessions: workoutSessions, showDetails, user }} /> */}
-          {/* {workout && workout.exercises && workout.exercises.length > 0 &&
+          {workout && workout.exercises && workout.exercises.length > 0 &&
             <Graph {...{ ...workout, sessions: workoutSessions, user }} />
-          } */}
+          }
           {workout && workout.exercises && workout.exercises.length > 0 &&
             <Exercises {...{ ...workout, sessions: workoutSessions, user }} />
           }

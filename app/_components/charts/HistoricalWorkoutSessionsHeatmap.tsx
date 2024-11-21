@@ -27,8 +27,8 @@ export default function DailySummaryChart({
   console.log("components.charts.DailySummaryChart", { summarizedSessions });
 
   const data: any = summarizedSessions && Object.entries(summarizedSessions)
-    .map((e: any) => [e[0], Math.round(e[1])]
-    );
+    .map((e: any) => [e[0], Math.round(e[1])])
+    .filter((e: any) => e[1] > 1) // trim out non-valid workouts
 
   console.log("components.charts.DailySummaryChart", { data });
 

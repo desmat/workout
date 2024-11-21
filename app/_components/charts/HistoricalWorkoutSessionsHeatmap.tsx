@@ -36,7 +36,7 @@ export default function DailySummaryChart({
   const toDate = moment()
     .format("YYYY-MM-DD");
   const fromDate = moment(toDate)
-    .add(-360, "days")
+    .add(-365, "days")
     .format("YYYY-MM-DD");
   const minTotal = data && data
     .reduce((min: number, val: any) => val[1] < min ? val[1] : min, Number.MAX_SAFE_INTEGER);

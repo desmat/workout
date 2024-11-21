@@ -1,5 +1,6 @@
 'use client'
 
+import { capitalize, formatNumber, formatRange, formatTime } from '@desmat/utils/format';
 import { useRouter } from 'next/navigation'
 import moment from 'moment';
 import { useEffect } from "react";
@@ -11,7 +12,6 @@ import useAlert from '@/app/_hooks/alert';
 import useWorkouts from "@/app/_hooks/workouts";
 import useUser from "@/app/_hooks/user";
 import { Exercise } from '@/types/Exercise';
-import { capitalize, formatNumber, formatRange, formatTime } from '@/utils/format';
 
 function ExerciseEntry({ user, workout, exercise, offset }: any) {
   const warning = useAlert((state: any) => state.warning);

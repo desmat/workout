@@ -1,11 +1,5 @@
+import delay from '@desmat/utils';
 import OpenAI from 'openai';
-import { sampleExercises } from './stores/samples';
-import delay from '@/utils/delay';
-
-let store: any;
-import(`@/services/stores/${process.env.STORE_TYPE}`).then((importedStore) => {
-  store = importedStore;
-});
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,

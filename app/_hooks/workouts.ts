@@ -1,9 +1,9 @@
+import { listToMap, mapToList, mapToSearchParams, uuid } from '@desmat/utils';
 import { User } from 'firebase/auth';
 import moment from 'moment';
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import { Workout } from '@/types/Workout';
-import { listToMap, mapToList, mapToSearchParams, uuid } from '@/utils/misc';
 import trackEvent from '@/utils/trackEvent';
 import useAlert from "./alert";
 import { Exercise } from '@/types/Exercise';
@@ -366,8 +366,8 @@ const useWorkouts: any = create(devtools((set: any, get: any) => ({
       // console.log("loading exercises", { exerciseMap });
 
       (updating.exercises || [])
-        .filter((e: Exercise) => !e.id) // non-resolved should not have an id (id this one was not added just now)
-        .forEach((e: Exercise) => {
+        .filter((e: any) => !e.id) // non-resolved should not have an id (id this one was not added just now)
+        .forEach((e: any) => {
           console.debug("loading exercises resolving exercises", { e })
           const found = exerciseMap[e.name.toLowerCase()];
           // exists

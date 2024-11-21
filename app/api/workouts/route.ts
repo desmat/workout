@@ -1,10 +1,10 @@
 export const maxDuration = 300;
 // export const dynamic = 'force-dynamic';
 
+import { searchParamsToMap } from '@desmat/utils';
 import { NextRequest, NextResponse } from 'next/server'
 import { getWorkouts, createWorkout } from '@/services/workout';
 import { validateUserSession } from '@/services/users';
-import { searchParamsToMap } from '@/utils/misc';
 
 export async function GET(request: NextRequest) {
   const query = searchParamsToMap(request.nextUrl.searchParams.toString());

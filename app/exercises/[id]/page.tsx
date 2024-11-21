@@ -1,16 +1,14 @@
 'use client'
 
-import { User } from 'firebase/auth';
+import { capitalize, formatNumber, formatRange, formatTime } from '@desmat/utils/format';
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import BackLink from '@/app/_components/BackLink';
 import Link from "@/app/_components/Link"
 import Page from "@/app/_components/Page";
 import { formatDirections } from '@/app/_components/Exercise';
 import useExercises from "@/app/_hooks/exercises";
 import useUser from "@/app/_hooks/user";
-import { Exercise } from "@/types/Exercise";
-import { capitalize, formatNumber, formatRange, formatTime } from '@/utils/format';
 
 function ExerciseVariation({ name, description, instructions, level, directions }: any) {
   const formattedDirections = directions && formatDirections(directions);

@@ -1,8 +1,8 @@
 'use client'
 
+import { byName } from '@desmat/utils/sort';
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useState } from "react";
-import FilterButton from '@/app/_components/FilterButton';
+import { useEffect } from "react";
 import Link from "@/app/_components/Link"
 import Page from "@/app/_components/Page";
 import useAlert from '@/app/_hooks/alert';
@@ -11,7 +11,6 @@ import useWorkouts from '@/app/_hooks/workouts';
 import { handleCreateWorkout, handleGenerateWorkout } from '@/app/_utils/handlers';
 import { Workout } from "@/types/Workout"
 import { Exercise } from '@/types/Exercise';
-import { byName } from '@/utils/sort';
 
 function WorkoutEntry({ workout, user }: any) {
   const isReady = ["created", "saved"].includes(workout?.status);

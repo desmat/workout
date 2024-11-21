@@ -1,7 +1,7 @@
+import { searchParamsToMap } from '@desmat/utils';
 import { NextRequest, NextResponse } from 'next/server'
 import { getExercises, createExercise } from '@/services/exercise';
 import { validateUserSession } from '@/services/users';
-import { searchParamsToMap } from '@/utils/misc';
 
 export const maxDuration = 300;
 // export const dynamic = 'force-dynamic';

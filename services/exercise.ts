@@ -1,16 +1,13 @@
+import { uuid } from '@desmat/utils';
 import { User } from 'firebase/auth';
 import moment from 'moment';
 import * as openai from "@/services/openai";
+import { createStore } from '@/services/stores/redis';
 import { Exercise } from "@/types/Exercise";
-import { Store } from "@/types/Store";
-import { uuid } from '@/utils/misc';
 
-let store: Store;
-import(`@/services/stores/${process.env.STORE_TYPE}`)
-  .then((s: any) => {
-    console.log(">> services.exercise.parseGeneratedExercise", { s })
-    store = new s.create();
-  });
+const store = createStore({
+  debug: true,
+});
 
 export function summarizeExercise(exercise: Exercise, include?: any): Exercise {
   // console.log(`>> services.workout.summarizeExercise`, { exercise, include });
@@ -187,7 +184,7 @@ export async function createExercise(user: User, name: string): Promise<Exercise
     name,
   } as Exercise;
 
-  return store.exercises.create(user.uid, exercise);
+  return store.exercises.create(exercise);
 }
 
 export async function generateExercise(user: User, exercise: Exercise): Promise<Exercise> {
@@ -201,7 +198,7 @@ export async function generateExercise(user: User, exercise: Exercise): Promise<
     updatedAt: moment().valueOf(),
     updatedBy: user.uid,
   };
-  store.exercises.update(user.uid, exercise);
+  store.exercises.update(exercise);
 
   const res = await openai.generateExercise(exercise.name);
   const generatedExercise = parseGeneratedExercise(res);
@@ -216,10 +213,10 @@ export async function generateExercise(user: User, exercise: Exercise): Promise<
     updatedBy: user.uid,
   };
 
-  return store.exercises.update(user.uid, exercise);
+  return store.exercises.update(exercise);
 }
 
-export async function deleteExercise(user: any, id: string): Promise<Exercise> {
+export async function deleteExercise(user: any, id: string): Promise<Exercise | undefined> {
   console.log(">> services.exercise.deleteExercise", { id, user });
 
   if (!id) {
@@ -235,7 +232,7 @@ export async function deleteExercise(user: any, id: string): Promise<Exercise> {
     throw `Unauthorized`;
   }
 
-  return store.exercises.delete(user.uid, id);
+  return store.exercises.delete(id);
 }
 
 export async function saveExercise(user: any, exercise: Exercise): Promise<Exercise> {
@@ -245,5 +242,5 @@ export async function saveExercise(user: any, exercise: Exercise): Promise<Exerc
     throw `Unauthorized`;
   }
 
-  return store.exercises.update(user.uid, exercise);
+  return store.exercises.update(exercise);
 }

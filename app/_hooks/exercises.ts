@@ -1,9 +1,9 @@
+import { listToMap, mapToList, mapToSearchParams, uuid } from '@desmat/utils';
 import { User } from 'firebase/auth';
 import moment from 'moment';
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import { Exercise } from '@/types/Exercise';
-import { listToMap, mapToList, mapToSearchParams, uuid } from '@/utils/misc';
 import trackEvent from '@/utils/trackEvent';
 import useAlert from "./alert";
 

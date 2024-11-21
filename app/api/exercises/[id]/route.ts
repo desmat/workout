@@ -1,7 +1,6 @@
+import { getExercise, deleteExercise, saveExercise } from '@/services/exercise';
 import { NextResponse } from 'next/server'
-import { getExercise, deleteExercise } from '@/services/exercise';
 import { validateUserSession } from '@/services/users';
-import { saveExercise } from '@/services/stores/memory';
 
 export const maxDuration = 300;
 

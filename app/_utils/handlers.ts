@@ -1,9 +1,9 @@
 'use client'
 
+import { capitalize } from "@desmat/utils/format";
 import { User } from "firebase/auth";
 import moment from "moment";
 import { SuggestedExerciseTypes } from "@/types/Exercise";
-import { capitalize } from "@/utils/format";
 
 export async function handleCreateWorkout(createWorkout: any, router: any, user: User | undefined) {
   // console.log("*** handleCreateGame", { user, name: user.displayName?.split(/\s+/) });

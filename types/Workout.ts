@@ -1,8 +1,8 @@
 import { Exercise } from "./Exercise";
 
 export type Workout = {
-  id?: string,
-  createdAt?: number,
+  id: string,
+  createdAt: number,
   createdBy?: string,
   deletedAt?: number,
   deletedBy?: string,
@@ -16,9 +16,9 @@ export type Workout = {
 };
 
 export type WorkoutSession = {
-  id?: string,
+  id: string,
   createdBy?: string,
-  createdAt?: number,
+  createdAt: number,
   deletedAt?: number,
   updatedAt?: number,
   status?: string,

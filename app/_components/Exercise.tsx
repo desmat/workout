@@ -1,6 +1,6 @@
 import Link from "@/app/_components/Link"
 import { ExerciseDirections } from "@/types/Exercise";
-import { formatNumber, formatTime, formatRange } from "@/utils/format";
+import { formatNumber, formatTime, formatRange } from "@desmat/utils/format";
 
 export function formatDirections({ duration, sets, reps }: ExerciseDirections) {
   const formattedSets = sets && sets != 1 &&`${formatRange(sets, formatNumber, "set")}`;

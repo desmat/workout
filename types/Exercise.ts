@@ -7,8 +7,8 @@ export const SuggestedExerciseTypes = [
 
 export type Exercise = {
   name: string,
-  id?: string,
-  createdAt?: number,
+  id: string,
+  createdAt: number,
   createdBy?: string,
   deletedAt?: number,
   deletedBy?: string,

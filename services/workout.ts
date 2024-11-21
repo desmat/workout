@@ -1,18 +1,15 @@
+import { uuid } from '@desmat/utils';
 import { User } from 'firebase/auth';
 import moment from 'moment';
 import * as openai from "@/services/openai";
+import { createStore } from '@/services/stores/redis';
 import { Exercise } from "@/types/Exercise";
 import { Workout, WorkoutSession, WorkoutSet } from '@/types/Workout';
-import { Store } from '@/types/Store';
-import { uuid } from '@/utils/misc';
-import { createExercise, getExercises, generateExercise, getOrGenerateExercises, summarizeExercise } from './exercise';
+import { getOrGenerateExercises, summarizeExercise } from './exercise';
 
-let store: Store;
-import(`@/services/stores/${process.env.STORE_TYPE}`)
-  .then((s: any) => {
-    console.log(">> services.exercise.parseGeneratedExercise", { s })
-    store = new s.create();
-  });
+const store = createStore({
+  debug: true,
+});
 
 export function summarizeWorkout(workout: Workout, include?: any): Workout {
   console.log(`>> services.workout.summarizeWorkout`, { workout, include });
@@ -135,7 +132,7 @@ export async function createWorkout(user: User, name: string, exerciseNames: str
 
   console.log(`>> services.workout.createWorkout`, { exercises });
 
-  return store.workouts.create(user.uid, summarizeWorkout(
+  return store.workouts.create(summarizeWorkout(
     { ...workout, exercises, status: "created" },
     {
       exercises: {
@@ -182,7 +179,7 @@ export async function generateWorkout(user: User, name: string, parameters: any[
     updatedAt: moment().valueOf(),
   };
 
-  return store.workouts.create(user.uid, summarizeWorkout(
+  return store.workouts.create(summarizeWorkout(
     { ...workout, exercises, status: "created" },
     {
       exercises: {
@@ -205,8 +202,8 @@ export async function saveWorkout(user: User, workout: Workout): Promise<Workout
 
   // TODO check something here?
 
-  return store.workouts.update(user.uid, summarizeWorkout(
-    { ...workout, status: "saved" },
+  return store.workouts.update(summarizeWorkout(
+    { ...workout, status: "saved", updatedBy: user.uid },
     {
       exercises: {
         status: true,
@@ -233,7 +230,7 @@ export async function deleteWorkout(user: any, id: string): Promise<void> {
     throw `Unauthorized`;
   }
 
-  store.workouts.delete(user.uid, id);
+  store.workouts.delete(id);
   return new Promise((resolve, reject) => resolve());
 }
 
@@ -278,7 +275,7 @@ export async function createSession(user: User, data: any): Promise<WorkoutSessi
 
   console.log(`>> services.workout.createSession`, { session });
 
-  const createdSession = await store.workoutSessions.create(user.uid, summarizeWorkoutSession(session));
+  const createdSession = await store.workoutSessions.create(summarizeWorkoutSession(session));
 
   console.log(`>> services.workout.createSession`, { createdSession });
 
@@ -297,12 +294,12 @@ export async function saveSession(user: User, session: WorkoutSession): Promise<
 
   // TODO check something here?
 
-  const savedSession = await store.workoutSessions.update(user.uid, summarizeWorkoutSession(session));
+  const savedSession = await store.workoutSessions.update({ ...summarizeWorkoutSession(session), updatedBy: user.uid });
 
   return savedSession;
 }
 
-export async function deleteSession(user: any, id: string): Promise<WorkoutSession> {
+export async function deleteSession(user: any, id: string): Promise<WorkoutSession | undefined> {
   console.log(">> services.workout.deleteSession", { id, user });
 
   if (!id) {
@@ -318,5 +315,5 @@ export async function deleteSession(user: any, id: string): Promise<WorkoutSessi
     throw `Unauthorized`;
   }
 
-  return store.workoutSessions.delete(user.uid, id);
+  return store.workoutSessions.delete(id);
 }

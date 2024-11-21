@@ -1,6 +1,6 @@
 'use client'
 
-import { User } from 'firebase/auth';
+import { byName } from '@desmat/utils/sort';
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect } from "react";
 import { ExerciseEntry } from '@/app/_components/Exercise';
@@ -8,8 +8,6 @@ import Link from "@/app/_components/Link"
 import Page from "@/app/_components/Page";
 import useExercises from '@/app/_hooks/exercises';
 import useUser from '@/app/_hooks/user';
-import { Exercise } from "@/types/Exercise"
-import { byName } from '@/utils/sort';
 
 export default function Component() {
   const router = useRouter();

@@ -3,14 +3,29 @@
 import { byName } from '@desmat/utils/sort';
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect } from "react";
+import DailySummaryChart from '@/app/_components/charts/HistoricalWorkoutSessionsHeatmap';
 import Link from "@/app/_components/Link"
 import Page from "@/app/_components/Page";
 import useAlert from '@/app/_hooks/alert';
 import useUser from '@/app/_hooks/user';
 import useWorkouts from '@/app/_hooks/workouts';
+import useWorkoutSessions from '@/app/_hooks/workoutSessions';
 import { handleCreateWorkout, handleGenerateWorkout } from '@/app/_utils/handlers';
-import { Workout } from "@/types/Workout"
+import { Workout, WorkoutSession } from "@/types/Workout"
 import { Exercise } from '@/types/Exercise';
+
+function Graph({ sessions }: any) {
+  console.log('>> app.workouts.Graph.render()', { sessions });
+
+  return (
+    <div className="flex flex-col items-center gap-3 max-w-[53rem] w-[calc(100vw-32px)]">
+      {/* <div className="text-dark-0 opacity-40">Historical</div> */}
+      <div className="flex flex-col gap-0 w-full">
+        <DailySummaryChart sessions={sessions} />
+      </div>
+    </div>
+  );
+}
 
 function WorkoutEntry({ workout, user }: any) {
   const isReady = ["created", "saved"].includes(workout?.status);
@@ -77,6 +92,18 @@ export default function Component() {
   ]);
 
   const [
+    startSession,
+    sessions,
+    sessionsLoaded,
+    loadSessions
+  ] = useWorkoutSessions((state: any) => [
+    state.start,
+    state.find(),
+    state.loaded(),
+    state.load
+  ]);
+
+  const [
     info,
     success
   ] = useAlert((state: any) => [
@@ -84,13 +111,15 @@ export default function Component() {
     state.success
   ]);
 
-  const loaded = userLoaded && workoutsLoaded;
+  const loaded = userLoaded && workoutsLoaded // && sessionsLoaded;
   const filteredWorkouts = loaded && uidFilter && workouts.filter((workout: Workout) => workout.createdBy == uidFilter) || workouts;
+  const filteredSessions = sessionsLoaded && sessions.filter((session: WorkoutSession) => session.createdBy == user.uid);
   // console.log('>> app.trivia.page.render()', { uidFilter, loaded, workouts });
 
   useEffect(() => {
     if (userLoaded) {
       load(query);
+      loadSessions();
     }
   }, [uidFilter, userLoaded]);
 
@@ -144,6 +173,11 @@ export default function Component() {
       >
         {/* <FilterButton href="/workouts" onClick={() => setFiltered(!isFiltered)} userId={user?.uid} isFiltered={isFiltered} /> */}
 
+        {filteredSessions && filteredSessions.length > 0 &&
+          <div className="self-center flex flex-col gap-3">
+            <Graph sessions={sessions} />
+          </div>
+        }
         {filteredWorkouts && filteredWorkouts.length > 0 &&
           <div className="self-center flex flex-col gap-3">
             {

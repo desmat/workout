@@ -51,14 +51,14 @@ function SessionSummary({ session, workout }: any) {
   )
 }
 
-function Graph({ id, prompt, exercises, sessions, showDetails, user }: any) {
-  console.log('>> app.workouts[id].Graph.render()', { id, exercises, sessions });
+function Graph({ sessions }: any) {
+  console.log('>> app.workouts[id].Graph.render()', { sessions });
 
   return (
-      <div className="flex flex-col items-center gap-3 lg:w-[calc(100vw-12rem)] w-[calc(100vw-4rem)]">
-      <div className="text-dark-0 opacity-40">Historical</div>
+    <div className="flex flex-col items-center gap-3 max-w-[53rem] w-[calc(100vw-32px)]">
+      {/* <div className="text-dark-0 opacity-40">Historical</div> */}
       <div className="flex flex-col gap-0 w-full mb-[-1rem]">
-        <DailySummaryChart sessions={sessions}/>
+        <DailySummaryChart sessions={sessions} />
       </div>
     </div>
   );
@@ -240,7 +240,7 @@ export default function Component({ params }: { params: { id: string } }) {
         <div className="flex flex-col items-center gap-4">
           {/* <WorkoutDetails {...{ ...workout, sessions: workoutSessions, showDetails, user }} /> */}
           {workout && workout.exercises && workout.exercises.length > 0 &&
-            <Graph {...{ ...workout, sessions: workoutSessions, user }} />
+            <Graph sessions={sessions} />
           }
           {workout && workout.exercises && workout.exercises.length > 0 &&
             <Exercises {...{ ...workout, sessions: workoutSessions, user }} />

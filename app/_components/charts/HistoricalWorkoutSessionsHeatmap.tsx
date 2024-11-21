@@ -15,16 +15,20 @@ export default function DailySummaryChart({
   console.log("app._components.charts.DailySummaryChart", { sessions });
 
   const summarizedSessions: any = {};
-  sessions && sessions.forEach((session: WorkoutSession) => {
-    const date = moment(session.createdAt).format("YYYY-MM-DD");
-    const total = session.sets.reduce((total: number, s: WorkoutSet) => total + (moment(s.stoppedAt).diff(moment(s.createdAt), "minutes")), 0)
-    console.log("components.charts.DailySummaryChart forEach", { session, date, total });
-    summarizedSessions[date] = (summarizedSessions[date] || 0) + total;
-  });
+  sessions && sessions
+    .forEach((session: WorkoutSession) => {
+      const date = moment(session.createdAt).format("YYYY-MM-DD");
+      const total = session.sets
+        .reduce((total: number, s: WorkoutSet) => total + (s.duration || 0) / 1000 / 60, 0)
+      console.log("components.charts.DailySummaryChart forEach", { session, date, total });
+      summarizedSessions[date] = (summarizedSessions[date] || 0) + total;
+    });
 
   console.log("components.charts.DailySummaryChart", { summarizedSessions });
 
-  const data: any = summarizedSessions && Object.entries(summarizedSessions);
+  const data: any = summarizedSessions && Object.entries(summarizedSessions)
+    .map((e: any) => [e[0], Math.round(e[1])]
+    );
 
   console.log("components.charts.DailySummaryChart", { data });
 
@@ -52,10 +56,10 @@ export default function DailySummaryChart({
     },
     calendar: {
       itemStyle: {
-          color: "rgba(0, 0, 0, 0.015)",
+        color: "rgba(0, 0, 0, 0.015)",
         borderColor: "rgba(0, 0, 0, 0.03)",
       },
-        top: 18,
+      top: 18,
       left: 0,
       right: 0,
       range: [fromDate, toDate],

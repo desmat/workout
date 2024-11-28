@@ -17,6 +17,7 @@
   --color-scheme-light-1: #edc78a;
   --color-scheme-light-2: #edb08a;
   --color-scheme-light-3: #EE6C4D;
+  --color-scheme-light-4: #a94c36;
 }
 
 /* TODO: figure out a clean dark mode style */
@@ -105,4 +106,17 @@ ul {
   -webkit-line-clamp: 3; /* number of lines to show */
           line-clamp: 3; 
   -webkit-box-orient: vertical;
+}
+
+.animate-pulse-1 {
+  animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: .5;
+    }
+  }
 }

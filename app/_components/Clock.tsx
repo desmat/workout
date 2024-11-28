@@ -5,6 +5,10 @@ export default function Clock({ ms }: { ms: number }) {
   const h = Math.floor(ms / 60 / 60 / 1000);
 
   return (
-    <span className="font-mono">{`${(h + "").padStart(2, '0')}:${(m + "").padStart(2, '0')}:${(s + "").padStart(2, '0')}`}</span>
+    <span
+      className="font-mono"
+    >
+      {`${(h + "").padStart(2, '0')}:${(m + "").padStart(2, '0')}:${(s + "").padStart(2, '0')}`}
+    </span>
   )
 }

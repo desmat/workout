@@ -66,6 +66,7 @@ export default function Component({ params }: { params: { id: string, sessionId:
   const currentSet = session && sessionStarted && session.sets && session.sets.sort(byCreatedAtDesc)[0];
   const [previousSet, setPreviousSet] = useState<WorkoutSet | undefined>(undefined);
   const [currentSetDuration, setCurrentSetDuration] = useState(0);
+  const [pulseTimer, setPulseTimer] = useState(0);
   let [timer, setTimer] = useState(0);
   // const [mode, setMode] = useState<SessionMode>({
   //   countdown: session?.mode && session.session?.mode?.countdown || !!workout?.defaultMode?.countdown,
@@ -111,14 +112,25 @@ export default function Component({ params }: { params: { id: string, sessionId:
           // console.log('>> app.workouts[id].session.Page useEffect(currentSet) TIC TOK!', { currentSet, timer, duration, targetDuration });
 
           if (session?.mode?.countdown && targetDuration) {
-            setCurrentSetDuration(Math.max(targetDuration - duration + 1000, 1400));
+            const currentSetDuration = Math.max(targetDuration - duration + 1000, 1400);
+            setCurrentSetDuration(currentSetDuration);
+            setPulseTimer(targetDuration >= 1000 * 60 * 2
+              ? currentSetDuration < 1000 * 10
+                ? 2
+                : currentSetDuration < 1000 * 60
+                  ? 1
+                  : 0
+              : currentSetDuration < targetDuration / 2
+                ? 1
+                : 0);
           } else {
             setCurrentSetDuration(duration);
+            setPulseTimer(0);
           }
 
           if (session?.mode?.countdown && duration >= targetDuration) {
             // console.log('>> app.workouts[id].session.Page useEffect(currentSet) NEXT!', { currentSet, timer, duration, targetDuration });
-
+            setPulseTimer(0);
             if (canNext) {
               handleNext();
             } else {
@@ -288,7 +300,8 @@ export default function Component({ params }: { params: { id: string, sessionId:
           className={`font-bold text-6xl transition-all
             ${workout && user && session?.status == "stopped" ? "_bg-pink-200 opacity-30 hover:opacity-100 animate-pulse hover:animate-none opacity- text-dark-1 active:text-light-1" : ""}
             ${workout && user && sessionStarted && !sessionPaused ? "_bg-yellow-200 active:text-light-1" : ""}
-            ${session?.status != "completed" ? " text-dark-1 cursor-pointer" : ""}          
+            ${session?.status != "completed" ? " text-dark-1 cursor-pointer" : ""}
+            ${pulseTimer > 1 ? "animate-pulse-1 text-light-3" : pulseTimer > 0 ? "animate-pulse text-light-4" : ""}
           `}
           title={
             session?.status == "stopped"

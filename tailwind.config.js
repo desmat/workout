@@ -20,6 +20,7 @@ module.exports = {
         'light-1': '#e9c46a',
         'light-2': '#f4a261',
         'light-3': '#EE6C4D',
+        'light-4': '#a94c36',
       },
     },
   },
